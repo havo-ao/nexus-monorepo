@@ -1,0 +1,97 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: nexus-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: nexus
+      MYSQL_USER: nexus_user
+      MYSQL_PASSWORD: nexus_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - nexus_mysql_data:/var/lib/mysql
+ 
+  webapp:
+    build:
+      context: ../../webapp
+      dockerfile: Dockerfile.dev
+    container_name: nexus-webapp
+    restart: unless-stopped
+    ports:
+      - "8100:8100"
+    volumes:
+      - ../../webapp:/app
+      - /app/node_modules
+    depends_on:
+      - identity-service
+      - trading-service
+      - portfolio-service
+      - market-service
+      - compliance-service
+ 
+  identity-service:
+    build:
+      context: ../../services/identity-service
+      dockerfile: Dockerfile.dev
+    container_name: nexus-identity-service
+    restart: unless-stopped
+    ports:
+      - "8881:8881"
+    volumes:
+      - ../../services/identity-service:/app
+      - /root/.m2
+    depends_on:
+      - mysql
+ 
+  trading-service:
+    build:
+      context: ../../services/trading-service
+      dockerfile: Dockerfile.dev
+    container_name: nexus-trading-service
+    restart: unless-stopped
+    ports:
+      - "8882:8882"
+    volumes:
+      - ../../services/trading-service:/app
+      - /app/node_modules
+ 
+  portfolio-service:
+    build:
+      context: ../../services/portfolio-service
+      dockerfile: Dockerfile.dev
+    container_name: nexus-portfolio-service
+    restart: unless-stopped
+    ports:
+      - "8883:8883"
+    volumes:
+      - ../../services/portfolio-service:/app
+      - /app/node_modules
+ 
+  market-service:
+    build:
+      context: ../../services/market-service
+      dockerfile: Dockerfile.dev
+    container_name: nexus-market-service
+    restart: unless-stopped
+    ports:
+      - "8884:8884"
+    volumes:
+      - ../../services/market-service:/app
+      - /app/node_modules
+ 
+  compliance-service:
+    build:
+      context: ../../services/compliance-service
+      dockerfile: Dockerfile.dev
+    container_name: nexus-compliance-service
+    restart: unless-stopped
+    ports:
+      - "8885:8885"
+    volumes:
+      - ../../services/compliance-service:/app
+      - /app/node_modules
+ 
+volumes:
+  nexus_mysql_data:
