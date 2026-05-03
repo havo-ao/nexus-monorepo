@@ -9,7 +9,7 @@ services:
       MYSQL_USER: nexus_user
       MYSQL_PASSWORD: nexus_password
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - nexus_mysql_data:/var/lib/mysql
  

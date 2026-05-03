@@ -1,0 +1,168 @@
+/* src/components/NavBar.css */
+.landing-toolbar {
+  padding: 0 40px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  min-height: 80px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.toolbar-brand {
+  flex-shrink: 0;
+  z-index: 2;
+}
+
+.logo {
+  /* Do not use `font: inherit` here — it resets font-family/size/weight and overrides the lines above (strikethrough in DevTools). */
+  font-family: "Montserrat", sans-serif;
+  font-size: 1.65rem;
+  font-weight: 900;
+  font-style: normal;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #8a27fc, #06ff4c);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin: 0;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.clickable-logo:focus-visible {
+  outline: 2px solid rgba(138, 39, 252, 0.65);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* True horizontal center of nav links (independent of start/end slot widths) */
+.nav-links {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  gap: 48px;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  pointer-events: auto;
+  max-width: min(90vw, 720px);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.nav-links button {
+  margin: 0;
+  padding: 8px 4px;
+  border: 0;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+  font: inherit;
+  font-weight: 500;
+  font-size: 16px;
+  color: #b885ff;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.nav-links button:hover {
+  color: #d5b2ff;
+}
+
+.nav-links button:focus-visible {
+  outline: 2px solid rgba(138, 39, 252, 0.6);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.action-buttons {
+  min-width: 0;
+  margin-left: auto;
+  flex-shrink: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+}
+
+.nav-user-summary {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  max-width: min(220px, 28vw);
+  text-align: right;
+}
+
+.nav-user-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--ion-text-color, #f4f5f8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+.nav-user-meta {
+  font-size: 0.72rem;
+  color: rgba(184, 133, 255, 0.95);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+.login-btn {
+  --color: #f4f5f8;
+  --background: rgba(138, 39, 252, 0.18);
+  --background-hover: rgba(138, 39, 252, 0.32);
+  --border-color: rgba(138, 39, 252, 0.55);
+  margin-right: 12px;
+  font-weight: 600;
+  --box-shadow: 0 8px 18px rgba(138, 39, 252, 0.25);
+}
+
+.signup-btn {
+  --background: #8a27fc;
+  --background-hover: #a146ff;
+  --color: #ffffff;
+  font-weight: 600;
+  --box-shadow: 0 10px 22px rgba(138, 39, 252, 0.35);
+}
+
+/* Móvil */
+@media (max-width: 768px) {
+  .landing-toolbar {
+    padding: 0 15px;
+  }
+
+  .nav-links {
+    display: none;
+  }
+
+  .action-buttons {
+    min-width: auto;
+    gap: 8px;
+  }
+
+  .nav-user-summary {
+    display: none;
+  }
+
+  .logo {
+    font-size: 1.4rem;
+  }
+}

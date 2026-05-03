@@ -1,0 +1,43 @@
+.about-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 60px 20px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.nexus-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 5rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, #8a27fc, #1a8a3a);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin-bottom: 24px;
+  letter-spacing: -0.02em;
+}
+
+.description {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.2rem;
+  line-height: 1.6;
+  color: #e4e4e4;
+  max-width: 700px;
+}
+
+.description p {
+  margin-bottom: 1.2rem;
+}
+
+@media (max-width: 768px) {
+  .nexus-title {
+    font-size: 3rem;
+  }
+  .description {
+    font-size: 1rem;
+  }
+}
