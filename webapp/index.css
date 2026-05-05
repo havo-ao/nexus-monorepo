@@ -1,0 +1,9 @@
+:root {
+  --font-heading: 'Montserrat', sans-serif;
+  --font-body: 'Poppins', sans-serif;
+}
+
+.logo, .nexus-title {
+  font-family: var(--font-heading);
+  font-weight: 900;
+}

@@ -1,0 +1,116 @@
+/* src/components/MarketsSection.css */
+.markets-section {
+  padding: 60px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.markets-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.markets-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 2.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #2dd55b, #1a8a3a);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin-bottom: 16px;
+}
+
+.markets-subtitle {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.1rem;
+  opacity: 0.8;
+}
+
+.markets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 28px;
+}
+
+.market-card {
+  border-radius: 24px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+  transition: transform 0.2s ease;
+  background: var(--ion-card-background);
+}
+
+.market-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 24px rgba(3, 248, 15, 0.12);
+}
+
+.market-card-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 20px 0 20px;
+}
+
+.market-flag {
+  font-size: 48px;
+}
+
+.market-info {
+  flex: 1;
+}
+
+.market-country {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+}
+
+.market-exchange {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.9rem;
+  opacity: 0.7;
+  margin: 0;
+}
+
+.top-stocks {
+  margin-top: 8px;
+}
+
+.top-stocks-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 1rem;
+}
+
+.top-stocks-title ion-icon {
+  font-size: 1.2rem;
+  color: #2dd55b;
+}
+
+.stock-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .markets-title {
+    font-size: 1.8rem;
+  }
+  .markets-grid {
+    grid-template-columns: 1fr;
+  }
+  .market-country {
+    font-size: 1.2rem;
+  }
+  .market-flag {
+    font-size: 36px;
+  }
+}
