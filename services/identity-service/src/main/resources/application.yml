@@ -1,11 +1,20 @@
 spring:
   application:
     name: identity-service
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
-      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
- 
+  datasource:
+    url: jdbc:mysql://localhost:3307/nexus
+    username: nexus_user
+    password: nexus_password
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      show-sql: true
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+
+
 management:
   endpoints:
     web:
@@ -14,6 +23,11 @@ management:
   endpoint:
     health:
       show-details: always
- 
+
 server:
   port: 8881
+
+jwt:
+  secret: u8X@93s#L!pZqT0vM&cRk2jYbN7wD5rE$FhGzA.grsdd1f8y?/z~^*
+  expiration: 86400000
+  refresh-expiration: 86400000
