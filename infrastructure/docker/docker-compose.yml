@@ -1,3 +1,4 @@
+name: nexus
 services:
   mysql:
     image: mysql:8.4
@@ -12,7 +13,7 @@ services:
       - "3307:3306"
     volumes:
       - nexus_mysql_data:/var/lib/mysql
- 
+
   webapp:
     build:
       context: ../../webapp
@@ -30,7 +31,7 @@ services:
       - portfolio-service
       - market-service
       - compliance-service
- 
+
   identity-service:
     build:
       context: ../../services/identity-service
@@ -44,7 +45,11 @@ services:
       - /root/.m2
     depends_on:
       - mysql
- 
+    command: >
+      sh -c "sed -i 's/\r$//' mvnw &&
+      chmod +x mvnw &&
+      ./mvnw spring-boot:run"
+
   trading-service:
     build:
       context: ../../services/trading-service
@@ -56,7 +61,7 @@ services:
     volumes:
       - ../../services/trading-service:/app
       - /app/node_modules
- 
+
   portfolio-service:
     build:
       context: ../../services/portfolio-service
@@ -68,7 +73,7 @@ services:
     volumes:
       - ../../services/portfolio-service:/app
       - /app/node_modules
- 
+
   market-service:
     build:
       context: ../../services/market-service
@@ -80,7 +85,7 @@ services:
     volumes:
       - ../../services/market-service:/app
       - /app/node_modules
- 
+
   compliance-service:
     build:
       context: ../../services/compliance-service
@@ -92,6 +97,6 @@ services:
     volumes:
       - ../../services/compliance-service:/app
       - /app/node_modules
- 
+
 volumes:
   nexus_mysql_data:
