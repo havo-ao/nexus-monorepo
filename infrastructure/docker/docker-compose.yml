@@ -61,9 +61,17 @@ services:
     restart: unless-stopped
     ports:
       - "8882:8882"
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USERNAME: nexus_user
+      DB_PASSWORD: nexus_password
+      DB_DATABASE: nexus
     volumes:
       - ../../services/trading-service:/app
       - /app/node_modules
+    depends_on:
+      - mysql
 
   portfolio-service:
     build:
