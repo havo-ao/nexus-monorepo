@@ -2,7 +2,7 @@ spring:
   application:
     name: identity-service
   datasource:
-    url: jdbc:mysql://localhost:3307/nexus
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3307/nexus}
     username: nexus_user
     password: nexus_password
     driver-class-name: com.mysql.cj.jdbc.Driver

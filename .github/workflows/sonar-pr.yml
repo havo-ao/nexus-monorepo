@@ -1,4 +1,4 @@
-name: PR Static Checks
+name: CI
 
 on:
   pull_request:
@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   webapp:
-    name: Build webapp
+    name: Build webapp frontend
     runs-on: ubuntu-latest
     if: ${{ !github.event.pull_request.draft }}
 
@@ -34,7 +34,7 @@ jobs:
           npm run build
 
   trading-service:
-    name: Build trading-service
+    name: Build trading service
     runs-on: ubuntu-latest
     if: ${{ !github.event.pull_request.draft }}
 
@@ -54,7 +54,7 @@ jobs:
           npm run build
 
   portfolio-service:
-    name: Build portfolio-service
+    name: Build portfolio service
     runs-on: ubuntu-latest
     if: ${{ !github.event.pull_request.draft }}
 
@@ -74,7 +74,7 @@ jobs:
           npm run build
 
   market-service:
-    name: Build market-service
+    name: Build market service
     runs-on: ubuntu-latest
     if: ${{ !github.event.pull_request.draft }}
 
@@ -94,7 +94,7 @@ jobs:
           npm run build
 
   compliance-service:
-    name: Build compliance-service
+    name: Build compliance service
     runs-on: ubuntu-latest
     if: ${{ !github.event.pull_request.draft }}
 
@@ -114,7 +114,7 @@ jobs:
           npm run build
 
   identity-service:
-    name: Build identity-service
+    name: Build identity service
     runs-on: ubuntu-latest
     if: ${{ !github.event.pull_request.draft }}
 
@@ -141,7 +141,7 @@ jobs:
           if-no-files-found: error
 
   sonar:
-    name: Sonar analysis
+    name: Analyze code with SonarCloud
     runs-on: ubuntu-latest
     if: ${{ !github.event.pull_request.draft }}
     needs:
