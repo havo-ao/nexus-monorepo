@@ -40,14 +40,17 @@ services:
     restart: unless-stopped
     ports:
       - "8881:8881"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/nexus
+      ADMIN_EMAIL: admin@nexus.local
+      ADMIN_PASSWORD: Admin123@
     volumes:
       - ../../services/identity-service:/app
       - /root/.m2
     depends_on:
       - mysql
     command: >
-      sh -c "sed -i 's/\r$//' mvnw &&
-      chmod +x mvnw &&
+      sh -c "chmod +x mvnw &&
       ./mvnw spring-boot:run"
 
   trading-service:

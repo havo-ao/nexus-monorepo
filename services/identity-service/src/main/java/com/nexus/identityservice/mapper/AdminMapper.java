@@ -16,6 +16,9 @@ public interface AdminMapper {
     @Mapping(target = "createdAt", expression = "java(java.time.Instant.now())")
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "lastLogin", ignore = true)
+    @Mapping(target = "failedLoginAttempts", constant = "0")
+    @Mapping(target = "lastFailedLogin", ignore = true)
+    @Mapping(target = "banUntil", ignore = true)
     Admin toEntity(AdminCreateRequest request);
 
     // For PARTIAL update - IGNORE NULLS
@@ -28,6 +31,9 @@ public interface AdminMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", expression = "java(java.time.Instant.now())")
     @Mapping(target = "lastLogin", ignore = true)
+    @Mapping(target = "failedLoginAttempts", ignore = true)
+    @Mapping(target = "lastFailedLogin", ignore = true)
+    @Mapping(target = "banUntil", ignore = true)
     //Ignore UserDetails fields
     @Mapping(target = "authorities", ignore = true)
     @Mapping(target = "accountNonExpired", ignore = true)
