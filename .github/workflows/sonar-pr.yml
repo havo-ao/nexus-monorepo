@@ -51,6 +51,9 @@ jobs:
         working-directory: services/trading-service
         run: |
           npm install --no-audit --no-fund
+          npm run lint:check
+          npm run test:ci
+          npm run test:e2e
           npm run build
 
   portfolio-service:
