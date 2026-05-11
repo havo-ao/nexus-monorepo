@@ -48,4 +48,10 @@ describe('AppController (e2e)', () => {
         currentValue: 0,
       });
   });
+
+  it('/api/v1/portfolio/:traderId/positions/:positionId (GET)', () => {
+    return request(app.getHttpServer())
+      .get('/api/v1/portfolio/1/positions/99')
+      .expect(404);
+  });
 });

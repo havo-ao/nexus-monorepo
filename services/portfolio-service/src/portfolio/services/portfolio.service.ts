@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PortfolioPositionsRepository } from '../../positions/repositories/portfolio-positions.repository';
 import { PortfolioPositionResponseDto } from '../dto/portfolio-position-response.dto';
 import { PortfolioSummaryResponseDto } from '../dto/portfolio-summary-response.dto';
@@ -23,6 +23,24 @@ export class PortfolioService {
       totalInvested: this.sumInvested(mappedPositions),
       currentValue: this.sumCurrentValue(mappedPositions),
     };
+  }
+
+  async getPositionDetail(
+    traderId: string,
+    positionId: string,
+  ): Promise<PortfolioPositionResponseDto> {
+    const position = await this.positionsRepository.findByTraderIdAndPositionId(
+      traderId,
+      positionId,
+    );
+
+    if (!position) {
+      throw new NotFoundException(
+        `Position ${positionId} was not found for trader ${traderId}`,
+      );
+    }
+
+    return this.toPositionResponse(position);
   }
 
   calculateCurrentValue(
