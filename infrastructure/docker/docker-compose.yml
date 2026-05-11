@@ -93,6 +93,8 @@ services:
     restart: unless-stopped
     ports:
       - "8883:8883"
+    depends_on:
+      - mysql
     volumes:
       - ../../services/portfolio-service:/app
       - /app/node_modules
