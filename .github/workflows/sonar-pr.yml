@@ -30,7 +30,8 @@ jobs:
       - name: Build webapp
         working-directory: webapp
         run: |
-          npm install --no-audit --no-fund
+          npm ci --no-audit --no-fund
+          npm run test.unit -- --run
           npm run build
 
   trading-service:
@@ -47,14 +48,21 @@ jobs:
         with:
           node-version: 22
 
-      - name: Build trading-service
+      - name: Test and build trading-service
         working-directory: services/trading-service
         run: |
-          npm install --no-audit --no-fund
+          npm ci --no-audit --no-fund
           npm run lint:check
-          npm run test:ci
+          npm run test:cov
           npm run test:e2e
           npm run build
+
+      - name: Upload trading coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: trading-service-coverage
+          path: services/trading-service/coverage/lcov.info
+          if-no-files-found: error
 
   portfolio-service:
     name: Build portfolio service
@@ -120,6 +128,21 @@ jobs:
     name: Build identity service
     runs-on: ubuntu-latest
     if: ${{ !github.event.pull_request.draft }}
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: nexus
+          MYSQL_USER: nexus_user
+          MYSQL_PASSWORD: nexus_password
+        ports:
+          - 3307:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
 
     steps:
       - name: Checkout repository
@@ -134,7 +157,11 @@ jobs:
 
       - name: Build identity service
         working-directory: services/identity-service
-        run: bash ./mvnw -B -DskipTests package
+        env:
+          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3307/nexus
+          ADMIN_EMAIL: admin@nexus.local
+          ADMIN_PASSWORD: Admin123@
+        run: bash ./mvnw -B package
 
       - name: Upload identity bytecode
         uses: actions/upload-artifact@v4
@@ -167,6 +194,12 @@ jobs:
           name: identity-service-classes
           path: services/identity-service/target/classes
 
+      - name: Download trading coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: trading-service-coverage
+          path: services/trading-service/coverage
+
       - name: SonarQube Cloud scan
         uses: SonarSource/sonarqube-scan-action@v7
         env:
@@ -175,3 +208,4 @@ jobs:
           args: >
             -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
             -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
+            -Dsonar.qualitygate.wait=true
