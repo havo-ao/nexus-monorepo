@@ -3,8 +3,8 @@ spring:
     name: identity-service
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3307/nexus}
-    username: nexus_user
-    password: nexus_password
+    username: ${SPRING_DATASOURCE_USERNAME:nexus_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
@@ -28,6 +28,6 @@ server:
   port: 8881
 
 jwt:
-  secret: u8X@93s#L!pZqT0vM&cRk2jYbN7wD5rE$FhGzA.grsdd1f8y?/z~^*
+  secret: ${JWT_SECRET:}
   expiration: 86400000
   refresh-expiration: 86400000

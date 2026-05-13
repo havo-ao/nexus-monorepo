@@ -12,7 +12,7 @@ import { Wallet } from '../src/wallet/entities/wallet.entity';
       host: process.env.DB_HOST ?? 'localhost',
       port: Number(process.env.DB_PORT ?? 3307),
       username: process.env.DB_USERNAME ?? 'nexus_user',
-      password: process.env.DB_PASSWORD ?? 'nexus_password',
+      password: process.env.DB_PASSWORD ?? '',
       database: process.env.DB_DATABASE ?? 'nexus',
       entities: [
         FundsValidationEvent,

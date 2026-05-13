@@ -159,6 +159,9 @@ jobs:
         working-directory: services/identity-service
         env:
           SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3307/nexus
+          SPRING_DATASOURCE_USERNAME: nexus_user
+          SPRING_DATASOURCE_PASSWORD: nexus_password
+          JWT_SECRET: local-ci-jwt-secret-change-before-production-123456
           ADMIN_EMAIL: admin@nexus.local
           ADMIN_PASSWORD: Admin123@
         run: bash ./mvnw -B package
