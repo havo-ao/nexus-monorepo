@@ -6,17 +6,31 @@ import mysql from 'mysql2/promise';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const migrationsDir = join(__dirname, 'migrations');
 
+function requireEnv(name) {
+  const value = process.env[name];
+
+  if (!value) {
+    throw new Error(`${name} is required to run market-service migrations`);
+  }
+
+  return value;
+}
+
+function getOptionalNumber(value, fallback) {
+  return value ? Number(value) : fallback;
+}
+
 const pool = mysql.createPool({
   host: process.env.MYSQL_HOST ?? 'localhost',
-  port: Number(process.env.MYSQL_PORT ?? 3307),
-  user: process.env.MYSQL_USER ?? 'nexus_user',
-  password: process.env.MYSQL_PASSWORD ?? 'nexus_password',
-  database: process.env.MYSQL_DATABASE ?? 'nexus',
-  multipleStatements: true,
+  port: getOptionalNumber(process.env.MYSQL_PORT, 3307),
+  user: requireEnv('MYSQL_USER'),
+  password: requireEnv('MYSQL_PASSWORD'),
+  database: requireEnv('MYSQL_DATABASE'),
 });
 
 async function migrate() {
   const connection = await pool.getConnection();
+  let transactionStarted = false;
 
   try {
     await connection.query(`
@@ -45,20 +59,33 @@ async function migrate() {
       }
 
       const sql = await readFile(join(migrationsDir, migrationFile), 'utf8');
+      const statements = sql
+        .split(';')
+        .map((statement) => statement.trim())
+        .filter(Boolean);
 
       await connection.beginTransaction();
-      await connection.query(sql);
+      transactionStarted = true;
+
+      for (const statement of statements) {
+        await connection.query(statement);
+      }
+
       await connection.query(
         `INSERT INTO schema_migrations (service_name, migration_name)
          VALUES (?, ?)`,
         ['market-service', migrationFile],
       );
       await connection.commit();
+      transactionStarted = false;
 
       console.log(`Applied migration ${migrationFile}`);
     }
   } catch (error) {
-    await connection.rollback();
+    if (transactionStarted) {
+      await connection.rollback();
+    }
+
     throw error;
   } finally {
     connection.release();

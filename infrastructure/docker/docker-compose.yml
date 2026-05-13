@@ -5,10 +5,10 @@ services:
     container_name: nexus-mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: ${NEXUS_MYSQL_ROOT_PASSWORD:?Set NEXUS_MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: nexus
       MYSQL_USER: nexus_user
-      MYSQL_PASSWORD: nexus_password
+      MYSQL_PASSWORD: ${NEXUS_MYSQL_PASSWORD:?Set NEXUS_MYSQL_PASSWORD}
     ports:
       - "3307:3306"
     volumes:
@@ -47,10 +47,10 @@ services:
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/nexus
       SPRING_DATASOURCE_USERNAME: nexus_user
-      SPRING_DATASOURCE_PASSWORD: nexus_password
-      JWT_SECRET: local-development-jwt-secret-change-before-production-123456
+      SPRING_DATASOURCE_PASSWORD: ${NEXUS_MYSQL_PASSWORD:?Set NEXUS_MYSQL_PASSWORD}
+      JWT_SECRET: ${NEXUS_JWT_SECRET:?Set NEXUS_JWT_SECRET}
       ADMIN_EMAIL: admin@nexus.local
-      ADMIN_PASSWORD: Admin123@
+      ADMIN_PASSWORD: ${NEXUS_ADMIN_PASSWORD:?Set NEXUS_ADMIN_PASSWORD}
     volumes:
       - ../../services/identity-service:/app
       - /root/.m2
@@ -72,7 +72,7 @@ services:
       DB_HOST: mysql
       DB_PORT: 3306
       DB_USERNAME: nexus_user
-      DB_PASSWORD: nexus_password
+      DB_PASSWORD: ${NEXUS_MYSQL_PASSWORD:?Set NEXUS_MYSQL_PASSWORD}
       DB_DATABASE: nexus
     volumes:
       - ../../services/trading-service:/app
@@ -109,7 +109,7 @@ services:
       MYSQL_PORT: 3306
       MYSQL_DATABASE: nexus
       MYSQL_USER: nexus_user
-      MYSQL_PASSWORD: nexus_password
+      MYSQL_PASSWORD: ${NEXUS_MYSQL_PASSWORD:?Set NEXUS_MYSQL_PASSWORD}
     volumes:
       - ../../services/market-service:/app
       - /app/node_modules

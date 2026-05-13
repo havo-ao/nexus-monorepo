@@ -22,6 +22,14 @@ npm run db:migrate
 ```
 
 In Docker Compose, `market-service` runs migrations before `npm run start:dev`.
+For a clean local environment, run:
+
+```powershell
+.\infrastructure\docker\start-local.ps1
+```
+
+The script creates `infrastructure/docker/.env` with local values if the file
+does not exist, then starts Docker Compose with that environment file.
 
 ## Manual Validation
 
