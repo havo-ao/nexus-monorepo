@@ -72,6 +72,9 @@ services:
       - /app/node_modules
     depends_on:
       - mysql
+    command: >
+      sh -c "npm run db:migrate &&
+      npm run start:dev"
 
   portfolio-service:
     build:

@@ -10,7 +10,12 @@ import {
 } from "@ionic/react";
 import { useHistory, useLocation } from "react-router-dom";
 import NavBar from "../components/NavBar";
-import { validateBuyFunds, type FundsValidationResponse } from "../api/trading";
+import {
+  validateBuyFunds,
+  validateMarketStatus,
+  type FundsValidationResponse,
+  type MarketValidationResponse,
+} from "../api/trading";
 import type { UserProfile } from "../api/types";
 import { formatUserDisplayName, getStoredUser } from "../auth/storage";
 import "./TraderPanel.css";
@@ -26,6 +31,11 @@ const TraderPanel: React.FC = () => {
   );
   const [validationError, setValidationError] = useState("");
   const [isValidatingFunds, setIsValidatingFunds] = useState(false);
+  const [exchangeId, setExchangeId] = useState("1");
+  const [marketValidation, setMarketValidation] =
+    useState<MarketValidationResponse | null>(null);
+  const [marketValidationError, setMarketValidationError] = useState("");
+  const [isValidatingMarket, setIsValidatingMarket] = useState(false);
 
   // Ionic keeps pages in the navigation stack; the same component instance can be reused.
   // `location.key` changes on each navigation, so we always re-read session from storage.
@@ -64,6 +74,32 @@ const TraderPanel: React.FC = () => {
       );
     } finally {
       setIsValidatingFunds(false);
+    }
+  };
+
+  const handleValidateMarket = async () => {
+    setMarketValidation(null);
+    setMarketValidationError("");
+
+    if (!exchangeId.trim()) {
+      setMarketValidationError("Ingresa el mercado a validar.");
+      return;
+    }
+
+    setIsValidatingMarket(true);
+    try {
+      const result = await validateMarketStatus({
+        exchangeId: exchangeId.trim(),
+      });
+      setMarketValidation(result);
+    } catch (error) {
+      setMarketValidationError(
+        error instanceof Error
+          ? error.message
+          : "No fue posible validar el estado del mercado.",
+      );
+    } finally {
+      setIsValidatingMarket(false);
     }
   };
 
@@ -145,6 +181,47 @@ const TraderPanel: React.FC = () => {
             {validationError && (
               <p className="funds-validation-message rejected">
                 {validationError}
+              </p>
+            )}
+          </section>
+          <section className="funds-validation-section">
+            <IonText>
+              <h2>Validar mercado</h2>
+            </IonText>
+            <div className="funds-validation-fields">
+              <IonItem>
+                <IonLabel position="stacked">Mercado</IonLabel>
+                <IonInput
+                  value={exchangeId}
+                  onIonInput={(event) =>
+                    setExchangeId(String(event.detail.value ?? ""))
+                  }
+                />
+              </IonItem>
+            </div>
+            <IonButton
+              expand="block"
+              onClick={handleValidateMarket}
+              disabled={isValidatingMarket}
+            >
+              {isValidatingMarket ? "Validando" : "Validar mercado"}
+            </IonButton>
+            {marketValidation && (
+              <p
+                className={
+                  marketValidation.canOperate
+                    ? "funds-validation-message approved"
+                    : "funds-validation-message rejected"
+                }
+              >
+                {marketValidation.canOperate
+                  ? "Mercado abierto. La orden puede continuar."
+                  : `Operación bloqueada. Estado: ${marketValidation.marketStatus}.`}
+              </p>
+            )}
+            {marketValidationError && (
+              <p className="funds-validation-message rejected">
+                {marketValidationError}
               </p>
             )}
           </section>

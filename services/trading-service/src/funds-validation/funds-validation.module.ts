@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ValidationsController } from './controllers/validations.controller';
+import { FundsValidationController } from './controllers/funds-validation.controller';
 import { InMemoryTraderFundsRepository } from './repositories/in-memory-trader-funds.repository';
 import { TRADER_FUNDS_REPOSITORY } from './repositories/trader-funds.repository';
 import { TypeOrmTraderFundsRepository } from './repositories/typeorm-trader-funds.repository';
@@ -11,7 +11,7 @@ const fundsRepository =
     : TypeOrmTraderFundsRepository;
 
 @Module({
-  controllers: [ValidationsController],
+  controllers: [FundsValidationController],
   providers: [
     FundsValidationService,
     {
@@ -21,4 +21,4 @@ const fundsRepository =
   ],
   exports: [FundsValidationService],
 })
-export class ValidationsModule {}
+export class FundsValidationModule {}

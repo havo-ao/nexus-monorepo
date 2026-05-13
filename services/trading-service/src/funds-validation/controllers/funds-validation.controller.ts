@@ -4,13 +4,13 @@ import { ValidateBuyFundsDto } from '../dto/validate-buy-funds.dto';
 import { FundsValidationService } from '../services/funds-validation.service';
 
 @ApiTags('validations')
-@Controller('validations')
-export class ValidationsController {
+@Controller('validations/funds')
+export class FundsValidationController {
   constructor(
     private readonly fundsValidationService: FundsValidationService,
   ) {}
 
-  @Post('funds/buy')
+  @Post('buy')
   @HttpCode(200)
   @ApiOperation({
     summary: 'Validate and reserve available funds before creating a buy order',
