@@ -84,14 +84,14 @@ export class MarketHoursAdminService {
       );
     }
 
-    if (!dto.reason.trim()) {
+    if (typeof dto.reason !== 'string' || !dto.reason.trim()) {
       throw new BadRequestException('Restriction reason is required');
     }
 
     return {
       date: dto.date,
       status: dto.status,
-      reason: dto.reason,
+      reason: dto.reason.trim(),
     };
   }
 
