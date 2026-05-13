@@ -77,7 +77,7 @@ async function connectWithRetry(): Promise<mysql.Connection> {
         host: process.env.DB_HOST ?? 'localhost',
         port: Number(process.env.DB_PORT ?? 3307),
         user: process.env.DB_USERNAME ?? 'nexus_user',
-        password: process.env.DB_PASSWORD ?? 'nexus_password',
+        password: process.env.DB_PASSWORD ?? '',
         database: process.env.DB_DATABASE ?? 'nexus',
       });
     } catch (error) {
