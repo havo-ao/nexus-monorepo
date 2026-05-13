@@ -55,7 +55,7 @@ const TraderPanel: React.FC = () => {
 
     const amount = Number(grossAmount);
     if (!traderId.trim() || !Number.isFinite(amount) || amount <= 0) {
-      setValidationError("Ingresa un trader y un monto de compra válido.");
+      setValidationError("Enter a valid trader and buy amount.");
       return;
     }
 
@@ -70,7 +70,7 @@ const TraderPanel: React.FC = () => {
       setValidationError(
         error instanceof Error
           ? error.message
-          : "No fue posible validar los fondos de la operación.",
+          : "Unable to validate operation funds.",
       );
     } finally {
       setIsValidatingFunds(false);
@@ -82,7 +82,7 @@ const TraderPanel: React.FC = () => {
     setMarketValidationError("");
 
     if (!exchangeId.trim()) {
-      setMarketValidationError("Ingresa el mercado a validar.");
+      setMarketValidationError("Enter the market to validate.");
       return;
     }
 
@@ -96,7 +96,7 @@ const TraderPanel: React.FC = () => {
       setMarketValidationError(
         error instanceof Error
           ? error.message
-          : "No fue posible validar el estado del mercado.",
+          : "Unable to validate market status.",
       );
     } finally {
       setIsValidatingMarket(false);
@@ -134,7 +134,7 @@ const TraderPanel: React.FC = () => {
           </dl>
           <section className="funds-validation-section">
             <IonText>
-              <h2>Validar compra</h2>
+              <h2>Validate Buy Order</h2>
             </IonText>
             <div className="funds-validation-fields">
               <IonItem>
@@ -147,7 +147,7 @@ const TraderPanel: React.FC = () => {
                 />
               </IonItem>
               <IonItem>
-                <IonLabel position="stacked">Monto</IonLabel>
+                <IonLabel position="stacked">Amount</IonLabel>
                 <IonInput
                   type="number"
                   min="0"
@@ -163,7 +163,7 @@ const TraderPanel: React.FC = () => {
               onClick={handleValidateFunds}
               disabled={isValidatingFunds}
             >
-              {isValidatingFunds ? "Validando" : "Validar fondos"}
+              {isValidatingFunds ? "Validating" : "Validate Funds"}
             </IonButton>
             {validation && (
               <p
@@ -174,8 +174,8 @@ const TraderPanel: React.FC = () => {
                 }
               >
                 {validation.approved
-                  ? `Fondos suficientes. Se reservaron ${validation.reservedAmount.toFixed(2)}.`
-                  : `Operación bloqueada. Disponible: ${validation.availableAmount.toFixed(2)}.`}
+                  ? `Sufficient funds. ${validation.reservedAmount.toFixed(2)} has been reserved.`
+                  : `Operation blocked. Available: ${validation.availableAmount.toFixed(2)}.`}
               </p>
             )}
             {validationError && (
@@ -186,11 +186,11 @@ const TraderPanel: React.FC = () => {
           </section>
           <section className="funds-validation-section">
             <IonText>
-              <h2>Validar mercado</h2>
+              <h2>Validate Market</h2>
             </IonText>
             <div className="funds-validation-fields">
               <IonItem>
-                <IonLabel position="stacked">Mercado</IonLabel>
+                <IonLabel position="stacked">Market</IonLabel>
                 <IonInput
                   value={exchangeId}
                   onIonInput={(event) =>
@@ -204,7 +204,7 @@ const TraderPanel: React.FC = () => {
               onClick={handleValidateMarket}
               disabled={isValidatingMarket}
             >
-              {isValidatingMarket ? "Validando" : "Validar mercado"}
+              {isValidatingMarket ? "Validating" : "Validate Market"}
             </IonButton>
             {marketValidation && (
               <p
@@ -215,8 +215,8 @@ const TraderPanel: React.FC = () => {
                 }
               >
                 {marketValidation.canOperate
-                  ? "Mercado abierto. La orden puede continuar."
-                  : `Operación bloqueada. Estado: ${marketValidation.marketStatus}.`}
+                  ? "Market is open. The order can continue."
+                  : `Operation blocked. Status: ${marketValidation.marketStatus}.`}
               </p>
             )}
             {marketValidationError && (

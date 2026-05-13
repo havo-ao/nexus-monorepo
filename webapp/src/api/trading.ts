@@ -60,7 +60,7 @@ export async function validateBuyFunds(
   const body = await readJsonSafe(response);
 
   if (!response.ok) {
-    throw new Error("No fue posible validar los fondos de la operación.");
+    throw new Error("Unable to validate operation funds.");
   }
 
   return body as FundsValidationResponse;
@@ -84,7 +84,7 @@ export async function validateMarketStatus(
   const body = await readJsonSafe(response);
 
   if (!response.ok) {
-    throw new Error("No fue posible validar el estado del mercado.");
+    throw new Error("Unable to validate market status.");
   }
 
   return body as MarketValidationResponse;
