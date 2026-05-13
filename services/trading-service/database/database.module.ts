@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { FundsValidationEvent } from '../src/validations/entities/funds-validation-event.entity';
+import { FundsValidationEvent } from '../src/funds-validation/entities/funds-validation-event.entity';
+import { MarketExchange } from '../src/market/entities/market-exchange.entity';
+import { MarketValidationEvent } from '../src/market-validation/entities/market-validation-event.entity';
 import { Wallet } from '../src/wallet/entities/wallet.entity';
 
 @Module({
@@ -12,7 +14,12 @@ import { Wallet } from '../src/wallet/entities/wallet.entity';
       username: process.env.DB_USERNAME ?? 'nexus_user',
       password: process.env.DB_PASSWORD ?? 'nexus_password',
       database: process.env.DB_DATABASE ?? 'nexus',
-      entities: [FundsValidationEvent, Wallet],
+      entities: [
+        FundsValidationEvent,
+        MarketExchange,
+        MarketValidationEvent,
+        Wallet,
+      ],
       synchronize: false,
     }),
   ],

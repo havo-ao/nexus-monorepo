@@ -35,4 +35,5 @@ export const API_PATHS = {
   authLogin: "/api/auth/login",
   authRegisterTrader: "/api/auth/register/trader",
   tradingValidateBuyFunds: "/api/v1/validations/funds/buy",
+  tradingValidateMarketStatus: "/api/v1/validations/market/status",
 } as const;

@@ -34,4 +34,23 @@ describe('AppController (e2e)', () => {
         service: 'trading-service',
       });
   });
+
+  it('/api/v1/validations/market/status (POST)', () => {
+    return request(app.getHttpServer())
+      .post('/api/v1/validations/market/status')
+      .send({
+        exchangeId: '1',
+        evaluatedAt: '2026-05-12T14:30:00.000Z',
+      })
+      .expect(200)
+      .expect({
+        canOperate: true,
+        exchangeId: '1',
+        marketStatus: 'OPEN',
+        evaluatedAt: '2026-05-12T14:30:00.000Z',
+        timezone: 'America/New_York',
+        openTime: '09:30:00',
+        closeTime: '16:00:00',
+      });
+  });
 });
