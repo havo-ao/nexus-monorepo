@@ -30,7 +30,7 @@ jobs:
       - name: Build webapp
         working-directory: webapp
         run: |
-          npm ci --no-audit --no-fund
+          npm install --no-audit --no-fund
           npm run test.unit -- --run
           npm run build
 
@@ -51,7 +51,7 @@ jobs:
       - name: Test and build trading-service
         working-directory: services/trading-service
         run: |
-          npm ci --no-audit --no-fund
+          npm install --no-audit --no-fund
           npm run lint:check
           npm run test:cov
           npm run test:e2e
