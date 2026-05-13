@@ -17,7 +17,17 @@ function requireEnv(name) {
 }
 
 function getOptionalNumber(value, fallback) {
-  return value ? Number(value) : fallback;
+  if (!value) {
+    return fallback;
+  }
+
+  const parsedValue = Number(value);
+
+  if (!Number.isInteger(parsedValue) || parsedValue <= 0) {
+    throw new Error('MYSQL_PORT must be a positive integer');
+  }
+
+  return parsedValue;
 }
 
 const pool = mysql.createPool({

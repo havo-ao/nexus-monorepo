@@ -46,12 +46,28 @@ export class MarketHours {
   private constructor(private readonly snapshot: MarketHoursSnapshot) {}
 
   static restore(snapshot: MarketHoursSnapshot): MarketHours {
-    if (!snapshot.marketCode.trim()) {
+    if (
+      typeof snapshot.marketCode !== 'string' ||
+      !snapshot.marketCode.trim()
+    ) {
       throw new Error('Market code is required');
     }
 
-    if (snapshot.operatingDays.length === 0) {
+    if (typeof snapshot.timezone !== 'string' || !snapshot.timezone.trim()) {
+      throw new Error('Market timezone is required');
+    }
+
+    if (
+      !Array.isArray(snapshot.operatingDays) ||
+      snapshot.operatingDays.length === 0
+    ) {
       throw new Error('Market must define at least one operating day');
+    }
+
+    for (const day of snapshot.operatingDays) {
+      if (!Number.isInteger(day) || day < 0 || day > 6) {
+        throw new Error('Operating days must be integers between 0 and 6');
+      }
     }
 
     const openMinutes = this.toMinutes(snapshot.openTime);
@@ -63,8 +79,11 @@ export class MarketHours {
 
     return new MarketHours({
       ...snapshot,
-      marketCode: snapshot.marketCode.toUpperCase(),
-      operatingDays: [...new Set(snapshot.operatingDays)].sort(),
+      marketCode: snapshot.marketCode.trim().toUpperCase(),
+      timezone: snapshot.timezone.trim(),
+      operatingDays: [...new Set(snapshot.operatingDays)].sort(
+        (left, right) => left - right,
+      ),
       restrictions: [...snapshot.restrictions],
     });
   }
@@ -82,6 +101,10 @@ export class MarketHours {
   }
 
   evaluate(at: Date): MarketHoursEvaluation {
+    if (Number.isNaN(at.getTime())) {
+      throw new Error('Evaluation date must be valid');
+    }
+
     const zonedParts = this.getZonedParts(at, this.snapshot.timezone);
     const restriction = this.snapshot.restrictions.find(
       (item) => item.date === zonedParts.date,
@@ -160,6 +183,8 @@ export class MarketHours {
 
   private static toMinutes(time: TimeOfDay): number {
     if (
+      !Number.isInteger(time.hour) ||
+      !Number.isInteger(time.minute) ||
       time.hour < 0 ||
       time.hour > 23 ||
       time.minute < 0 ||
@@ -186,15 +211,48 @@ export class MarketHours {
     const parts = Object.fromEntries(
       formatter.formatToParts(at).map((part) => [part.type, part.value]),
     );
+    const year = MarketHours.getRequiredDatePart(parts, 'year');
+    const month = MarketHours.getRequiredDatePart(parts, 'month');
+    const day = MarketHours.getRequiredDatePart(parts, 'day');
+    const hour = MarketHours.getRequiredNumericPart(parts, 'hour');
+    const minute = MarketHours.getRequiredNumericPart(parts, 'minute');
+    const weekday = MarketHours.getRequiredDatePart(parts, 'weekday');
 
     return {
-      date: `${parts.year}-${parts.month}-${parts.day}`,
-      dayOfWeek: MarketHours.weekdayToNumber(parts.weekday),
-      minutesFromMidnight: Number(parts.hour) * 60 + Number(parts.minute),
+      date: `${year}-${month}-${day}`,
+      dayOfWeek: MarketHours.weekdayToNumber(weekday),
+      minutesFromMidnight: hour * 60 + minute,
     };
   }
 
-  private static weekdayToNumber(weekday?: string): number {
+  private static getRequiredDatePart(
+    parts: Record<string, string>,
+    partName: string,
+  ): string {
+    const value = parts[partName];
+
+    if (!value) {
+      throw new Error(`Unable to resolve market date part ${partName}`);
+    }
+
+    return value;
+  }
+
+  private static getRequiredNumericPart(
+    parts: Record<string, string>,
+    partName: string,
+  ): number {
+    const value = this.getRequiredDatePart(parts, partName);
+    const parsedValue = Number(value);
+
+    if (!Number.isInteger(parsedValue)) {
+      throw new Error(`Unable to resolve numeric market date part ${partName}`);
+    }
+
+    return parsedValue;
+  }
+
+  private static weekdayToNumber(weekday: string): number {
     const weekdays: Record<string, number> = {
       Sun: 0,
       Mon: 1,
