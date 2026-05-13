@@ -11,6 +11,13 @@ export interface MarketRestriction {
   reason: string;
 }
 
+export interface MarketHoursSchedule {
+  timezone: string;
+  openTime: TimeOfDay;
+  closeTime: TimeOfDay;
+  operatingDays: number[];
+}
+
 export interface MarketHoursSnapshot {
   marketCode: string;
   timezone: string;
@@ -57,6 +64,20 @@ export class MarketHours {
     return new MarketHours({
       ...snapshot,
       marketCode: snapshot.marketCode.toUpperCase(),
+      operatingDays: [...new Set(snapshot.operatingDays)].sort(),
+      restrictions: [...snapshot.restrictions],
+    });
+  }
+
+  static configure(
+    marketCode: string,
+    schedule: MarketHoursSchedule,
+    restrictions: MarketRestriction[] = [],
+  ): MarketHours {
+    return MarketHours.restore({
+      marketCode,
+      ...schedule,
+      restrictions,
     });
   }
 
@@ -94,8 +115,32 @@ export class MarketHours {
   toSnapshot(): MarketHoursSnapshot {
     return {
       ...this.snapshot,
+      openTime: { ...this.snapshot.openTime },
+      closeTime: { ...this.snapshot.closeTime },
+      operatingDays: [...this.snapshot.operatingDays],
       restrictions: [...this.snapshot.restrictions],
     };
+  }
+
+  configureSchedule(schedule: MarketHoursSchedule): MarketHours {
+    return MarketHours.restore({
+      ...this.snapshot,
+      ...schedule,
+      restrictions: this.snapshot.restrictions,
+    });
+  }
+
+  upsertRestriction(restriction: MarketRestriction): MarketHours {
+    const restrictions = this.snapshot.restrictions.filter(
+      (item) => item.date !== restriction.date,
+    );
+
+    restrictions.push(restriction);
+
+    return MarketHours.restore({
+      ...this.snapshot,
+      restrictions,
+    });
   }
 
   private buildEvaluation(

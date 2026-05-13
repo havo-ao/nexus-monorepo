@@ -103,9 +103,21 @@ services:
     restart: unless-stopped
     ports:
       - "8884:8884"
+    environment:
+      MARKET_HOURS_REPOSITORY: mysql
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: nexus
+      MYSQL_USER: nexus_user
+      MYSQL_PASSWORD: nexus_password
     volumes:
       - ../../services/market-service:/app
       - /app/node_modules
+    depends_on:
+      - mysql
+    command: >
+      sh -c "npm run db:migrate &&
+      npm run start:dev"
 
   compliance-service:
     build:

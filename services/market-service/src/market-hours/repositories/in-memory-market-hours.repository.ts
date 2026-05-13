@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { MarketHours } from '../entities/market-hours.entity';
-import { MarketHoursRepository } from './market-hours.repository';
+import type {
+  MarketConfigurationChange,
+  MarketHoursRepository,
+} from './market-hours.repository';
 
 @Injectable()
 export class InMemoryMarketHoursRepository implements MarketHoursRepository {
@@ -43,5 +46,25 @@ export class InMemoryMarketHoursRepository implements MarketHoursRepository {
         (market) => market.toSnapshot().marketCode === normalizedMarketCode,
       ) ?? null,
     );
+  }
+
+  save(
+    marketHours: MarketHours,
+    change: MarketConfigurationChange,
+  ): Promise<MarketHours> {
+    void change;
+
+    const snapshot = marketHours.toSnapshot();
+    const existingIndex = this.markets.findIndex(
+      (market) => market.toSnapshot().marketCode === snapshot.marketCode,
+    );
+
+    if (existingIndex >= 0) {
+      this.markets[existingIndex] = marketHours;
+    } else {
+      this.markets.push(marketHours);
+    }
+
+    return Promise.resolve(marketHours);
   }
 }
