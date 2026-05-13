@@ -83,6 +83,7 @@ public class LoadDefaultAdmin {
         admin.setPassword(passwordEncoder.encode(adminPassword));
         admin.setUserRol(UserRol.ADMIN);
         admin.setCreatedAt(Instant.now());
+        admin.setFailedLoginAttempts(0);
         admin.setDepartment(DEFAULT_ADMIN_DEPARTMENT);
         admin.setPosition(DEFAULT_ADMIN_POSITION);
 
