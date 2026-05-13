@@ -1,4 +1,8 @@
-import { Inject, Injectable } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import type { Pool, RowDataPacket } from 'mysql2/promise';
 import { MYSQL_POOL } from '../../../database/database.module';
 import { MarketHours } from '../entities/market-hours.entity';
@@ -143,6 +147,32 @@ export class MysqlMarketHoursRepository implements MarketHoursRepository {
       return value;
     }
 
-    return JSON.parse(value) as number[];
+    try {
+      const parsedValue = JSON.parse(value) as unknown;
+
+      if (Array.isArray(parsedValue)) {
+        const operatingDays: number[] = [];
+
+        for (const day of parsedValue as unknown[]) {
+          if (!Number.isInteger(day)) {
+            throw new InternalServerErrorException(
+              'Stored market operating days must contain only integers',
+            );
+          }
+
+          operatingDays.push(day as number);
+        }
+
+        return operatingDays;
+      }
+    } catch {
+      throw new InternalServerErrorException(
+        'Stored market operating days are invalid',
+      );
+    }
+
+    throw new InternalServerErrorException(
+      'Stored market operating days must be an array of weekdays',
+    );
   }
 }
