@@ -12,6 +12,14 @@ interface MarketHoursConfigurationResponse {
   }>;
 }
 
+interface SyncMarketDataResponse {
+  updatedQuotes: Array<{
+    symbol: string;
+    currency: string;
+    provider: string;
+  }>;
+}
+
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
 
@@ -142,6 +150,35 @@ describe('AppController (e2e)', () => {
             reason: 'Juneteenth market holiday',
           }),
         );
+      });
+  });
+
+  it('/api/v1/quotes/sync (POST) synchronizes market data', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/quotes/sync')
+      .send({
+        symbols: ['AAPL'],
+        requestedBy: 'system@nexus.local',
+      })
+      .expect(200)
+      .expect((response) => {
+        const body = response.body as SyncMarketDataResponse;
+
+        expect(response.body).toEqual(
+          expect.objectContaining({
+            status: 'SUCCESS',
+            provider: 'alpha-vantage-compatible',
+            failedSymbols: [],
+            preservedLastKnownData: false,
+          }),
+        );
+        expect(body.updatedQuotes).toEqual([
+          expect.objectContaining({
+            symbol: 'AAPL',
+            currency: 'USD',
+            provider: 'alpha-vantage-compatible',
+          }),
+        ]);
       });
   });
 });

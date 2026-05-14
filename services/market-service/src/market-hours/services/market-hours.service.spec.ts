@@ -60,6 +60,15 @@ describe('MarketHoursService', () => {
     });
   });
 
+  it('uses the current server time when evaluation date is omitted', async () => {
+    repository.findByMarketCode.mockResolvedValue(market);
+
+    const response = await service.getMarketStatus('NYSE');
+
+    expect(response.marketCode).toBe('NYSE');
+    expect(response.evaluatedAt).toEqual(expect.any(String));
+  });
+
   it('blocks processing outside trading hours', async () => {
     repository.findByMarketCode.mockResolvedValue(market);
 

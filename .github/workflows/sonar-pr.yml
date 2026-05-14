@@ -98,11 +98,21 @@ jobs:
         with:
           node-version: 22
 
-      - name: Build market-service
+      - name: Test and build market-service
         working-directory: services/market-service
         run: |
           npm install --no-audit --no-fund
+          npm run lint:check
+          npm run test:cov
+          npm run test:e2e
           npm run build
+
+      - name: Upload market coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: market-service-coverage
+          path: services/market-service/coverage/lcov.info
+          if-no-files-found: error
 
   compliance-service:
     name: Build compliance service
@@ -203,6 +213,12 @@ jobs:
           name: trading-service-coverage
           path: services/trading-service/coverage
 
+      - name: Download market coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: market-service-coverage
+          path: services/market-service/coverage
+
       - name: SonarQube Cloud scan
         uses: SonarSource/sonarqube-scan-action@v7
         env:
@@ -211,4 +227,5 @@ jobs:
           args: >
             -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
             -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
+            -Dsonar.javascript.lcov.reportPaths=services/trading-service/coverage/lcov.info,services/market-service/coverage/lcov.info
             -Dsonar.qualitygate.wait=true

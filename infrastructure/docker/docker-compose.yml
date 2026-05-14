@@ -105,6 +105,7 @@ services:
       - "8884:8884"
     environment:
       MARKET_HOURS_REPOSITORY: mysql
+      QUOTES_REPOSITORY: mysql
       MYSQL_HOST: mysql
       MYSQL_PORT: 3306
       MYSQL_DATABASE: nexus
