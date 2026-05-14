@@ -56,6 +56,29 @@ describe('MarketHoursAdminService', () => {
     );
   });
 
+  it('updates market-hours configuration when the market already exists', async () => {
+    repository.findByMarketCode.mockResolvedValue(
+      MarketHours.configure('NYSE', {
+        timezone: 'America/New_York',
+        openTime: { hour: 9, minute: 30 },
+        closeTime: { hour: 16, minute: 0 },
+        operatingDays: [1, 2, 3, 4, 5],
+      }),
+    );
+
+    const response = await service.configureSchedule('NYSE', {
+      timezone: 'America/New_York',
+      openTime: { hour: 10, minute: 0 },
+      closeTime: { hour: 15, minute: 30 },
+      operatingDays: [1, 2, 3, 4],
+      actor: 'admin@nexus.local',
+    });
+
+    expect(response.openTime).toEqual({ hour: 10, minute: 0 });
+    expect(response.closeTime).toEqual({ hour: 15, minute: 30 });
+    expect(response.operatingDays).toEqual([1, 2, 3, 4]);
+  });
+
   it('adds a restriction to an existing market', async () => {
     repository.findByMarketCode.mockResolvedValue(
       MarketHours.configure('NYSE', {
@@ -98,6 +121,66 @@ describe('MarketHoursAdminService', () => {
         date: '2026-06-19',
         status: 'CLOSED',
         reason: 'Holiday',
+        actor: 'admin@nexus.local',
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('rejects restrictions with invalid date format', async () => {
+    repository.findByMarketCode.mockResolvedValue(
+      MarketHours.configure('NYSE', {
+        timezone: 'America/New_York',
+        openTime: { hour: 9, minute: 30 },
+        closeTime: { hour: 16, minute: 0 },
+        operatingDays: [1, 2, 3, 4, 5],
+      }),
+    );
+
+    await expect(
+      service.configureRestriction('NYSE', {
+        date: '06-19-2026',
+        status: 'CLOSED',
+        reason: 'Holiday',
+        actor: 'admin@nexus.local',
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('rejects restrictions with unsupported status', async () => {
+    repository.findByMarketCode.mockResolvedValue(
+      MarketHours.configure('NYSE', {
+        timezone: 'America/New_York',
+        openTime: { hour: 9, minute: 30 },
+        closeTime: { hour: 16, minute: 0 },
+        operatingDays: [1, 2, 3, 4, 5],
+      }),
+    );
+
+    await expect(
+      service.configureRestriction('NYSE', {
+        date: '2026-06-19',
+        status: 'OPEN' as 'CLOSED',
+        reason: 'Holiday',
+        actor: 'admin@nexus.local',
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('rejects restrictions without reason', async () => {
+    repository.findByMarketCode.mockResolvedValue(
+      MarketHours.configure('NYSE', {
+        timezone: 'America/New_York',
+        openTime: { hour: 9, minute: 30 },
+        closeTime: { hour: 16, minute: 0 },
+        operatingDays: [1, 2, 3, 4, 5],
+      }),
+    );
+
+    await expect(
+      service.configureRestriction('NYSE', {
+        date: '2026-06-19',
+        status: 'CLOSED',
+        reason: ' ',
         actor: 'admin@nexus.local',
       }),
     ).rejects.toBeInstanceOf(BadRequestException);

@@ -10,9 +10,15 @@ function New-LocalSecret {
     [string] $Prefix
   )
 
-  $bytes = [byte[]]::new(32)
-  [System.Security.Cryptography.RandomNumberGenerator]::Fill($bytes)
-  $randomValue = [Convert]::ToBase64String($bytes)
+  $bytes = New-Object byte[] 32
+  $randomGenerator = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+
+  try {
+    $randomGenerator.GetBytes($bytes)
+    $randomValue = [Convert]::ToBase64String($bytes)
+  } finally {
+    $randomGenerator.Dispose()
+  }
 
   return "$Prefix-$randomValue".Replace("=", "").Replace("+", "").Replace("/", "")
 }

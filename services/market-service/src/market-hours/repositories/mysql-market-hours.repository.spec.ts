@@ -20,7 +20,7 @@ describe('MysqlMarketHoursRepository', () => {
   let repository: MysqlMarketHoursRepository;
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
     pool.getConnection.mockResolvedValue(connection);
 
     const module: TestingModule = await Test.createTestingModule({
@@ -36,6 +36,89 @@ describe('MysqlMarketHoursRepository', () => {
     repository = module.get<MysqlMarketHoursRepository>(
       MysqlMarketHoursRepository,
     );
+  });
+
+  it('returns null when market-hours configuration is not stored', async () => {
+    pool.query.mockResolvedValueOnce([[]]);
+
+    await expect(repository.findByMarketCode('bvc')).resolves.toBeNull();
+    expect(pool.query).toHaveBeenCalledWith(expect.any(String), ['BVC']);
+  });
+
+  it('accepts operating days already parsed as an array by the driver', async () => {
+    pool.query
+      .mockResolvedValueOnce([
+        [
+          {
+            market_code: 'BVC',
+            timezone: 'America/Bogota',
+            open_hour: 9,
+            open_minute: 0,
+            close_hour: 15,
+            close_minute: 0,
+            operating_days: [1, 2, 3, 4, 5],
+          },
+        ],
+      ])
+      .mockResolvedValueOnce([[]]);
+
+    const marketHours = await repository.findByMarketCode('BVC');
+
+    expect(marketHours?.toSnapshot().operatingDays).toEqual([1, 2, 3, 4, 5]);
+  });
+
+  it('rejects malformed stored operating days JSON', async () => {
+    pool.query.mockResolvedValueOnce([
+      [
+        {
+          market_code: 'BVC',
+          timezone: 'America/Bogota',
+          open_hour: 9,
+          open_minute: 0,
+          close_hour: 15,
+          close_minute: 0,
+          operating_days: '{invalid-json',
+        },
+      ],
+    ]);
+
+    await expect(repository.findByMarketCode('BVC')).rejects.toThrow();
+  });
+
+  it('rejects stored operating days that are not arrays', async () => {
+    pool.query.mockResolvedValueOnce([
+      [
+        {
+          market_code: 'BVC',
+          timezone: 'America/Bogota',
+          open_hour: 9,
+          open_minute: 0,
+          close_hour: 15,
+          close_minute: 0,
+          operating_days: '{"monday": true}',
+        },
+      ],
+    ]);
+
+    await expect(repository.findByMarketCode('BVC')).rejects.toThrow();
+  });
+
+  it('rejects stored operating days with non integer values', async () => {
+    pool.query.mockResolvedValueOnce([
+      [
+        {
+          market_code: 'BVC',
+          timezone: 'America/Bogota',
+          open_hour: 9,
+          open_minute: 0,
+          close_hour: 15,
+          close_minute: 0,
+          operating_days: '[1,"2",3]',
+        },
+      ],
+    ]);
+
+    await expect(repository.findByMarketCode('BVC')).rejects.toThrow();
   });
 
   it('restores market-hours configuration with restrictions from MySQL rows', async () => {
