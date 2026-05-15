@@ -71,4 +71,37 @@ describe('MysqlInstrumentsRepository', () => {
 
     await expect(repository.findAvailable()).rejects.toThrow(TypeError);
   });
+
+  it('finds an active instrument by symbol', async () => {
+    pool.query.mockResolvedValueOnce([
+      [
+        {
+          symbol: 'AAPL',
+          name: 'Apple Inc.',
+          market_code: 'NASDAQ',
+          currency: 'USD',
+          sector: 'Technology',
+          status: 'ACTIVE',
+        },
+      ],
+    ]);
+
+    const instrument = await repository.findBySymbol(' aapl ');
+
+    expect(instrument?.toSnapshot()).toEqual({
+      symbol: 'AAPL',
+      name: 'Apple Inc.',
+      marketCode: 'NASDAQ',
+      currency: 'USD',
+      sector: 'Technology',
+      status: 'ACTIVE',
+    });
+    expect(pool.query).toHaveBeenCalledWith(expect.any(String), ['AAPL']);
+  });
+
+  it('returns null when an instrument is not stored', async () => {
+    pool.query.mockResolvedValueOnce([[]]);
+
+    await expect(repository.findBySymbol('ZZZZ')).resolves.toBeNull();
+  });
 });

@@ -39,4 +39,28 @@ export class MysqlInstrumentsRepository implements InstrumentsRepository {
       }),
     );
   }
+
+  async findBySymbol(symbol: string): Promise<Instrument | null> {
+    const normalizedSymbol = symbol.trim().toUpperCase();
+    const [rows] = await this.pool.query<InstrumentRow[]>(
+      `SELECT symbol, name, market_code, currency, sector, status
+       FROM market_instruments
+       WHERE symbol = ? AND status = 'ACTIVE'`,
+      [normalizedSymbol],
+    );
+    const row = rows[0];
+
+    if (!row) {
+      return null;
+    }
+
+    return Instrument.restore({
+      symbol: row.symbol,
+      name: row.name,
+      marketCode: row.market_code,
+      currency: row.currency,
+      sector: row.sector,
+      status: row.status,
+    });
+  }
 }

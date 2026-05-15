@@ -35,6 +35,10 @@ interface InstrumentResponse {
   sector: string;
 }
 
+interface InstrumentDetailResponse extends InstrumentResponse {
+  quote: MarketQuoteResponse | null;
+}
+
 interface MarketQuoteResponse {
   symbol: string;
   price: number;
@@ -150,6 +154,41 @@ describe('AppController (e2e)', () => {
               currency: 'USD',
             }),
           ]),
+        );
+      });
+  });
+
+  it('/api/v1/instruments/:symbol (GET) returns instrument detail', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/quotes/sync')
+      .send({
+        symbols: ['AAPL'],
+        requestedBy: 'system@nexus.local',
+      })
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .get('/api/v1/instruments/AAPL')
+      .expect(200)
+      .expect((response) => {
+        const body = response.body as InstrumentDetailResponse;
+
+        expect(body).toEqual(
+          expect.objectContaining({
+            symbol: 'AAPL',
+            name: 'Apple Inc.',
+            marketCode: 'NASDAQ',
+            currency: 'USD',
+            sector: 'Technology',
+            status: 'ACTIVE',
+          }),
+        );
+        expect(body.quote).toEqual(
+          expect.objectContaining({
+            symbol: 'AAPL',
+            currency: 'USD',
+            provider: 'alpha-vantage-compatible',
+          }),
         );
       });
   });

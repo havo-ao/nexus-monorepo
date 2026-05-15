@@ -77,4 +77,14 @@ export class InMemoryInstrumentsRepository implements InstrumentsRepository {
           .symbol.localeCompare(rightInstrument.toSnapshot().symbol),
       );
   }
+
+  findBySymbol(symbol: string): Instrument | null {
+    const normalizedSymbol = symbol.trim().toUpperCase();
+
+    return (
+      this.instruments.find(
+        (instrument) => instrument.toSnapshot().symbol === normalizedSymbol,
+      ) ?? null
+    );
+  }
 }
