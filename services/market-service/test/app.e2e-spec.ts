@@ -20,6 +20,13 @@ interface SyncMarketDataResponse {
   }>;
 }
 
+interface MarketResponse {
+  code: string;
+  name: string;
+  currency: string;
+  representativeSymbols: string[];
+}
+
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
 
@@ -76,6 +83,30 @@ describe('AppController (e2e)', () => {
         evaluatedAt: '2026-05-11T21:00:00.000Z',
         timezone: 'America/New_York',
         reason: 'Market is outside trading hours',
+      });
+  });
+
+  it('/api/v1/markets (GET) lists available markets', async () => {
+    await request(app.getHttpServer())
+      .get('/api/v1/markets')
+      .expect(200)
+      .expect((response) => {
+        const body = response.body as MarketResponse[];
+
+        expect(body).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              code: 'NYSE',
+              name: 'New York Stock Exchange',
+              currency: 'USD',
+              representativeSymbols: ['AAPL', 'JPM', 'KO'],
+            }),
+            expect.objectContaining({
+              code: 'NASDAQ',
+              currency: 'USD',
+            }),
+          ]),
+        );
       });
   });
 
