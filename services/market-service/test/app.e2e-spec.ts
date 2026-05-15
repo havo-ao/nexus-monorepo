@@ -35,6 +35,16 @@ interface InstrumentResponse {
   sector: string;
 }
 
+interface MarketQuoteResponse {
+  symbol: string;
+  price: number;
+  bid: number;
+  ask: number;
+  spread: number;
+  currency: string;
+  provider: string;
+}
+
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
 
@@ -244,6 +254,37 @@ describe('AppController (e2e)', () => {
             provider: 'alpha-vantage-compatible',
           }),
         ]);
+      });
+  });
+
+  it('/api/v1/quotes/:symbol (GET) returns latest price components', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/quotes/sync')
+      .send({
+        symbols: ['AAPL'],
+        requestedBy: 'system@nexus.local',
+      })
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .get('/api/v1/quotes/AAPL')
+      .expect(200)
+      .expect((response) => {
+        const body = response.body as MarketQuoteResponse;
+
+        expect(body).toEqual(
+          expect.objectContaining({
+            symbol: 'AAPL',
+            currency: 'USD',
+            provider: 'alpha-vantage-compatible',
+          }),
+        );
+        expect(typeof body.price).toBe('number');
+        expect(typeof body.bid).toBe('number');
+        expect(typeof body.ask).toBe('number');
+        expect(typeof body.spread).toBe('number');
+        expect(body.bid).toBeLessThanOrEqual(body.ask);
+        expect(body.spread).toBeGreaterThanOrEqual(0);
       });
   });
 });
