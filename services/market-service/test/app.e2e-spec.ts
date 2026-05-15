@@ -27,6 +27,14 @@ interface MarketResponse {
   representativeSymbols: string[];
 }
 
+interface InstrumentResponse {
+  symbol: string;
+  name: string;
+  marketCode: string;
+  currency: string;
+  sector: string;
+}
+
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
 
@@ -103,6 +111,32 @@ describe('AppController (e2e)', () => {
             }),
             expect.objectContaining({
               code: 'NASDAQ',
+              currency: 'USD',
+            }),
+          ]),
+        );
+      });
+  });
+
+  it('/api/v1/instruments (GET) lists available instruments', async () => {
+    await request(app.getHttpServer())
+      .get('/api/v1/instruments')
+      .expect(200)
+      .expect((response) => {
+        const body = response.body as InstrumentResponse[];
+
+        expect(body).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              symbol: 'AAPL',
+              name: 'Apple Inc.',
+              marketCode: 'NASDAQ',
+              currency: 'USD',
+              sector: 'Technology',
+            }),
+            expect.objectContaining({
+              symbol: 'JPM',
+              marketCode: 'NYSE',
               currency: 'USD',
             }),
           ]),
