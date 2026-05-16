@@ -13,4 +13,22 @@ describe('InMemoryInstrumentsRepository', () => {
       true,
     );
   });
+
+  it('finds an instrument by normalized symbol', () => {
+    const repository = new InMemoryInstrumentsRepository();
+
+    expect(repository.findBySymbol(' aapl ')?.toSnapshot()).toEqual(
+      expect.objectContaining({
+        symbol: 'AAPL',
+        name: 'Apple Inc.',
+        marketCode: 'NASDAQ',
+      }),
+    );
+  });
+
+  it('returns null when instrument symbol is not configured', () => {
+    const repository = new InMemoryInstrumentsRepository();
+
+    expect(repository.findBySymbol('ZZZZ')).toBeNull();
+  });
 });

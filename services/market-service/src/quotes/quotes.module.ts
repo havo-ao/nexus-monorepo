@@ -35,5 +35,6 @@ import { QuoteQueryService } from './services/quote-query.service';
       inject: [InMemoryQuotesRepository, MysqlQuotesRepository],
     },
   ],
+  exports: [QUOTES_REPOSITORY],
 })
 export class QuotesModule {}
