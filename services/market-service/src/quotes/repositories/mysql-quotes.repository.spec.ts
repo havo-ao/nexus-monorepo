@@ -166,6 +166,39 @@ describe('MysqlQuotesRepository', () => {
     );
   });
 
+  it('restores historical quotes ordered by the stored query', async () => {
+    pool.query.mockResolvedValueOnce([
+      [
+        {
+          symbol: 'AAPL',
+          price: '190.00',
+          bid: '189.95',
+          ask: '190.05',
+          spread: '0.10',
+          currency: 'USD',
+          provider: 'test-provider',
+          as_of: new Date('2026-05-14T14:00:00.000Z'),
+        },
+      ],
+    ]);
+
+    const history = await repository.findHistoryBySymbol(' aapl ');
+
+    expect(history.map((quote) => quote.toSnapshot())).toEqual([
+      {
+        symbol: 'AAPL',
+        price: 190,
+        bid: 189.95,
+        ask: 190.05,
+        spread: 0.1,
+        currency: 'USD',
+        provider: 'test-provider',
+        asOf: new Date('2026-05-14T14:00:00.000Z'),
+      },
+    ]);
+    expect(pool.query).toHaveBeenCalledWith(expect.any(String), ['AAPL']);
+  });
+
   it('records synchronization events', async () => {
     await repository.recordSyncEvent({
       status: 'SUCCESS',

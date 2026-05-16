@@ -19,5 +19,6 @@ export interface QuotesRepository {
   findLatestBySymbol(
     symbol: string,
   ): MarketQuote | null | Promise<MarketQuote | null>;
+  findHistoryBySymbol(symbol: string): MarketQuote[] | Promise<MarketQuote[]>;
   recordSyncEvent(event: MarketDataSyncEvent): void | Promise<void>;
 }

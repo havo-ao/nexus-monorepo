@@ -49,6 +49,11 @@ interface MarketQuoteResponse {
   provider: string;
 }
 
+interface MarketQuoteHistoryResponse {
+  symbol: string;
+  prices: MarketQuoteResponse[];
+}
+
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
 
@@ -324,6 +329,33 @@ describe('AppController (e2e)', () => {
         expect(typeof body.spread).toBe('number');
         expect(body.bid).toBeLessThanOrEqual(body.ask);
         expect(body.spread).toBeGreaterThanOrEqual(0);
+      });
+  });
+
+  it('/api/v1/quotes/:symbol/history (GET) returns historical prices', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/quotes/sync')
+      .send({
+        symbols: ['AAPL'],
+        requestedBy: 'system@nexus.local',
+      })
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .get('/api/v1/quotes/AAPL/history')
+      .expect(200)
+      .expect((response) => {
+        const body = response.body as MarketQuoteHistoryResponse;
+
+        expect(body.symbol).toBe('AAPL');
+        expect(body.prices.length).toBeGreaterThan(0);
+        expect(body.prices[0]).toEqual(
+          expect.objectContaining({
+            symbol: 'AAPL',
+            currency: 'USD',
+            provider: 'alpha-vantage-compatible',
+          }),
+        );
       });
   });
 });

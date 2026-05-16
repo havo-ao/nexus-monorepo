@@ -8,17 +8,30 @@ import type {
 @Injectable()
 export class InMemoryQuotesRepository implements QuotesRepository {
   private readonly latestQuotes = new Map<string, MarketQuote>();
+  private readonly quoteHistory = new Map<string, MarketQuote[]>();
   private readonly events: MarketDataSyncEvent[] = [];
 
   saveQuotes(quotes: MarketQuote[]): void {
     for (const quote of quotes) {
       const snapshot = quote.toSnapshot();
       this.latestQuotes.set(snapshot.symbol, quote);
+      this.quoteHistory.set(snapshot.symbol, [
+        ...(this.quoteHistory.get(snapshot.symbol) ?? []),
+        quote,
+      ]);
     }
   }
 
   findLatestBySymbol(symbol: string): MarketQuote | null {
     return this.latestQuotes.get(symbol.trim().toUpperCase()) ?? null;
+  }
+
+  findHistoryBySymbol(symbol: string): MarketQuote[] {
+    return [...(this.quoteHistory.get(symbol.trim().toUpperCase()) ?? [])].sort(
+      (leftQuote, rightQuote) =>
+        leftQuote.toSnapshot().asOf.getTime() -
+        rightQuote.toSnapshot().asOf.getTime(),
+    );
   }
 
   recordSyncEvent(event: MarketDataSyncEvent): void {
