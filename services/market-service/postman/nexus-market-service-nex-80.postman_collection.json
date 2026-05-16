@@ -1,0 +1,87 @@
+{
+  "info": {
+    "name": "Nexus Market Service - NEX-80",
+    "description": "Manual validation collection for NEX-80: manage trader watchlist.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8884"
+    },
+    {
+      "key": "traderId",
+      "value": "trader-123"
+    }
+  ],
+  "item": [
+    {
+      "name": "Synchronize AAPL quote",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"symbols\": [\"AAPL\"],\n  \"requestedBy\": \"system@nexus.local\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/quotes/sync",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "quotes", "sync"]
+        },
+        "description": "Seeds the current quote used to enrich watchlist items."
+      }
+    },
+    {
+      "name": "Add AAPL to watchlist",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"symbol\": \"AAPL\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/watchlists/{{traderId}}/items",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "watchlists", "{{traderId}}", "items"]
+        },
+        "description": "Adds an available instrument to the trader watchlist."
+      }
+    },
+    {
+      "name": "Get trader watchlist",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/watchlists/{{traderId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "watchlists", "{{traderId}}"]
+        },
+        "description": "Returns watchlist items enriched with latest available quotes."
+      }
+    },
+    {
+      "name": "Remove AAPL from watchlist",
+      "request": {
+        "method": "DELETE",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/watchlists/{{traderId}}/items/AAPL",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "watchlists", "{{traderId}}", "items", "AAPL"]
+        },
+        "description": "Removes an instrument from the trader watchlist."
+      }
+    }
+  ]
+}

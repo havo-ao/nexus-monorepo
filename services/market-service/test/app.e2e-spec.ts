@@ -54,6 +54,14 @@ interface MarketQuoteHistoryResponse {
   prices: MarketQuoteResponse[];
 }
 
+interface WatchlistResponse {
+  traderId: string;
+  items: Array<{
+    symbol: string;
+    quote: MarketQuoteResponse | null;
+  }>;
+}
+
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
 
@@ -356,6 +364,40 @@ describe('AppController (e2e)', () => {
             provider: 'alpha-vantage-compatible',
           }),
         );
+      });
+  });
+
+  it('/api/v1/watchlists/:traderId manages watched symbols with current quotes', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/quotes/sync')
+      .send({
+        symbols: ['AAPL'],
+        requestedBy: 'system@nexus.local',
+      })
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .post('/api/v1/watchlists/trader-123/items')
+      .send({ symbol: 'aapl' })
+      .expect(200)
+      .expect((response) => {
+        const body = response.body as WatchlistResponse;
+        const quote = body.items[0]?.quote;
+
+        expect(body.traderId).toBe('trader-123');
+        expect(body.items[0]?.symbol).toBe('AAPL');
+        expect(quote?.symbol).toBe('AAPL');
+        expect(quote?.currency).toBe('USD');
+        expect(quote?.provider).toBe('alpha-vantage-compatible');
+      });
+
+    await request(app.getHttpServer())
+      .delete('/api/v1/watchlists/trader-123/items/AAPL')
+      .expect(200)
+      .expect((response) => {
+        const body = response.body as WatchlistResponse;
+
+        expect(body.items).toEqual([]);
       });
   });
 });
