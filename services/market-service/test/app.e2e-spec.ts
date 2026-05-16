@@ -62,6 +62,25 @@ interface WatchlistResponse {
   }>;
 }
 
+interface PriceAlertResponse {
+  id: number;
+  traderId: string;
+  symbol: string;
+  targetPrice: number;
+  condition: string;
+  status: string;
+}
+
+interface EvaluatePriceAlertsResponse {
+  evaluatedCount: number;
+  triggeredCount: number;
+  triggeredEvents: Array<{
+    alertId: number;
+    symbol: string;
+    marketPrice: number;
+  }>;
+}
+
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
 
@@ -398,6 +417,66 @@ describe('AppController (e2e)', () => {
         const body = response.body as WatchlistResponse;
 
         expect(body.items).toEqual([]);
+      });
+  });
+
+  it('/api/v1/price-alerts creates and evaluates target price alerts', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/quotes/sync')
+      .send({
+        symbols: ['AAPL'],
+        requestedBy: 'system@nexus.local',
+      })
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .post('/api/v1/price-alerts')
+      .send({
+        traderId: 'trader-123',
+        symbol: 'aapl',
+        targetPrice: 180,
+      })
+      .expect(200)
+      .expect((response) => {
+        const body = response.body as PriceAlertResponse;
+
+        expect(body).toEqual(
+          expect.objectContaining({
+            id: 1,
+            traderId: 'trader-123',
+            symbol: 'AAPL',
+            targetPrice: 180,
+            condition: 'ABOVE_OR_EQUAL',
+            status: 'ACTIVE',
+          }),
+        );
+      });
+
+    await request(app.getHttpServer())
+      .get('/api/v1/price-alerts/trader-123')
+      .expect(200)
+      .expect((response) => {
+        const body = response.body as PriceAlertResponse[];
+
+        expect(body).toHaveLength(1);
+        expect(body[0].symbol).toBe('AAPL');
+      });
+
+    await request(app.getHttpServer())
+      .post('/api/v1/price-alerts/evaluate')
+      .expect(200)
+      .expect((response) => {
+        const body = response.body as EvaluatePriceAlertsResponse;
+
+        expect(body.evaluatedCount).toBe(1);
+        expect(body.triggeredCount).toBe(1);
+        expect(body.triggeredEvents[0]).toEqual(
+          expect.objectContaining({
+            alertId: 1,
+            symbol: 'AAPL',
+          }),
+        );
+        expect(typeof body.triggeredEvents[0].marketPrice).toBe('number');
       });
   });
 });
