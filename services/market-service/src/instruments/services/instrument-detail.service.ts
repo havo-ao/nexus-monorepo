@@ -4,8 +4,8 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { MarketQuoteResponseDto } from '../../quotes/dto/market-quote-response.dto';
 import { MarketQuote } from '../../quotes/entities/market-quote.entity';
+import { toMarketQuoteResponse } from '../../quotes/mappers/market-quote-response.mapper';
 import { QUOTES_REPOSITORY } from '../../quotes/repositories/quotes.repository';
 import type { QuotesRepository } from '../../quotes/repositories/quotes.repository';
 import { InstrumentDetailResponseDto } from '../dto/instrument-detail-response.dto';
@@ -62,22 +62,7 @@ export class InstrumentDetailService {
       currency: snapshot.currency,
       sector: snapshot.sector,
       status: snapshot.status,
-      quote: quote ? this.toQuoteResponse(quote) : null,
-    };
-  }
-
-  private toQuoteResponse(quote: MarketQuote): MarketQuoteResponseDto {
-    const snapshot = quote.toSnapshot();
-
-    return {
-      symbol: snapshot.symbol,
-      price: snapshot.price,
-      bid: snapshot.bid,
-      ask: snapshot.ask,
-      spread: snapshot.spread,
-      currency: snapshot.currency,
-      provider: snapshot.provider,
-      asOf: snapshot.asOf.toISOString(),
+      quote: quote ? toMarketQuoteResponse(quote) : null,
     };
   }
 }

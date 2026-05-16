@@ -103,6 +103,30 @@ export class MysqlQuotesRepository implements QuotesRepository {
     });
   }
 
+  async findHistoryBySymbol(symbol: string): Promise<MarketQuote[]> {
+    const normalizedSymbol = symbol.trim().toUpperCase();
+    const [rows] = await this.pool.query<MarketQuoteRow[]>(
+      `SELECT symbol, price, bid, ask, spread, currency, provider, as_of
+       FROM market_quote_history
+       WHERE symbol = ?
+       ORDER BY as_of ASC`,
+      [normalizedSymbol],
+    );
+
+    return rows.map((row) =>
+      MarketQuote.restore({
+        symbol: row.symbol,
+        price: this.parseDecimal(row.price, 'price'),
+        bid: this.parseDecimal(row.bid, 'bid'),
+        ask: this.parseDecimal(row.ask, 'ask'),
+        spread: this.parseDecimal(row.spread, 'spread'),
+        currency: row.currency,
+        provider: row.provider,
+        asOf: new Date(row.as_of),
+      }),
+    );
+  }
+
   async recordSyncEvent(event: MarketDataSyncEvent): Promise<void> {
     await this.pool.execute(
       `INSERT INTO market_data_sync_events
