@@ -81,6 +81,26 @@ interface EvaluatePriceAlertsResponse {
   }>;
 }
 
+interface DashboardResponse {
+  markets: {
+    total: number;
+    active: number;
+  };
+  instruments: {
+    total: number;
+  };
+  quotes: {
+    trackedCount: number;
+    latest: MarketQuoteResponse[];
+    topGainers: MarketQuoteResponse[];
+    topLosers: MarketQuoteResponse[];
+  };
+  platform: {
+    service: string;
+    status: string;
+  };
+}
+
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
 
@@ -477,6 +497,60 @@ describe('AppController (e2e)', () => {
           }),
         );
         expect(typeof body.triggeredEvents[0].marketPrice).toBe('number');
+      });
+  });
+
+  it('/api/v1/dashboard (GET) returns market dashboard summary', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/quotes/sync')
+      .send({
+        symbols: ['AAPL', 'MSFT'],
+        requestedBy: 'system@nexus.local',
+      })
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .post('/api/v1/quotes/sync')
+      .send({
+        symbols: ['AAPL', 'MSFT'],
+        requestedBy: 'system@nexus.local',
+      })
+      .expect(200);
+
+    await request(app.getHttpServer())
+      .get('/api/v1/dashboard')
+      .expect(200)
+      .expect((response) => {
+        const body = response.body as DashboardResponse;
+
+        expect(body.markets.total).toBeGreaterThan(0);
+        expect(body.markets.active).toBeGreaterThan(0);
+        expect(body.instruments.total).toBeGreaterThan(0);
+        expect(body.quotes.trackedCount).toBeGreaterThan(0);
+        expect(body.quotes.latest).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              symbol: 'AAPL',
+              currency: 'USD',
+              provider: 'alpha-vantage-compatible',
+            }),
+          ]),
+        );
+        expect(body.quotes.topGainers[0]).toEqual(
+          expect.objectContaining({
+            symbol: 'AAPL',
+          }),
+        );
+        expect(body.quotes.topLosers[0]).toEqual(
+          expect.objectContaining({
+            symbol: 'MSFT',
+          }),
+        );
+        expect(body.platform).toEqual({
+          service: 'market-service',
+          status: 'OPERATIONAL',
+          generatedAt: expect.any(String) as string,
+        });
       });
   });
 });
