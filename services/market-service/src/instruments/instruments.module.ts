@@ -28,5 +28,6 @@ import { InstrumentsService } from './services/instruments.service';
       inject: [InMemoryInstrumentsRepository, MysqlInstrumentsRepository],
     },
   ],
+  exports: [INSTRUMENTS_REPOSITORY],
 })
 export class InstrumentsModule {}

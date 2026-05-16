@@ -108,6 +108,7 @@ services:
       MARKETS_REPOSITORY: mysql
       INSTRUMENTS_REPOSITORY: mysql
       QUOTES_REPOSITORY: mysql
+      WATCHLISTS_REPOSITORY: mysql
       MYSQL_HOST: mysql
       MYSQL_PORT: 3306
       MYSQL_DATABASE: nexus
