@@ -22,13 +22,22 @@ describe('StaticMarketDataProvider', () => {
     expect(quote.asOf).toBeInstanceOf(Date);
   });
 
-  it('keeps deterministic prices for the same symbol', () => {
+  it('varies prices over repeated requests for dashboard gainers and losers', () => {
     const firstQuote = provider.fetchQuote('MSFT');
     const secondQuote = provider.fetchQuote('msft');
 
-    expect(secondQuote.price).toBe(firstQuote.price);
-    expect(secondQuote.bid).toBe(firstQuote.bid);
-    expect(secondQuote.ask).toBe(firstQuote.ask);
+    expect(secondQuote.price).toBeLessThan(firstQuote.price);
+    expect(secondQuote.bid).toBeLessThan(firstQuote.bid);
+    expect(secondQuote.ask).toBeLessThan(firstQuote.ask);
+  });
+
+  it('keeps deterministic first prices across provider instances', () => {
+    const firstProvider = new StaticMarketDataProvider();
+    const secondProvider = new StaticMarketDataProvider();
+
+    expect(secondProvider.fetchQuote('AAPL').price).toBe(
+      firstProvider.fetchQuote('aapl').price,
+    );
   });
 
   it('rejects empty symbols', () => {

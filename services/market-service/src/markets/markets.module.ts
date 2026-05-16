@@ -25,5 +25,6 @@ import { MarketsService } from './services/markets.service';
       inject: [InMemoryMarketsRepository, MysqlMarketsRepository],
     },
   ],
+  exports: [MARKETS_REPOSITORY],
 })
 export class MarketsModule {}

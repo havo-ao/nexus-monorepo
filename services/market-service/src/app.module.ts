@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { DashboardModule } from './dashboard/dashboard.module';
 import { HealthModule } from './health/health.module';
 import { InstrumentsModule } from './instruments/instruments.module';
 import { MarketHoursModule } from './market-hours/market-hours.module';
@@ -16,6 +17,7 @@ import { WatchlistsModule } from './watchlists/watchlists.module';
     QuotesModule,
     WatchlistsModule,
     PriceAlertsModule,
+    DashboardModule,
   ],
 })
 export class AppModule {}
