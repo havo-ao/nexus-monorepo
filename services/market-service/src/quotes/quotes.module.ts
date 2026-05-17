@@ -3,6 +3,8 @@ import { DatabaseModule } from '../../database/database.module';
 import { MarketDataSyncController } from './controllers/market-data-sync.controller';
 import { QuoteHistoryController } from './controllers/quote-history.controller';
 import { QuoteQueryController } from './controllers/quote-query.controller';
+import { AlphaVantageMarketDataProvider } from './providers/alpha-vantage-market-data.provider';
+import { selectMarketDataProvider } from './providers/market-data-provider.factory';
 import { MARKET_DATA_PROVIDER } from './providers/market-data-provider';
 import { StaticMarketDataProvider } from './providers/static-market-data.provider';
 import { InMemoryQuotesRepository } from './repositories/in-memory-quotes.repository';
@@ -23,12 +25,14 @@ import { QuoteQueryService } from './services/quote-query.service';
     MarketDataSyncService,
     QuoteHistoryService,
     QuoteQueryService,
+    AlphaVantageMarketDataProvider,
     StaticMarketDataProvider,
     InMemoryQuotesRepository,
     MysqlQuotesRepository,
     {
       provide: MARKET_DATA_PROVIDER,
-      useExisting: StaticMarketDataProvider,
+      useFactory: selectMarketDataProvider,
+      inject: [StaticMarketDataProvider, AlphaVantageMarketDataProvider],
     },
     {
       provide: QUOTES_REPOSITORY,
