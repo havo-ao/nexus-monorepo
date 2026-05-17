@@ -25,7 +25,9 @@ services:
     environment:
       VITE_API_BASE_URL: http://localhost:8881
       VITE_TRADING_API_BASE_URL: http://localhost:8882
+      VITE_MARKET_API_BASE_URL: /market-api
       VITE_PROXY_API_TARGET: http://identity-service:8881
+      VITE_PROXY_MARKET_API_TARGET: http://market-service:8884
     volumes:
       - ../../webapp:/app
       - /app/node_modules

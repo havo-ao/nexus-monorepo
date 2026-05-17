@@ -39,7 +39,7 @@ const Login: React.FC = () => {
     try {
       const auth = await login({ email: email.trim(), password });
       persistAuthSession(auth);
-      history.push("/trader-panel");
+      history.push("/dashboard");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Login failed. Please try again.";
       const looksLikeTempBan =

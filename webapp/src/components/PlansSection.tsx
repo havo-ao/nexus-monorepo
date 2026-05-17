@@ -1,7 +1,7 @@
 // src/components/PlansSection.tsx
 import React from 'react';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonButton, IonIcon, IonList, IonItem, IonLabel } from '@ionic/react';
-import { checkmarkCircleOutline, checkmarkCircle, starOutline, trendingUpOutline } from 'ionicons/icons';
+import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonList, IonItem, IonLabel } from '@ionic/react';
+import { checkmarkCircleOutline, checkmarkCircle } from 'ionicons/icons';
 import './PlansSection.css';
 
 const PlansSection: React.FC = () => {

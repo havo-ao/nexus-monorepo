@@ -1,18 +1,12 @@
 // src/components/SecuritySection.tsx
 import React from 'react';
 import { 
-  IonCard, 
-  IonCardContent, 
-  IonIcon, 
-  IonText 
+  IonIcon
 } from '@ionic/react';
 import { 
   shieldCheckmarkOutline, 
-  keyOutline, 
   businessOutline, 
-  documentTextOutline,
-  eyeOutline,
-  cloudDoneOutline
+  eyeOutline
 } from 'ionicons/icons';
 import './SecuritySection.css';
 

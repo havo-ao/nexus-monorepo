@@ -20,6 +20,12 @@ export function getTradingApiBaseUrl(): string {
   );
 }
 
+export function getMarketApiBaseUrl(): string {
+  return cleanBaseUrl(
+    import.meta.env.VITE_MARKET_API_BASE_URL ?? "/market-api",
+  );
+}
+
 export function apiUrl(path: string): string {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   const base = getApiBaseUrl();
@@ -31,9 +37,15 @@ export function tradingApiUrl(path: string): string {
   return `${getTradingApiBaseUrl()}${normalizedPath}`;
 }
 
+export function marketApiUrl(path: string): string {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${getMarketApiBaseUrl()}${normalizedPath}`;
+}
+
 export const API_PATHS = {
   authLogin: "/api/auth/login",
   authRegisterTrader: "/api/auth/register/trader",
   tradingValidateBuyFunds: "/api/v1/validations/funds/buy",
   tradingValidateMarketStatus: "/api/v1/validations/market/status",
+  marketDashboard: "/api/v1/dashboard",
 } as const;

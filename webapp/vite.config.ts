@@ -15,6 +15,11 @@ export default defineConfig({
       '/api': {
         target: process.env.VITE_PROXY_API_TARGET ?? 'http://localhost:8881',
         changeOrigin: true
+      },
+      '/market-api': {
+        target: process.env.VITE_PROXY_MARKET_API_TARGET ?? 'http://localhost:8884',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/market-api/, '')
       }
     }
   },
