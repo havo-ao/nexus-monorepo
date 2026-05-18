@@ -1,10 +1,8 @@
 package com.nexus.identityservice.mapper;
 
-import com.nexus.identityservice.dto.trader.TraderAuditResponse;
-import com.nexus.identityservice.dto.trader.TraderCreateRequest;
-import com.nexus.identityservice.dto.trader.TraderResponse;
-import com.nexus.identityservice.dto.trader.TraderUpdateRequest;
+import com.nexus.identityservice.dto.trader.*;
 import com.nexus.identityservice.model.Trader;
+import com.nexus.identityservice.model.TraderSubscription;
 import org.mapstruct.*;
 
 @Mapper(componentModel = "spring", uses = UserMapper.class)
@@ -23,6 +21,8 @@ public interface TraderMapper {
     @Mapping(target = "failedLoginAttempts", constant = "0")
     @Mapping(target = "lastFailedLogin", ignore = true)
     @Mapping(target = "banUntil", ignore = true)
+    @Mapping(target = "subscriptions", ignore = true)
+    @Mapping(target = "activePremiumPlan", ignore = true)
     Trader toEntity(TraderCreateRequest request);
 
     // For PARTIAL update - IGNORE NULLS
@@ -47,13 +47,20 @@ public interface TraderMapper {
     @Mapping(target = "accountNonLocked", ignore = true)
     @Mapping(target = "credentialsNonExpired", ignore = true)
     @Mapping(target = "enabled", ignore = true)
+    @Mapping(target = "subscriptions", ignore = true)
+    @Mapping(target = "activePremiumPlan", ignore = true)
     void updateEntity(@MappingTarget Trader trader, TraderUpdateRequest request);
 
 
     @Mapping(source = "userNickname", target = "username")
+    @Mapping(target = "activePremiumPlan", source = "activePremiumPlan")
     TraderResponse toResponse(Trader trader);
 
     @Mapping(source = "userNickname", target = "username")
+    @Mapping(target = "activePremiumPlan", source = "activePremiumPlan")
     TraderAuditResponse toAuditResponse(Trader trader);
+
+    @Mapping(source = "plan.name", target = "planName")
+    TraderSubscriptionResponse toSubscriptionResponse(TraderSubscription subscription);
 
 }
