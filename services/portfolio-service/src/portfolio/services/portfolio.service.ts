@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PortfolioPositionsRepository } from '../../positions/repositories/portfolio-positions.repository';
 import { ValuationsService } from '../../valuations/services/valuations.service';
 import { PortfolioPositionResponseDto } from '../dto/portfolio-position-response.dto';
+import { PortfolioSectorDistributionResponseDto } from '../dto/portfolio-sector-distribution-response.dto';
 import { PortfolioSummaryResponseDto } from '../dto/portfolio-summary-response.dto';
 
 @Injectable()
@@ -54,6 +55,29 @@ export class PortfolioService {
     }
 
     return this.toPositionResponse(position);
+  }
+
+  async getSectorDistribution(
+    traderId: string,
+  ): Promise<PortfolioSectorDistributionResponseDto> {
+    const positions = await this.positionsRepository.findByTraderId(traderId);
+    const mappedPositions = await Promise.all(
+      positions.map((position) => this.toPositionResponse(position)),
+    );
+    const distribution =
+      await this.valuationsService.calculateSectorDistribution(
+        mappedPositions.map((position) => ({
+          symbol: position.symbol,
+          currentValue: position.currentValue,
+          totalInvested: position.totalInvested,
+        })),
+      );
+
+    return {
+      traderId,
+      totalValue: distribution.totalValue,
+      sectors: distribution.sectors,
+    };
   }
 
   calculateCurrentValue(

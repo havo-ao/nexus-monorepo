@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { MarketInstrumentsClient } from '../clients/market-instruments.client';
 import { MarketQuotesClient } from '../clients/market-quotes.client';
 
 export interface PositionValuationInput {
@@ -14,9 +15,30 @@ export interface PositionValuation {
   returnPercentage: number | null;
 }
 
+export interface SectorDistributionPosition {
+  symbol: string | null;
+  currentValue: number | null;
+  totalInvested: number;
+}
+
+export interface SectorDistributionItem {
+  sector: string;
+  value: number;
+  percentage: number;
+  positions: number;
+}
+
+export interface SectorDistribution {
+  totalValue: number;
+  sectors: SectorDistributionItem[];
+}
+
 @Injectable()
 export class ValuationsService {
-  constructor(private readonly marketQuotesClient: MarketQuotesClient) {}
+  constructor(
+    private readonly marketQuotesClient: MarketQuotesClient,
+    private readonly marketInstrumentsClient: MarketInstrumentsClient,
+  ) {}
 
   async valuePosition(
     position: PositionValuationInput,
@@ -75,5 +97,56 @@ export class ValuationsService {
     }
 
     return Number(((profitLoss / totalInvested) * 100).toFixed(4));
+  }
+
+  async calculateSectorDistribution(
+    positions: SectorDistributionPosition[],
+  ): Promise<SectorDistribution> {
+    const valuedPositions = await Promise.all(
+      positions.map(async (position) => ({
+        sector: await this.resolveSector(position.symbol),
+        value: position.currentValue ?? position.totalInvested,
+      })),
+    );
+    const totalValue = Number(
+      valuedPositions
+        .reduce((total, position) => total + position.value, 0)
+        .toFixed(2),
+    );
+    const bySector = new Map<string, { value: number; positions: number }>();
+
+    for (const position of valuedPositions) {
+      const current = bySector.get(position.sector) ?? {
+        value: 0,
+        positions: 0,
+      };
+      bySector.set(position.sector, {
+        value: current.value + position.value,
+        positions: current.positions + 1,
+      });
+    }
+
+    return {
+      totalValue,
+      sectors: [...bySector.entries()]
+        .map(([sector, distribution]) => ({
+          sector,
+          value: Number(distribution.value.toFixed(2)),
+          percentage:
+            totalValue === 0
+              ? 0
+              : Number(((distribution.value / totalValue) * 100).toFixed(4)),
+          positions: distribution.positions,
+        }))
+        .sort((first, second) => second.value - first.value),
+    };
+  }
+
+  private async resolveSector(symbol: string | null): Promise<string> {
+    if (!symbol) {
+      return 'Unknown';
+    }
+
+    return (await this.marketInstrumentsClient.getSector(symbol)) ?? 'Unknown';
   }
 }

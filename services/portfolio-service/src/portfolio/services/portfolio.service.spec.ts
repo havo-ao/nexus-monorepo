@@ -20,6 +20,7 @@ describe('PortfolioService', () => {
       calculateCurrentValue: jest.fn(),
       calculateProfitLoss: jest.fn(),
       calculateReturnPercentage: jest.fn(),
+      calculateSectorDistribution: jest.fn(),
     } as jest.Mocked<ValuationsService>;
     valuationsService.valuePosition.mockResolvedValue({
       currentPrice: null,
@@ -43,6 +44,10 @@ describe('PortfolioService', () => {
           ? null
           : Number(((profitLoss / totalInvested) * 100).toFixed(4)),
     );
+    valuationsService.calculateSectorDistribution.mockResolvedValue({
+      totalValue: 0,
+      sectors: [],
+    });
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -162,5 +167,50 @@ describe('PortfolioService', () => {
     await expect(service.getPositionDetail('7', '99')).rejects.toBeInstanceOf(
       NotFoundException,
     );
+  });
+
+  it('returns sector distribution for trader positions', async () => {
+    valuationsService.valuePosition.mockResolvedValue({
+      currentPrice: 189.42,
+      currentValue: 1894.2,
+      profitLoss: 370.7,
+      returnPercentage: 24.3321,
+    });
+    valuationsService.calculateSectorDistribution.mockResolvedValue({
+      totalValue: 1894.2,
+      sectors: [
+        {
+          sector: 'Technology',
+          value: 1894.2,
+          percentage: 100,
+          positions: 1,
+        },
+      ],
+    });
+    positionsRepository.findByTraderId.mockResolvedValue([
+      {
+        id: '15',
+        traderId: '7',
+        stockId: '25',
+        symbol: 'AAPL',
+        quantity: 10,
+        avgBuyPrice: '152.35',
+        totalInvested: '1523.50',
+        lastUpdated: new Date('2026-05-10T22:15:00.000Z'),
+      },
+    ]);
+
+    await expect(service.getSectorDistribution('7')).resolves.toEqual({
+      traderId: '7',
+      totalValue: 1894.2,
+      sectors: [
+        {
+          sector: 'Technology',
+          value: 1894.2,
+          percentage: 100,
+          positions: 1,
+        },
+      ],
+    });
   });
 });
