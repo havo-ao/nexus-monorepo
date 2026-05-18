@@ -18,12 +18,23 @@ export class PortfolioService {
     const mappedPositions = await Promise.all(
       positions.map((position) => this.toPositionResponse(position)),
     );
+    const totalInvested = this.sumInvested(mappedPositions);
+    const currentValue = this.sumCurrentValue(mappedPositions);
+    const profitLoss = this.valuationsService.calculateProfitLoss(
+      currentValue,
+      totalInvested,
+    );
 
     return {
       traderId,
       positions: mappedPositions,
-      totalInvested: this.sumInvested(mappedPositions),
-      currentValue: this.sumCurrentValue(mappedPositions),
+      totalInvested,
+      currentValue,
+      profitLoss,
+      returnPercentage: this.valuationsService.calculateReturnPercentage(
+        profitLoss,
+        totalInvested,
+      ),
     };
   }
 

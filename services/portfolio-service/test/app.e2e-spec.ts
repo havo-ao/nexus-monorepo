@@ -46,6 +46,8 @@ describe('AppController (e2e)', () => {
         positions: [],
         totalInvested: 0,
         currentValue: 0,
+        profitLoss: 0,
+        returnPercentage: null,
       });
   });
 
