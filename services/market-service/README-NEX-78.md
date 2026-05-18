@@ -16,8 +16,10 @@ NEX-79:
 - `market_quote_history`: snapshots historicos.
 - `market_quotes`: ultimo dato valido, usado por NEX-77.
 
-No se agrega migracion nueva porque `market_quote_history` ya representa la
-persistencia de series temporales requerida por esta historia.
+La migracion `009_enforce_unique_market_quote_history.sql` evita duplicados por
+`symbol + as_of`. Asi el historial oficial de una accion es unico, pero puede
+alimentarse tanto desde las sincronizaciones actuales como desde la serie diaria
+del proveedor externo.
 
 ## Validacion Manual
 
@@ -30,8 +32,22 @@ postman/nexus-market-service-nex-78.postman_collection.json
 Endpoints principales:
 
 ```text
-POST /api/v1/quotes/sync
+POST /api/v1/quotes/{symbol}/history/sync
 GET /api/v1/quotes/AAPL/history
+```
+
+El endpoint de sincronizacion usa `MARKET_HISTORY_PROVIDER`. Si existe
+`ALPHA_VANTAGE_API_KEY`, usa Alpha Vantage con `TIME_SERIES_DAILY`; si no
+existe, usa un proveedor estatico para no romper el arranque local. Se puede
+forzar el modo estatico con `MARKET_HISTORY_PROVIDER=static`.
+
+Variables soportadas:
+
+```text
+ALPHA_VANTAGE_API_KEY
+ALPHA_VANTAGE_BASE_URL
+ALPHA_VANTAGE_HISTORY_OUTPUT_SIZE=compact
+ALPHA_VANTAGE_TIMEOUT_MS=5000
 ```
 
 Resultado esperado:
@@ -47,8 +63,8 @@ Resultado esperado:
       "ask": 186.45,
       "spread": 0.1,
       "currency": "USD",
-      "provider": "alpha-vantage-compatible",
-      "asOf": "2026-05-14T18:13:21.253Z"
+      "provider": "alpha-vantage",
+      "asOf": "2026-05-15T00:00:00.000Z"
     }
   ]
 }

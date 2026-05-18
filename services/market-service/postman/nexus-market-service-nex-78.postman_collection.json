@@ -12,7 +12,20 @@
   ],
   "item": [
     {
-      "name": "Synchronize AAPL quote",
+      "name": "Synchronize AAPL historical prices",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/quotes/AAPL/history/sync",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "quotes", "AAPL", "history", "sync"]
+        },
+        "description": "Synchronizes daily historical prices from the configured market history provider."
+      }
+    },
+    {
+      "name": "Synchronize AAPL quote snapshot",
       "request": {
         "method": "POST",
         "header": [

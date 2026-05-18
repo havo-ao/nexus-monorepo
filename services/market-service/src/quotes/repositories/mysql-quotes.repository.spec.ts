@@ -65,7 +65,7 @@ describe('MysqlQuotesRepository', () => {
       ],
     );
     expect(connection.execute).toHaveBeenCalledWith(
-      expect.stringContaining('INSERT INTO market_quote_history'),
+      expect.stringContaining('ON DUPLICATE KEY UPDATE'),
       [
         'AAPL',
         190,
@@ -102,6 +102,71 @@ describe('MysqlQuotesRepository', () => {
 
     await expect(repository.saveQuotes([quote])).rejects.toThrow(
       'database failure',
+    );
+
+    expect(connection.rollback).toHaveBeenCalledTimes(1);
+    expect(connection.release).toHaveBeenCalledTimes(1);
+  });
+
+  it('saves historical quotes in one transaction without deleting local history', async () => {
+    const quote = MarketQuote.fromProvider({
+      symbol: 'AAPL',
+      price: 180,
+      bid: 179.95,
+      ask: 180.05,
+      currency: 'USD',
+      provider: 'history-provider',
+      asOf: new Date('2026-04-14T00:00:00.000Z'),
+    });
+
+    await repository.saveQuoteHistory([quote]);
+
+    expect(connection.beginTransaction).toHaveBeenCalledTimes(1);
+    expect(
+      connection.execute.mock.calls.some(([statement]) =>
+        String(statement).includes('DELETE FROM market_quote_history'),
+      ),
+    ).toBe(false);
+    expect(connection.execute).toHaveBeenCalledWith(
+      expect.stringContaining('ON DUPLICATE KEY UPDATE'),
+      [
+        'AAPL',
+        180,
+        179.95,
+        180.05,
+        0.1,
+        'USD',
+        'history-provider',
+        expect.any(Date),
+      ],
+    );
+    expect(connection.commit).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not open a transaction when there are no historical quotes to store', async () => {
+    await repository.saveQuoteHistory([]);
+
+    expect(pool.getConnection).not.toHaveBeenCalled();
+    expect(connection.beginTransaction).not.toHaveBeenCalled();
+  });
+
+  it('rolls back when saving history fails', async () => {
+    connection.execute.mockRejectedValueOnce(
+      new Error('history insert failed'),
+    );
+
+    const quote = MarketQuote.fromProvider({
+      symbol: 'AAPL',
+      price: 180,
+      bid: 179.95,
+      ask: 180.05,
+      currency: 'USD',
+      provider: 'history-provider',
+      asOf: new Date('2026-04-14T00:00:00.000Z'),
+    });
+
+    await expect(repository.saveQuoteHistory([quote])).rejects.toThrow(
+      'history insert failed',
     );
 
     expect(connection.rollback).toHaveBeenCalledTimes(1);

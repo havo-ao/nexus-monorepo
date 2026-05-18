@@ -11,7 +11,9 @@ describe('MarketDataSyncService', () => {
 
   const repository: jest.Mocked<QuotesRepository> = {
     saveQuotes: jest.fn(),
+    saveQuoteHistory: jest.fn(),
     findLatestBySymbol: jest.fn(),
+    findHistoryBySymbol: jest.fn(),
     recordSyncEvent: jest.fn(),
   };
 

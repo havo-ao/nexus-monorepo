@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import type { Pool, RowDataPacket } from 'mysql2/promise';
+import type { Pool, PoolConnection, RowDataPacket } from 'mysql2/promise';
 import { MYSQL_POOL } from '../../../database/database.module';
 import { MarketQuote } from '../entities/market-quote.entity';
 import type {
@@ -18,6 +18,17 @@ interface MarketQuoteRow extends RowDataPacket {
   as_of: Date;
 }
 
+type QuotePersistenceValues = [
+  string,
+  number,
+  number,
+  number,
+  number,
+  string,
+  string,
+  Date,
+];
+
 @Injectable()
 export class MysqlQuotesRepository implements QuotesRepository {
   constructor(@Inject(MYSQL_POOL) private readonly pool: Pool) {}
@@ -34,7 +45,7 @@ export class MysqlQuotesRepository implements QuotesRepository {
 
       for (const quote of quotes) {
         const snapshot = quote.toSnapshot();
-        const values = [
+        const values: QuotePersistenceValues = [
           snapshot.symbol,
           snapshot.price,
           snapshot.bid,
@@ -60,12 +71,7 @@ export class MysqlQuotesRepository implements QuotesRepository {
           values,
         );
 
-        await connection.execute(
-          `INSERT INTO market_quote_history
-            (symbol, price, bid, ask, spread, currency, provider, as_of)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-          values,
-        );
+        await this.upsertQuoteHistory(connection, values);
       }
 
       await connection.commit();
@@ -101,6 +107,39 @@ export class MysqlQuotesRepository implements QuotesRepository {
       provider: row.provider,
       asOf: new Date(row.as_of),
     });
+  }
+
+  async saveQuoteHistory(quotes: MarketQuote[]): Promise<void> {
+    if (quotes.length === 0) {
+      return;
+    }
+
+    const connection = await this.pool.getConnection();
+
+    try {
+      await connection.beginTransaction();
+
+      for (const quote of quotes) {
+        const snapshot = quote.toSnapshot();
+        await this.upsertQuoteHistory(connection, [
+          snapshot.symbol,
+          snapshot.price,
+          snapshot.bid,
+          snapshot.ask,
+          snapshot.spread,
+          snapshot.currency,
+          snapshot.provider,
+          snapshot.asOf,
+        ]);
+      }
+
+      await connection.commit();
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
   }
 
   async findHistoryBySymbol(symbol: string): Promise<MarketQuote[]> {
@@ -152,5 +191,24 @@ export class MysqlQuotesRepository implements QuotesRepository {
     }
 
     return parsedValue;
+  }
+
+  private async upsertQuoteHistory(
+    connection: PoolConnection,
+    values: QuotePersistenceValues,
+  ): Promise<void> {
+    await connection.execute(
+      `INSERT INTO market_quote_history
+        (symbol, price, bid, ask, spread, currency, provider, as_of)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE
+        price = VALUES(price),
+        bid = VALUES(bid),
+        ask = VALUES(ask),
+        spread = VALUES(spread),
+        currency = VALUES(currency),
+        provider = VALUES(provider)`,
+      values,
+    );
   }
 }

@@ -15,10 +15,13 @@ export class InMemoryQuotesRepository implements QuotesRepository {
     for (const quote of quotes) {
       const snapshot = quote.toSnapshot();
       this.latestQuotes.set(snapshot.symbol, quote);
-      this.quoteHistory.set(snapshot.symbol, [
-        ...(this.quoteHistory.get(snapshot.symbol) ?? []),
-        quote,
-      ]);
+      this.upsertHistoryQuote(quote);
+    }
+  }
+
+  saveQuoteHistory(quotes: MarketQuote[]): void {
+    for (const quote of quotes) {
+      this.upsertHistoryQuote(quote);
     }
   }
 
@@ -36,5 +39,22 @@ export class InMemoryQuotesRepository implements QuotesRepository {
 
   recordSyncEvent(event: MarketDataSyncEvent): void {
     this.events.push(event);
+  }
+
+  private upsertHistoryQuote(quote: MarketQuote): void {
+    const snapshot = quote.toSnapshot();
+    const existingQuotes = this.quoteHistory.get(snapshot.symbol) ?? [];
+    const existingIndex = existingQuotes.findIndex(
+      (existingQuote) =>
+        existingQuote.toSnapshot().asOf.getTime() === snapshot.asOf.getTime(),
+    );
+
+    if (existingIndex >= 0) {
+      existingQuotes[existingIndex] = quote;
+      this.quoteHistory.set(snapshot.symbol, existingQuotes);
+      return;
+    }
+
+    this.quoteHistory.set(snapshot.symbol, [...existingQuotes, quote]);
   }
 }
