@@ -18,6 +18,8 @@ describe('PortfolioService', () => {
     valuationsService = {
       valuePosition: jest.fn(),
       calculateCurrentValue: jest.fn(),
+      calculateProfitLoss: jest.fn(),
+      calculateReturnPercentage: jest.fn(),
     } as jest.Mocked<ValuationsService>;
     valuationsService.valuePosition.mockResolvedValue({
       currentPrice: null,
@@ -28,6 +30,18 @@ describe('PortfolioService', () => {
     valuationsService.calculateCurrentValue.mockImplementation(
       (quantity: number, currentPrice: number | null) =>
         currentPrice === null ? null : quantity * currentPrice,
+    );
+    valuationsService.calculateProfitLoss.mockImplementation(
+      (currentValue: number | null, totalInvested: number) =>
+        currentValue === null
+          ? null
+          : Number((currentValue - totalInvested).toFixed(2)),
+    );
+    valuationsService.calculateReturnPercentage.mockImplementation(
+      (profitLoss: number | null, totalInvested: number) =>
+        profitLoss === null || totalInvested === 0
+          ? null
+          : Number(((profitLoss / totalInvested) * 100).toFixed(4)),
     );
 
     const module: TestingModule = await Test.createTestingModule({
@@ -86,6 +100,8 @@ describe('PortfolioService', () => {
       ],
       totalInvested: 1523.5,
       currentValue: 1894.2,
+      profitLoss: 370.7,
+      returnPercentage: 24.3321,
     });
   });
 
@@ -97,6 +113,8 @@ describe('PortfolioService', () => {
       positions: [],
       totalInvested: 0,
       currentValue: 0,
+      profitLoss: 0,
+      returnPercentage: null,
     });
   });
 
