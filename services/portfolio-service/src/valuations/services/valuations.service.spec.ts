@@ -28,10 +28,16 @@ describe('ValuationsService', () => {
     marketQuotesClient.getLatestPrice.mockResolvedValue(189.42);
 
     await expect(
-      service.valuePosition({ symbol: 'AAPL', quantity: 10 }),
+      service.valuePosition({
+        symbol: 'AAPL',
+        quantity: 10,
+        totalInvested: 1523.5,
+      }),
     ).resolves.toEqual({
       currentPrice: 189.42,
       currentValue: 1894.2,
+      profitLoss: 370.7,
+      returnPercentage: 24.3321,
     });
   });
 
@@ -39,20 +45,36 @@ describe('ValuationsService', () => {
     marketQuotesClient.getLatestPrice.mockResolvedValue(null);
 
     await expect(
-      service.valuePosition({ symbol: 'AAPL', quantity: 10 }),
+      service.valuePosition({
+        symbol: 'AAPL',
+        quantity: 10,
+        totalInvested: 1523.5,
+      }),
     ).resolves.toEqual({
       currentPrice: null,
       currentValue: null,
+      profitLoss: null,
+      returnPercentage: null,
     });
   });
 
   it('does not call market-service when the position has no symbol', async () => {
     await expect(
-      service.valuePosition({ symbol: null, quantity: 10 }),
+      service.valuePosition({
+        symbol: null,
+        quantity: 10,
+        totalInvested: 1523.5,
+      }),
     ).resolves.toEqual({
       currentPrice: null,
       currentValue: null,
+      profitLoss: null,
+      returnPercentage: null,
     });
     expect(marketQuotesClient.getLatestPrice.mock.calls).toHaveLength(0);
+  });
+
+  it('does not calculate return percentage when invested value is zero', () => {
+    expect(service.calculateReturnPercentage(100, 0)).toBeNull();
   });
 });
