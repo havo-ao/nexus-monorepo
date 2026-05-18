@@ -25,6 +25,12 @@ export class PortfolioPositionResponseDto {
   @ApiProperty({ example: 1894.2, nullable: true })
   currentValue!: number | null;
 
+  @ApiProperty({ example: 370.7, nullable: true })
+  profitLoss!: number | null;
+
+  @ApiProperty({ example: 24.3321, nullable: true })
+  returnPercentage!: number | null;
+
   @ApiProperty({ example: '2026-05-10T22:15:00.000Z' })
   lastUpdated!: string;
 }

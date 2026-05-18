@@ -81,7 +81,12 @@ export class PortfolioService {
     totalInvested: string;
     lastUpdated: Date;
   }): Promise<PortfolioPositionResponseDto> {
-    const valuation = await this.valuationsService.valuePosition(position);
+    const totalInvested = Number(position.totalInvested);
+    const valuation = await this.valuationsService.valuePosition({
+      symbol: position.symbol,
+      quantity: position.quantity,
+      totalInvested,
+    });
 
     return {
       positionId: position.id,
@@ -89,9 +94,11 @@ export class PortfolioService {
       symbol: position.symbol ?? null,
       quantity: position.quantity,
       averageBuyPrice: Number(position.avgBuyPrice),
-      totalInvested: Number(position.totalInvested),
+      totalInvested,
       currentPrice: valuation.currentPrice,
       currentValue: valuation.currentValue,
+      profitLoss: valuation.profitLoss,
+      returnPercentage: valuation.returnPercentage,
       lastUpdated: position.lastUpdated.toISOString(),
     };
   }

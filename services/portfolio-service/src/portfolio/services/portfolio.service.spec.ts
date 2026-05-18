@@ -22,6 +22,8 @@ describe('PortfolioService', () => {
     valuationsService.valuePosition.mockResolvedValue({
       currentPrice: null,
       currentValue: null,
+      profitLoss: null,
+      returnPercentage: null,
     });
     valuationsService.calculateCurrentValue.mockImplementation(
       (quantity: number, currentPrice: number | null) =>
@@ -49,6 +51,8 @@ describe('PortfolioService', () => {
     valuationsService.valuePosition.mockResolvedValue({
       currentPrice: 189.42,
       currentValue: 1894.2,
+      profitLoss: 370.7,
+      returnPercentage: 24.3321,
     });
     positionsRepository.findByTraderId.mockResolvedValue([
       {
@@ -75,6 +79,8 @@ describe('PortfolioService', () => {
           totalInvested: 1523.5,
           currentPrice: 189.42,
           currentValue: 1894.2,
+          profitLoss: 370.7,
+          returnPercentage: 24.3321,
           lastUpdated: '2026-05-10T22:15:00.000Z',
         },
       ],
@@ -103,6 +109,8 @@ describe('PortfolioService', () => {
     valuationsService.valuePosition.mockResolvedValue({
       currentPrice: 189.42,
       currentValue: 1894.2,
+      profitLoss: 370.7,
+      returnPercentage: 24.3321,
     });
     positionsRepository.findByTraderIdAndPositionId.mockResolvedValue({
       id: '15',
@@ -124,6 +132,8 @@ describe('PortfolioService', () => {
       totalInvested: 1523.5,
       currentPrice: 189.42,
       currentValue: 1894.2,
+      profitLoss: 370.7,
+      returnPercentage: 24.3321,
       lastUpdated: '2026-05-10T22:15:00.000Z',
     });
   });
