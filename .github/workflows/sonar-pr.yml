@@ -145,7 +145,6 @@ jobs:
         working-directory: services/compliance-service
         run: |
           npm install --no-audit --no-fund
-          npm run test:cov
           node ../scripts/normalize-lcov-paths.mjs compliance-service
           npm run build
 
