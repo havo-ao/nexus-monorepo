@@ -93,8 +93,16 @@ services:
     restart: unless-stopped
     ports:
       - "8883:8883"
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USERNAME: nexus_user
+      DB_PASSWORD: ${NEXUS_MYSQL_PASSWORD:?Set NEXUS_MYSQL_PASSWORD}
+      DB_DATABASE: nexus
+      MARKET_SERVICE_BASE_URL: http://market-service:8884
     depends_on:
       - mysql
+      - market-service
     volumes:
       - ../../services/portfolio-service:/app
       - /app/node_modules

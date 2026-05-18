@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PortfolioPositionsRepository } from '../../positions/repositories/portfolio-positions.repository';
+import { ValuationsService } from '../../valuations/services/valuations.service';
 import { PortfolioPositionResponseDto } from '../dto/portfolio-position-response.dto';
 import { PortfolioSummaryResponseDto } from '../dto/portfolio-summary-response.dto';
 
@@ -7,14 +8,15 @@ import { PortfolioSummaryResponseDto } from '../dto/portfolio-summary-response.d
 export class PortfolioService {
   constructor(
     private readonly positionsRepository: PortfolioPositionsRepository,
+    private readonly valuationsService: ValuationsService,
   ) {}
 
   async getConsolidatedPortfolio(
     traderId: string,
   ): Promise<PortfolioSummaryResponseDto> {
     const positions = await this.positionsRepository.findByTraderId(traderId);
-    const mappedPositions = positions.map((position) =>
-      this.toPositionResponse(position),
+    const mappedPositions = await Promise.all(
+      positions.map((position) => this.toPositionResponse(position)),
     );
 
     return {
@@ -47,11 +49,7 @@ export class PortfolioService {
     quantity: number,
     currentPrice: number | null,
   ): number | null {
-    if (currentPrice === null) {
-      return null;
-    }
-
-    return quantity * currentPrice;
+    return this.valuationsService.calculateCurrentValue(quantity, currentPrice);
   }
 
   private sumInvested(positions: PortfolioPositionResponseDto[]): number {
@@ -74,7 +72,7 @@ export class PortfolioService {
     );
   }
 
-  private toPositionResponse(position: {
+  private async toPositionResponse(position: {
     id: string;
     stockId: string;
     symbol?: string | null;
@@ -82,8 +80,8 @@ export class PortfolioService {
     avgBuyPrice: string;
     totalInvested: string;
     lastUpdated: Date;
-  }): PortfolioPositionResponseDto {
-    const currentPrice = null;
+  }): Promise<PortfolioPositionResponseDto> {
+    const valuation = await this.valuationsService.valuePosition(position);
 
     return {
       positionId: position.id,
@@ -92,8 +90,8 @@ export class PortfolioService {
       quantity: position.quantity,
       averageBuyPrice: Number(position.avgBuyPrice),
       totalInvested: Number(position.totalInvested),
-      currentPrice,
-      currentValue: this.calculateCurrentValue(position.quantity, currentPrice),
+      currentPrice: valuation.currentPrice,
+      currentValue: valuation.currentValue,
       lastUpdated: position.lastUpdated.toISOString(),
     };
   }

@@ -1,11 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { PortfolioPositionsRepository } from '../../positions/repositories/portfolio-positions.repository';
+import { ValuationsService } from '../../valuations/services/valuations.service';
 import { PortfolioService } from './portfolio.service';
 
 describe('PortfolioService', () => {
   let service: PortfolioService;
   let positionsRepository: jest.Mocked<PortfolioPositionsRepository>;
+  let valuationsService: jest.Mocked<ValuationsService>;
 
   beforeEach(async () => {
     const repositoryMock: jest.Mocked<PortfolioPositionsRepository> = {
@@ -13,6 +15,18 @@ describe('PortfolioService', () => {
       findByTraderIdAndPositionId: jest.fn(),
     };
     positionsRepository = repositoryMock;
+    valuationsService = {
+      valuePosition: jest.fn(),
+      calculateCurrentValue: jest.fn(),
+    } as jest.Mocked<ValuationsService>;
+    valuationsService.valuePosition.mockResolvedValue({
+      currentPrice: null,
+      currentValue: null,
+    });
+    valuationsService.calculateCurrentValue.mockImplementation(
+      (quantity: number, currentPrice: number | null) =>
+        currentPrice === null ? null : quantity * currentPrice,
+    );
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -21,6 +35,10 @@ describe('PortfolioService', () => {
           provide: PortfolioPositionsRepository,
           useValue: positionsRepository,
         },
+        {
+          provide: ValuationsService,
+          useValue: valuationsService,
+        },
       ],
     }).compile();
 
@@ -28,6 +46,10 @@ describe('PortfolioService', () => {
   });
 
   it('returns consolidated portfolio positions for a trader', async () => {
+    valuationsService.valuePosition.mockResolvedValue({
+      currentPrice: 189.42,
+      currentValue: 1894.2,
+    });
     positionsRepository.findByTraderId.mockResolvedValue([
       {
         id: '15',
@@ -51,13 +73,13 @@ describe('PortfolioService', () => {
           quantity: 10,
           averageBuyPrice: 152.35,
           totalInvested: 1523.5,
-          currentPrice: null,
-          currentValue: null,
+          currentPrice: 189.42,
+          currentValue: 1894.2,
           lastUpdated: '2026-05-10T22:15:00.000Z',
         },
       ],
       totalInvested: 1523.5,
-      currentValue: null,
+      currentValue: 1894.2,
     });
   });
 
@@ -78,6 +100,10 @@ describe('PortfolioService', () => {
   });
 
   it('returns the detail of a trader position', async () => {
+    valuationsService.valuePosition.mockResolvedValue({
+      currentPrice: 189.42,
+      currentValue: 1894.2,
+    });
     positionsRepository.findByTraderIdAndPositionId.mockResolvedValue({
       id: '15',
       traderId: '7',
@@ -96,8 +122,8 @@ describe('PortfolioService', () => {
       quantity: 10,
       averageBuyPrice: 152.35,
       totalInvested: 1523.5,
-      currentPrice: null,
-      currentValue: null,
+      currentPrice: 189.42,
+      currentValue: 1894.2,
       lastUpdated: '2026-05-10T22:15:00.000Z',
     });
   });

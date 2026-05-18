@@ -11,6 +11,6 @@ export class PortfolioSummaryResponseDto {
   @ApiProperty({ example: 1523.5 })
   totalInvested!: number;
 
-  @ApiProperty({ example: null, nullable: true })
+  @ApiProperty({ example: 1894.2, nullable: true })
   currentValue!: number | null;
 }
