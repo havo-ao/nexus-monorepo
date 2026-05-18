@@ -31,3 +31,16 @@ jwt:
   secret: ${JWT_SECRET:}
   expiration: 86400000
   refresh-expiration: 86400000
+
+stripe:
+  secret-key: ${STRIPE_SECRET_KEY}
+  monthly-price-id: ${STRIPE_MONTHLY_PRICE}
+  yearly-price-id: ${STRIPE_YEARLY_PRICE}
+
+frontend-domain: ${FRONTEND_DOMAIN}
+
+logging:
+  level:
+    com.nexus.identityservice: DEBUG    # tus paquetes
+    org.springframework.web: DEBUG      # peticiones HTTP entrantes
+    org.springframework.web.servlet.mvc.method.annotation: TRACE  # más detalle
