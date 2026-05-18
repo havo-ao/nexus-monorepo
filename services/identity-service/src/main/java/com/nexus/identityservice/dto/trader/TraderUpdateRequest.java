@@ -41,7 +41,8 @@ public class TraderUpdateRequest {
     private String password;
 
 
-    @Pattern(regexp = "^[0-9]{10,12}$", message = "Phone must be between 10 and 12 digits")
+    @Pattern(regexp = "^\\+[0-9]{9,16}$",
+            message = "Phone must be international format without spaces")
     private String phone;
 
 

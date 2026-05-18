@@ -46,7 +46,7 @@ public class TraderCreateRequest {
     private String password;
 
     @NotBlank(message = "Phone is required")
-    @Pattern(regexp = "^[0-9]{10,12}$", message = "Phone must be between 10 and 12 digits")
+    @Pattern(regexp = "^\\+[0-9]{9,16}$", message = "Phone must be between 9 and 16 digits, using international format")
     private String phone;
 
     @NotBlank(message = "Address is required")

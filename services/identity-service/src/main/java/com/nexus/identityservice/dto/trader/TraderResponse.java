@@ -7,6 +7,8 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import java.util.List;
+
 @Data
 @SuperBuilder
 @NoArgsConstructor
@@ -17,4 +19,6 @@ public class TraderResponse extends UserResponse {
     private String nationalityCode;
     private String timeZone;
     private TraderExperience experience;
+    private boolean activePremiumPlan;
+    private List<TraderSubscriptionResponse> subscriptions;
 }
