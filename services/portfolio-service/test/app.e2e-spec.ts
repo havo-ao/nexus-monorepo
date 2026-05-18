@@ -51,6 +51,17 @@ describe('AppController (e2e)', () => {
       });
   });
 
+  it('/api/v1/portfolio/:traderId/distribution/sectors (GET)', () => {
+    return request(app.getHttpServer())
+      .get('/api/v1/portfolio/1/distribution/sectors')
+      .expect(200)
+      .expect({
+        traderId: '1',
+        totalValue: 0,
+        sectors: [],
+      });
+  });
+
   it('/api/v1/portfolio/:traderId/positions/:positionId (GET)', () => {
     return request(app.getHttpServer())
       .get('/api/v1/portfolio/1/positions/99')

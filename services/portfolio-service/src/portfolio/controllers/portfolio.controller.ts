@@ -1,6 +1,7 @@
 import { Controller, Get, Param, ParseIntPipe } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PortfolioPositionResponseDto } from '../dto/portfolio-position-response.dto';
+import { PortfolioSectorDistributionResponseDto } from '../dto/portfolio-sector-distribution-response.dto';
 import { PortfolioSummaryResponseDto } from '../dto/portfolio-summary-response.dto';
 import { PortfolioService } from '../services/portfolio.service';
 
@@ -18,6 +19,17 @@ export class PortfolioController {
     @Param('traderId', ParseIntPipe) traderId: number,
   ): Promise<PortfolioSummaryResponseDto> {
     return this.portfolioService.getConsolidatedPortfolio(String(traderId));
+  }
+
+  @Get(':traderId/distribution/sectors')
+  @ApiOperation({
+    summary: 'NEX-63 Visualizar distribucion del portafolio por sector',
+  })
+  @ApiOkResponse({ type: PortfolioSectorDistributionResponseDto })
+  getSectorDistribution(
+    @Param('traderId', ParseIntPipe) traderId: number,
+  ): Promise<PortfolioSectorDistributionResponseDto> {
+    return this.portfolioService.getSectorDistribution(String(traderId));
   }
 
   @Get(':traderId/positions/:positionId')
