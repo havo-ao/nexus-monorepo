@@ -9,7 +9,6 @@ import {
   IonButton,
   IonChip,
   IonLabel,
-  IonText,
 } from "@ionic/react";
 import {
   notificationsOutline,
@@ -29,7 +28,7 @@ import "./BrokersSection.css";
 const BrokersSection: React.FC = () => {
   return (
     <div className="brokers-section">
-      {/* Título principal */}
+      {/* Main title */}
       <div className="brokers-header">
         <h2 className="section-title">Brokers Assistance</h2>
         <p className="section-subtitle">
@@ -38,7 +37,7 @@ const BrokersSection: React.FC = () => {
         </p>
       </div>
 
-      {/* Modos de operación */}
+      {/* Operation modes */}
       <div className="modes-container">
         {/* Advisory Mode */}
         <IonCard className="mode-card">
@@ -53,8 +52,8 @@ const BrokersSection: React.FC = () => {
           </IonCardHeader>
           <IonCardContent>
             <p className="mode-description">
-              El broker envía notificaciones con recomendaciones de
-              compra/venta. Tú apruebas o rechazas cada operación.
+              The broker sends notifications with buy and sell recommendations.
+              You approve or reject each operation.
             </p>
             <div className="mode-actions">
               <IonButton size="small" fill="outline" color="success">
@@ -68,7 +67,7 @@ const BrokersSection: React.FC = () => {
             </div>
             <IonChip className="mode-chip" color="light">
               <IonIcon icon={eyeOutline} />
-              <IonLabel>Tú mantienes el control final</IonLabel>
+              <IonLabel>You keep final control</IonLabel>
             </IonChip>
           </IonCardContent>
         </IonCard>
@@ -86,34 +85,34 @@ const BrokersSection: React.FC = () => {
           </IonCardHeader>
           <IonCardContent>
             <p className="mode-description">
-              Acceso total para el broker a ventas y portafolio. Opera según las
-              estrategias definidas en el contrato.
+              Full broker access to sales and portfolio actions. Operations
+              follow the strategies defined in the contract.
             </p>
             <div className="mode-features">
               <div className="feature-item">
                 <IonIcon icon={trendingUpOutline} color="primary" />
-                <span>Operación automática</span>
+                <span>Automated operation</span>
               </div>
               <div className="feature-item">
                 <IonIcon icon={eyeOutline} color="primary" />
-                <span>Seguimiento en tiempo real</span>
+                <span>Real-time monitoring</span>
               </div>
               <div className="feature-item">
                 <IonIcon icon={documentTextOutline} color="primary" />
-                <span>Estrategias pre-aprobadas</span>
+                <span>Pre-approved strategies</span>
               </div>
             </div>
             <IonChip className="mode-chip" color="primary">
               <IonIcon icon={shieldCheckmarkOutline} />
-              <IonLabel>Tú supervisas todas las operaciones</IonLabel>
+              <IonLabel>You supervise every operation</IonLabel>
             </IonChip>
           </IonCardContent>
         </IonCard>
       </div>
 
-      {/* Sección "Why you need a broker" */}
+      {/* Why you need a broker */}
       <div className="why-broker-section">
-        <h3 className="why-title">Why you should to need a broker?</h3>
+        <h3 className="why-title">Why do you need a broker?</h3>
         <div className="why-grid">
           <div className="why-card">
             <IonIcon icon={timeOutline} className="why-icon" />
@@ -121,21 +120,21 @@ const BrokersSection: React.FC = () => {
               No time to watch the markets all day?
             </p>
             <p className="why-card-text">
-              Delega el análisis y monitoreo constante a un profesional.
+              Delegate analysis and continuous monitoring to a professional.
             </p>
           </div>
           <div className="why-card">
             <IonIcon icon={peopleOutline} className="why-icon" />
             <p className="why-card-title">Professional broker guidance</p>
             <p className="why-card-text">
-              Asesoría personalizada, no soluciones genéricas.
+              Personalized guidance, not generic solutions.
             </p>
           </div>
           <div className="why-card">
             <IonIcon icon={flagOutline} className="why-icon" />
             <p className="why-card-title">Your risk, your strategy</p>
             <p className="why-card-text">
-              Operamos bajo tus reglas y tolerancia al riesgo.
+              We operate under your rules and risk tolerance.
             </p>
           </div>
         </div>

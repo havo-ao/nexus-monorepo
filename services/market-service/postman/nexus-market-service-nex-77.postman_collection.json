@@ -1,0 +1,49 @@
+{
+  "info": {
+    "name": "Nexus Market Service - NEX-77",
+    "description": "Manual validation collection for NEX-77: consult latest quote price, bid, ask and spread.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8884"
+    }
+  ],
+  "item": [
+    {
+      "name": "Synchronize AAPL quote",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"symbols\": [\"AAPL\"],\n  \"requestedBy\": \"system@nexus.local\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/quotes/sync",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "quotes", "sync"]
+        },
+        "description": "Seeds the latest quote cache before consulting NEX-77."
+      }
+    },
+    {
+      "name": "Get latest AAPL quote",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/quotes/AAPL",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "quotes", "AAPL"]
+        },
+        "description": "Returns price, bid, ask, spread, currency, provider and quote timestamp."
+      }
+    }
+  ]
+}

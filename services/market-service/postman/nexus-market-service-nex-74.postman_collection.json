@@ -1,0 +1,28 @@
+{
+  "info": {
+    "name": "Nexus Market Service - NEX-74",
+    "description": "Consultar mercados disponibles.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "List available markets",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{marketServiceBaseUrl}}/api/v1/markets",
+          "host": ["{{marketServiceBaseUrl}}"],
+          "path": ["api", "v1", "markets"]
+        }
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "marketServiceBaseUrl",
+      "value": "http://localhost:8884"
+    }
+  ]
+}

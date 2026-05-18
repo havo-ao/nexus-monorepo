@@ -1,0 +1,57 @@
+{
+  "info": {
+    "name": "Nexus Market Service - NEX-81 Price Alerts",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create target price alert",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/price-alerts",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "price-alerts"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"traderId\": \"trader-123\",\n  \"symbol\": \"AAPL\",\n  \"targetPrice\": 180,\n  \"condition\": \"ABOVE_OR_EQUAL\"\n}"
+        }
+      }
+    },
+    {
+      "name": "List trader price alerts",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/price-alerts/trader-123",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "price-alerts", "trader-123"]
+        }
+      }
+    },
+    {
+      "name": "Evaluate active price alerts",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/price-alerts/evaluate",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "price-alerts", "evaluate"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8884"
+    }
+  ]
+}

@@ -52,3 +52,49 @@
   font-weight: 500;
   color: var(--ion-text-color, #f4f5f8);
 }
+
+.funds-validation-section {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(244, 245, 248, 0.14);
+}
+
+.funds-validation-section h2 {
+  margin: 0 0 16px;
+  font-size: 1.15rem;
+  color: var(--ion-text-color, #f4f5f8);
+}
+
+.funds-validation-fields {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.funds-validation-fields ion-item {
+  --background: rgba(255, 255, 255, 0.04);
+  --border-color: rgba(244, 245, 248, 0.16);
+  --border-radius: 8px;
+  --color: var(--ion-text-color, #f4f5f8);
+  --highlight-color-focused: rgba(184, 133, 255, 0.95);
+}
+
+.funds-validation-message {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.funds-validation-message.approved {
+  color: #d8f8e2;
+  background: rgba(31, 122, 68, 0.28);
+  border: 1px solid rgba(92, 214, 131, 0.35);
+}
+
+.funds-validation-message.rejected {
+  color: #ffe3e3;
+  background: rgba(143, 36, 54, 0.28);
+  border: 1px solid rgba(255, 125, 145, 0.36);
+}

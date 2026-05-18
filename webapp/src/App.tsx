@@ -5,6 +5,7 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import SignUp from './pages/SignUp';
 import TraderPanel from './pages/TraderPanel';
+import Dashboard from './pages/Dashboard';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -53,6 +54,9 @@ const App: React.FC = () => (
         </Route>
         <Route exact path="/signup">
           <SignUp />
+        </Route>
+        <Route exact path="/dashboard">
+          <Dashboard />
         </Route>
         <Route exact path="/trader-panel">
           <TraderPanel />

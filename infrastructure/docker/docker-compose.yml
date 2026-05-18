@@ -5,10 +5,10 @@ services:
     container_name: nexus-mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: ${NEXUS_MYSQL_ROOT_PASSWORD:?Set NEXUS_MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: nexus
       MYSQL_USER: nexus_user
-      MYSQL_PASSWORD: nexus_password
+      MYSQL_PASSWORD: ${NEXUS_MYSQL_PASSWORD:?Set NEXUS_MYSQL_PASSWORD}
     ports:
       - "3307:3306"
     volumes:
@@ -22,6 +22,12 @@ services:
     restart: unless-stopped
     ports:
       - "8100:8100"
+    environment:
+      VITE_API_BASE_URL: http://localhost:8881
+      VITE_TRADING_API_BASE_URL: http://localhost:8882
+      VITE_MARKET_API_BASE_URL: /market-api
+      VITE_PROXY_API_TARGET: http://identity-service:8881
+      VITE_PROXY_MARKET_API_TARGET: http://market-service:8884
     volumes:
       - ../../webapp:/app
       - /app/node_modules
@@ -42,8 +48,11 @@ services:
       - "8881:8881"
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/nexus
+      SPRING_DATASOURCE_USERNAME: nexus_user
+      SPRING_DATASOURCE_PASSWORD: ${NEXUS_MYSQL_PASSWORD:?Set NEXUS_MYSQL_PASSWORD}
+      JWT_SECRET: ${NEXUS_JWT_SECRET:?Set NEXUS_JWT_SECRET}
       ADMIN_EMAIL: admin@nexus.local
-      ADMIN_PASSWORD: Admin123@
+      ADMIN_PASSWORD: ${NEXUS_ADMIN_PASSWORD:?Set NEXUS_ADMIN_PASSWORD}
     volumes:
       - ../../services/identity-service:/app
       - /root/.m2
@@ -61,9 +70,20 @@ services:
     restart: unless-stopped
     ports:
       - "8882:8882"
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USERNAME: nexus_user
+      DB_PASSWORD: ${NEXUS_MYSQL_PASSWORD:?Set NEXUS_MYSQL_PASSWORD}
+      DB_DATABASE: nexus
     volumes:
       - ../../services/trading-service:/app
       - /app/node_modules
+    depends_on:
+      - mysql
+    command: >
+      sh -c "npm run db:migrate &&
+      npm run start:dev"
 
   portfolio-service:
     build:
@@ -87,9 +107,30 @@ services:
     restart: unless-stopped
     ports:
       - "8884:8884"
+    environment:
+      MARKET_HOURS_REPOSITORY: mysql
+      MARKET_DATA_PROVIDER: ${MARKET_DATA_PROVIDER:-}
+      MARKETS_REPOSITORY: mysql
+      INSTRUMENTS_REPOSITORY: mysql
+      QUOTES_REPOSITORY: mysql
+      WATCHLISTS_REPOSITORY: mysql
+      PRICE_ALERTS_REPOSITORY: mysql
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: nexus
+      MYSQL_USER: nexus_user
+      MYSQL_PASSWORD: ${NEXUS_MYSQL_PASSWORD:?Set NEXUS_MYSQL_PASSWORD}
+      ALPHA_VANTAGE_API_KEY: ${ALPHA_VANTAGE_API_KEY:-}
+      ALPHA_VANTAGE_BASE_URL: ${ALPHA_VANTAGE_BASE_URL:-https://www.alphavantage.co/query}
+      ALPHA_VANTAGE_TIMEOUT_MS: ${ALPHA_VANTAGE_TIMEOUT_MS:-5000}
     volumes:
       - ../../services/market-service:/app
       - /app/node_modules
+    depends_on:
+      - mysql
+    command: >
+      sh -c "npm run db:migrate &&
+      npm run start:dev"
 
   compliance-service:
     build:
