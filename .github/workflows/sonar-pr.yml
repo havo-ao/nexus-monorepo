@@ -82,6 +82,9 @@ jobs:
         working-directory: services/portfolio-service
         run: |
           npm install --no-audit --no-fund
+          npm run lint:check
+          npm run test:cov
+          npm run test:e2e
           npm run build
 
   market-service:
