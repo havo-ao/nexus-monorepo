@@ -406,6 +406,47 @@ describe('AppController (e2e)', () => {
       });
   });
 
+  it('/api/v1/quotes/:symbol/history/sync (POST) synchronizes historical prices', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/quotes/AAPL/history/sync')
+      .expect(200)
+      .expect((response) => {
+        const body = response.body as {
+          status: string;
+          provider: string;
+          symbol: string;
+          updatedCount: number;
+          preservedLocalHistory: boolean;
+          prices: MarketQuoteResponse[];
+        };
+
+        expect(body.status).toBe('SUCCESS');
+        expect(body.provider).toBe('alpha-vantage-history-compatible');
+        expect(body.symbol).toBe('AAPL');
+        expect(body.updatedCount).toBeGreaterThan(0);
+        expect(body.preservedLocalHistory).toBe(false);
+        expect(body.prices[0]).toEqual(
+          expect.objectContaining({
+            symbol: 'AAPL',
+            currency: 'USD',
+            provider: 'alpha-vantage-history-compatible',
+          }),
+        );
+      });
+
+    await request(app.getHttpServer())
+      .get('/api/v1/quotes/AAPL/history')
+      .expect(200)
+      .expect((response) => {
+        const body = response.body as MarketQuoteHistoryResponse;
+
+        expect(body.prices.length).toBeGreaterThan(1);
+        expect(body.prices[0]?.provider).toBe(
+          'alpha-vantage-history-compatible',
+        );
+      });
+  });
+
   it('/api/v1/watchlists/:traderId manages watched symbols with current quotes', async () => {
     await request(app.getHttpServer())
       .post('/api/v1/quotes/sync')

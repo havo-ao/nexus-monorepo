@@ -29,6 +29,7 @@ describe('PriceAlertsService', () => {
     };
     quotesRepository = {
       saveQuotes: jest.fn(),
+      saveQuoteHistory: jest.fn(),
       findLatestBySymbol: jest.fn(),
       findHistoryBySymbol: jest.fn(),
       recordSyncEvent: jest.fn(),

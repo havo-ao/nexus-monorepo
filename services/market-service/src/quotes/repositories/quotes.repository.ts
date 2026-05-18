@@ -16,6 +16,7 @@ export interface MarketDataSyncEvent {
 
 export interface QuotesRepository {
   saveQuotes(quotes: MarketQuote[]): void | Promise<void>;
+  saveQuoteHistory(quotes: MarketQuote[]): void | Promise<void>;
   findLatestBySymbol(
     symbol: string,
   ): MarketQuote | null | Promise<MarketQuote | null>;

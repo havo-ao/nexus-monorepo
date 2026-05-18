@@ -49,6 +49,7 @@ describe('DashboardService', () => {
     };
     quotesRepository = {
       saveQuotes: jest.fn(),
+      saveQuoteHistory: jest.fn(),
       findLatestBySymbol: jest.fn((symbol: string) =>
         Promise.resolve(resolveLatestQuote(symbol)),
       ),

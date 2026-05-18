@@ -61,6 +61,68 @@ describe('InMemoryQuotesRepository', () => {
     expect(repository.findHistoryBySymbol('MSFT')).toEqual([]);
   });
 
+  it('saves historical quotes without changing the latest quote cache', () => {
+    const latestQuote = MarketQuote.fromProvider({
+      symbol: 'aapl',
+      price: 200,
+      bid: 199.95,
+      ask: 200.05,
+      currency: 'usd',
+      provider: 'current-provider',
+      asOf: new Date('2026-05-14T14:00:00.000Z'),
+    });
+    const historicalQuote = MarketQuote.fromProvider({
+      symbol: 'aapl',
+      price: 180,
+      bid: 179.95,
+      ask: 180.05,
+      currency: 'usd',
+      provider: 'history-provider',
+      asOf: new Date('2026-04-14T00:00:00.000Z'),
+    });
+
+    repository.saveQuotes([latestQuote]);
+    repository.saveQuoteHistory([historicalQuote]);
+
+    expect(repository.findLatestBySymbol('AAPL')).toEqual(latestQuote);
+    expect(repository.findHistoryBySymbol('AAPL')).toEqual([
+      historicalQuote,
+      latestQuote,
+    ]);
+  });
+
+  it('updates historical quotes when symbol and timestamp already exist', () => {
+    const firstQuote = MarketQuote.fromProvider({
+      symbol: 'aapl',
+      price: 180,
+      bid: 179.95,
+      ask: 180.05,
+      currency: 'USD',
+      provider: 'first-provider',
+      asOf: new Date('2026-04-14T00:00:00.000Z'),
+    });
+    const updatedQuote = MarketQuote.fromProvider({
+      symbol: 'aapl',
+      price: 181,
+      bid: 180.95,
+      ask: 181.05,
+      currency: 'USD',
+      provider: 'updated-provider',
+      asOf: new Date('2026-04-14T00:00:00.000Z'),
+    });
+
+    repository.saveQuoteHistory([firstQuote, updatedQuote]);
+
+    expect(
+      repository.findHistoryBySymbol('AAPL').map((quote) => quote.toSnapshot()),
+    ).toEqual([
+      expect.objectContaining({
+        price: 181,
+        provider: 'updated-provider',
+      }),
+    ]);
+  });
+
   it('records synchronization events without persistence coupling', () => {
     expect(() =>
       repository.recordSyncEvent({
