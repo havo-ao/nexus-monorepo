@@ -47,6 +47,7 @@ public class SecurityConfig {
 
                                 // Admin endpoints (ADMIN only)
                                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                                .requestMatchers("/actuator/**").hasRole("ADMIN")
 
                                 .anyRequest().authenticated()
                 )
