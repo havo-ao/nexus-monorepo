@@ -135,6 +135,13 @@ public class StripeSubscriptionService {
     }
 
     private String normalizedFrontEndDomain() {
-        return frontEndDomain.replaceAll("/+$", "");
+        if (frontEndDomain == null) {
+            return "";
+        }
+        String domain = frontEndDomain;
+        while (domain.endsWith("/")) {
+            domain = domain.substring(0, domain.length() - 1);
+        }
+        return domain;
     }
 }

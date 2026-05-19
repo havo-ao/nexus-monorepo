@@ -56,4 +56,20 @@ class StripeSubscriptionServiceTest {
         assertThat(stripeSubscriptionService.buildCheckoutCancelUrl())
                 .isEqualTo("http://localhost:8100/cancelledPayment");
     }
+
+    @Test
+    void normalizedFrontEndDomainHandlesMultipleTrailingSlashes() {
+        ReflectionTestUtils.setField(stripeSubscriptionService, "frontEndDomain", "http://localhost:8100///");
+
+        assertThat(stripeSubscriptionService.buildCheckoutSuccessUrl())
+                .isEqualTo("http://localhost:8100/success?session_id={CHECKOUT_SESSION_ID}");
+    }
+
+    @Test
+    void normalizedFrontEndDomainHandlesNull() {
+        ReflectionTestUtils.setField(stripeSubscriptionService, "frontEndDomain", null);
+
+        assertThat(stripeSubscriptionService.buildCheckoutSuccessUrl())
+                .isEqualTo("/success?session_id={CHECKOUT_SESSION_ID}");
+    }
 }
