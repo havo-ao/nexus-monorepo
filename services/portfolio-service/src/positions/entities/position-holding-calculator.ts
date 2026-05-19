@@ -8,10 +8,21 @@ export interface ExecutedBuySnapshot {
   executionPrice: number;
 }
 
+export interface ExecutedSellSnapshot {
+  quantity: number;
+}
+
 export interface HoldingAfterBuy {
   quantity: number;
   totalInvested: number;
   averageBuyPrice: number;
+}
+
+export interface HoldingAfterSell {
+  quantity: number;
+  totalInvested: number;
+  averageBuyPrice: number;
+  closed: boolean;
 }
 
 export function calculateHoldingAfterBuy(
@@ -30,6 +41,36 @@ export function calculateHoldingAfterBuy(
     quantity,
     totalInvested,
     averageBuyPrice: roundMoney(totalInvested / quantity),
+  };
+}
+
+export function calculateHoldingAfterSell(
+  currentHolding: HoldingSnapshot,
+  executedSell: ExecutedSellSnapshot,
+): HoldingAfterSell {
+  const remainingQuantity = currentHolding.quantity - executedSell.quantity;
+
+  if (remainingQuantity === 0) {
+    return {
+      quantity: 0,
+      totalInvested: 0,
+      averageBuyPrice: 0,
+      closed: true,
+    };
+  }
+
+  const averageBuyPrice =
+    currentHolding.totalInvested / currentHolding.quantity;
+  const soldCostBasis = roundMoney(averageBuyPrice * executedSell.quantity);
+  const totalInvested = roundMoney(
+    currentHolding.totalInvested - soldCostBasis,
+  );
+
+  return {
+    quantity: remainingQuantity,
+    totalInvested,
+    averageBuyPrice: roundMoney(totalInvested / remainingQuantity),
+    closed: false,
   };
 }
 

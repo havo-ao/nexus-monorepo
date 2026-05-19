@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { RecordExecutedBuyDto } from '../../positions/dto/record-executed-buy.dto';
+import { RecordExecutedSellDto } from '../../positions/dto/record-executed-sell.dto';
 import { PortfolioPositionsRepository } from '../../positions/repositories/portfolio-positions.repository';
 import { PositionsService } from '../../positions/services/positions.service';
 import { ValuationsService } from '../../valuations/services/valuations.service';
@@ -87,6 +88,14 @@ export class PortfolioService {
     dto: RecordExecutedBuyDto,
   ): Promise<PortfolioPositionResponseDto> {
     const position = await this.positionsService.recordExecutedBuy(dto);
+
+    return this.toPositionResponse(position);
+  }
+
+  async recordExecutedSell(
+    dto: RecordExecutedSellDto,
+  ): Promise<PortfolioPositionResponseDto> {
+    const position = await this.positionsService.recordExecutedSell(dto);
 
     return this.toPositionResponse(position);
   }

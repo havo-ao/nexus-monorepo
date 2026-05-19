@@ -10,6 +10,7 @@ describe('PositionsService', () => {
   beforeEach(async () => {
     positionsRepository = {
       applyExecutedBuy: jest.fn(),
+      applyExecutedSell: jest.fn(),
       findByTraderId: jest.fn(),
       findByTraderIdAndPositionId: jest.fn(),
     } as unknown as jest.Mocked<PortfolioPositionsRepository>;
@@ -142,6 +143,57 @@ describe('PositionsService', () => {
         quantity: 10,
         executionPrice: 152.35,
         executedAt: 'not-a-date',
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('records an executed sell with normalized identifiers', async () => {
+    const executedAt = '2026-05-18T20:45:00.000Z';
+    positionsRepository.applyExecutedSell.mockResolvedValue({
+      id: '15',
+      traderId: '101',
+      stockId: '25',
+      quantity: 6,
+      avgBuyPrice: '152.35',
+      totalInvested: '914.10',
+      lastUpdated: new Date(executedAt),
+    });
+
+    await expect(
+      service.recordExecutedSell({
+        traderId: ' 101 ',
+        stockId: ' 25 ',
+        quantity: 4,
+        executionPrice: 178.45,
+        sourceOrderId: ' 5002 ',
+        sourceTransactionId: ' 7002 ',
+        executedAt,
+      }),
+    ).resolves.toMatchObject({
+      id: '15',
+      traderId: '101',
+      stockId: '25',
+      quantity: 6,
+    });
+
+    expect(positionsRepository.applyExecutedSell.mock.calls[0][0]).toEqual({
+      traderId: '101',
+      stockId: '25',
+      quantity: 4,
+      executionPrice: 178.45,
+      sourceOrderId: '5002',
+      sourceTransactionId: '7002',
+      executedAt: new Date(executedAt),
+    });
+  });
+
+  it('rejects invalid executed sell quantities', async () => {
+    await expect(
+      service.recordExecutedSell({
+        traderId: '101',
+        stockId: '25',
+        quantity: 0,
+        executionPrice: 178.45,
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
   });

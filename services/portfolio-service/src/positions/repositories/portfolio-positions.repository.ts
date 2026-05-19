@@ -1,7 +1,8 @@
-import { Injectable, Optional } from '@nestjs/common';
+import { BadRequestException, Injectable, Optional } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
 import {
   calculateHoldingAfterBuy,
+  calculateHoldingAfterSell,
   roundMoney,
   toMoneyString,
 } from '../entities/position-holding-calculator';
@@ -9,6 +10,16 @@ import { PortfolioPositionMovement } from '../entities/portfolio-position-moveme
 import { PortfolioPosition } from '../entities/portfolio-position.entity';
 
 export interface ExecutedBuyInput {
+  traderId: string;
+  stockId: string;
+  quantity: number;
+  executionPrice: number;
+  sourceOrderId?: string;
+  sourceTransactionId?: string;
+  executedAt: Date;
+}
+
+export interface ExecutedSellInput {
   traderId: string;
   stockId: string;
   quantity: number;
@@ -49,6 +60,61 @@ export class PortfolioPositionsRepository {
         : await this.createPosition(manager, input, grossAmount);
 
       await this.recordMovement(manager, input, position.id, grossAmount);
+
+      return position;
+    });
+  }
+
+  async applyExecutedSell(
+    input: ExecutedSellInput,
+  ): Promise<PortfolioPosition> {
+    const grossAmount = roundMoney(input.quantity * input.executionPrice);
+
+    if (!this.dataSource) {
+      return {
+        id: '0',
+        traderId: input.traderId,
+        stockId: input.stockId,
+        quantity: 0,
+        avgBuyPrice: toMoneyString(0),
+        totalInvested: toMoneyString(0),
+        lastUpdated: input.executedAt,
+        symbol: null,
+      };
+    }
+
+    return this.dataSource.transaction(async (manager) => {
+      const existingPosition = await this.findPositionForUpdate(
+        manager,
+        input.traderId,
+        input.stockId,
+      );
+
+      if (!existingPosition) {
+        throw new BadRequestException(
+          'Cannot record an executed sell without a position',
+        );
+      }
+
+      if (input.quantity > Number(existingPosition.quantity)) {
+        throw new BadRequestException(
+          'Cannot sell more shares than the current holding',
+        );
+      }
+
+      const position = await this.decreasePosition(
+        manager,
+        existingPosition,
+        input,
+      );
+
+      await this.recordMovement(
+        manager,
+        input,
+        position.id,
+        grossAmount,
+        'SELL',
+      );
 
       return position;
     });
@@ -216,15 +282,16 @@ export class PortfolioPositionsRepository {
 
   private async recordMovement(
     manager: EntityManager,
-    input: ExecutedBuyInput,
+    input: ExecutedBuyInput | ExecutedSellInput,
     positionId: string,
     grossAmount: number,
+    movementType: 'BUY' | 'SELL' = 'BUY',
   ): Promise<void> {
     await manager.getRepository(PortfolioPositionMovement).insert({
       traderId: input.traderId,
       stockId: input.stockId,
       positionId,
-      movementType: 'BUY',
+      movementType,
       quantity: input.quantity,
       executionPrice: toMoneyString(input.executionPrice),
       grossAmount: toMoneyString(grossAmount),
@@ -233,5 +300,40 @@ export class PortfolioPositionsRepository {
       occurredAt: input.executedAt,
       createdAt: new Date(),
     });
+  }
+
+  private async decreasePosition(
+    manager: EntityManager,
+    position: PortfolioPosition,
+    input: ExecutedSellInput,
+  ): Promise<PortfolioPosition> {
+    const updatedHolding = calculateHoldingAfterSell(
+      {
+        quantity: Number(position.quantity),
+        totalInvested: Number(position.totalInvested),
+      },
+      {
+        quantity: input.quantity,
+      },
+    );
+
+    if (updatedHolding.closed) {
+      await manager.getRepository(PortfolioPosition).delete(position.id);
+    } else {
+      await manager.getRepository(PortfolioPosition).update(position.id, {
+        quantity: updatedHolding.quantity,
+        avgBuyPrice: toMoneyString(updatedHolding.averageBuyPrice),
+        totalInvested: toMoneyString(updatedHolding.totalInvested),
+        lastUpdated: input.executedAt,
+      });
+    }
+
+    return {
+      ...position,
+      quantity: updatedHolding.quantity,
+      avgBuyPrice: toMoneyString(updatedHolding.averageBuyPrice),
+      totalInvested: toMoneyString(updatedHolding.totalInvested),
+      lastUpdated: input.executedAt,
+    };
   }
 }

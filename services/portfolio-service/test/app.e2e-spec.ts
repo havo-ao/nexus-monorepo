@@ -93,4 +93,30 @@ describe('AppController (e2e)', () => {
         lastUpdated: '2026-05-17T22:15:00.000Z',
       });
   });
+
+  it('/api/v1/portfolio/positions/sales (POST)', () => {
+    return request(app.getHttpServer())
+      .post('/api/v1/portfolio/positions/sales')
+      .send({
+        traderId: '1',
+        stockId: '25',
+        quantity: 4,
+        executionPrice: 178.45,
+        executedAt: '2026-05-18T20:45:00.000Z',
+      })
+      .expect(201)
+      .expect({
+        positionId: '0',
+        stockId: '25',
+        symbol: null,
+        quantity: 0,
+        averageBuyPrice: 0,
+        totalInvested: 0,
+        currentPrice: null,
+        currentValue: null,
+        profitLoss: null,
+        returnPercentage: null,
+        lastUpdated: '2026-05-18T20:45:00.000Z',
+      });
+  });
 });
