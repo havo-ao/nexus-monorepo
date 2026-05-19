@@ -9,8 +9,8 @@
   padding: 24px;
   background: rgba(20, 22, 35, 0.9);
   border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(138, 39, 252, 0.35);
-  border: 1px solid rgba(138, 39, 252, 0.25);
+  box-shadow: 0 10px 30px rgba(var(--nexus-accent-rgb), 0.35);
+  border: 1px solid rgba(var(--nexus-accent-rgb), 0.25);
 }
 
 .login-container h1 {
@@ -32,14 +32,14 @@
 
 .login-submit {
   margin-top: 10px;
-  --background: #2dd55b;
-  --background-hover: #25b54a;
+  --background: var(--nexus-accent);
+  --background-hover: var(--nexus-accent);
 }
 
 .login-form ion-item {
   --background: rgba(255, 255, 255, 0.04);
   --color: var(--ion-text-color, #f4f5f8);
-  --border-color: rgba(138, 39, 252, 0.28);
+  --border-color: rgba(var(--nexus-accent-rgb), 0.28);
   border-radius: 10px;
 }
 
@@ -60,6 +60,6 @@
 
 .form-banner {
   margin: 0 0 12px;
-  color: #86efac;
+  color: var(--nexus-accent-text);
   font-size: 0.9rem;
 }

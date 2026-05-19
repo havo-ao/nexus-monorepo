@@ -43,7 +43,6 @@ const TraderPanel: React.FC = () => {
     const stored = getStoredUser();
     if (!stored) {
       history.replace("/login");
-      setUser(null);
       return;
     }
     setUser(stored);
