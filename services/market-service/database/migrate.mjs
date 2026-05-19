@@ -5,6 +5,9 @@ import mysql from 'mysql2/promise';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const migrationsDir = join(__dirname, 'migrations');
+const migrationsTable = 'market_schema_migrations';
+const maxConnectionAttempts = 30;
+const retryDelayMs = 1000;
 
 function requireEnv(name) {
   const value = process.env[name];
@@ -30,38 +33,32 @@ function getOptionalNumber(value, fallback) {
   return parsedValue;
 }
 
-const pool = mysql.createPool({
-  host: process.env.MYSQL_HOST ?? 'localhost',
-  port: getOptionalNumber(process.env.MYSQL_PORT, 3307),
-  user: requireEnv('MYSQL_USER'),
-  password: requireEnv('MYSQL_PASSWORD'),
-  database: requireEnv('MYSQL_DATABASE'),
-});
-
 async function migrate() {
-  const connection = await pool.getConnection();
+  const connection = await connectWithRetry();
   let transactionStarted = false;
 
   try {
     await connection.query(`
-      CREATE TABLE IF NOT EXISTS schema_migrations (
-        service_name VARCHAR(80) NOT NULL,
-        migration_name VARCHAR(160) NOT NULL,
+      CREATE TABLE IF NOT EXISTS ${migrationsTable} (
+        id VARCHAR(255) NOT NULL,
         applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY (service_name, migration_name)
+        PRIMARY KEY (id)
       )
     `);
+    await copyLegacyMigrationRecords(connection);
 
     const migrationFiles = (await readdir(migrationsDir))
       .filter((file) => file.endsWith('.sql'))
       .sort();
 
     for (const migrationFile of migrationFiles) {
+      const migrationId = migrationFile;
       const [existingRows] = await connection.query(
-        `SELECT migration_name
-         FROM schema_migrations
-         WHERE service_name = ? AND migration_name = ?`,
-        ['market-service', migrationFile],
+        `SELECT id
+         FROM ${migrationsTable}
+         WHERE id = ?
+         LIMIT 1`,
+        [migrationId],
       );
 
       if (existingRows.length > 0) {
@@ -82,9 +79,9 @@ async function migrate() {
       }
 
       await connection.query(
-        `INSERT INTO schema_migrations (service_name, migration_name)
-         VALUES (?, ?)`,
-        ['market-service', migrationFile],
+        `INSERT INTO ${migrationsTable} (id)
+         VALUES (?)`,
+        [migrationId],
       );
       await connection.commit();
       transactionStarted = false;
@@ -98,9 +95,60 @@ async function migrate() {
 
     throw error;
   } finally {
-    connection.release();
-    await pool.end();
+    await connection.end();
   }
+}
+
+async function copyLegacyMigrationRecords(connection) {
+  try {
+    await connection.query(`
+      INSERT IGNORE INTO ${migrationsTable} (id, applied_at)
+      SELECT REPLACE(id, 'market-service/', ''), applied_at
+      FROM schema_migrations
+      WHERE id LIKE 'market-service/%'
+    `);
+  } catch (error) {
+    if (!isMissingLegacyMigrationTable(error)) {
+      throw error;
+    }
+  }
+}
+
+async function connectWithRetry() {
+  let lastError;
+
+  for (let attempt = 1; attempt <= maxConnectionAttempts; attempt += 1) {
+    try {
+      return await mysql.createConnection({
+        host: process.env.MYSQL_HOST ?? 'localhost',
+        port: getOptionalNumber(process.env.MYSQL_PORT, 3307),
+        user: requireEnv('MYSQL_USER'),
+        password: requireEnv('MYSQL_PASSWORD'),
+        database: requireEnv('MYSQL_DATABASE'),
+      });
+    } catch (error) {
+      lastError = error;
+      console.log(
+        `Waiting for database connection (${attempt}/${maxConnectionAttempts})`,
+      );
+      await delay(retryDelayMs);
+    }
+  }
+
+  throw lastError;
+}
+
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isMissingLegacyMigrationTable(error) {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error.code === 'ER_NO_SUCH_TABLE' || error.code === 'ER_BAD_FIELD_ERROR')
+  );
 }
 
 migrate().catch((error) => {
