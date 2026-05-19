@@ -152,7 +152,7 @@ jobs:
         with:
           name: compliance-service-coverage
           path: services/compliance-service/coverage/lcov.info
-          if-no-files-found: warn
+          if-no-files-found: error
 
   identity-service:
     name: Build identity service
