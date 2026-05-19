@@ -87,6 +87,13 @@ jobs:
           npm run test:e2e
           npm run build
 
+      - name: Upload portfolio coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: portfolio-service-coverage
+          path: services/portfolio-service/coverage/lcov.info
+          if-no-files-found: error
+
   market-service:
     name: Build market service
     runs-on: ubuntu-latest
@@ -221,6 +228,12 @@ jobs:
         with:
           name: market-service-coverage
           path: services/market-service/coverage
+
+      - name: Download portfolio coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: portfolio-service-coverage
+          path: services/portfolio-service/coverage
 
       - name: SonarQube Cloud scan
         uses: SonarSource/sonarqube-scan-action@v7
