@@ -1,10 +1,29 @@
 // src/components/PlansSection.tsx
-import React from 'react';
-import { IonCard, IonCardContent, IonCardHeader, IonCardTitle, IonIcon, IonList, IonItem, IonLabel } from '@ionic/react';
-import { checkmarkCircleOutline, checkmarkCircle } from 'ionicons/icons';
-import './PlansSection.css';
+import React from "react";
+import {
+  IonButton,
+  IonCard,
+  IonCardContent,
+  IonCardHeader,
+  IonCardTitle,
+  IonIcon,
+  IonItem,
+  IonLabel,
+  IonList
+} from "@ionic/react";
+import { checkmarkCircle, checkmarkCircleOutline } from "ionicons/icons";
+import "./PlansSection.css";
 
-const PlansSection: React.FC = () => {
+type PlanType = "free" | "premium";
+
+type PlansSectionProps = {
+  selectedPlan?: PlanType;
+  onSelectPlan?: (plan: PlanType) => void;
+};
+
+const PlansSection: React.FC<PlansSectionProps> = ({ selectedPlan, onSelectPlan }) => {
+  const isSelectable = Boolean(onSelectPlan);
+
   return (
     <div className="plans-section">
       <div className="plans-header">
@@ -14,7 +33,9 @@ const PlansSection: React.FC = () => {
 
       <div className="plans-container">
         {/* Plan Free */}
-        <IonCard className="plan-card">
+        <IonCard
+          className={`plan-card ${isSelectable && selectedPlan === "free" ? "selected-plan-card" : ""}`}
+        >
           <IonCardHeader>
             <IonCardTitle className="plan-name">FREE</IonCardTitle>
             <div className="plan-price">Free forever</div>
@@ -34,11 +55,25 @@ const PlansSection: React.FC = () => {
                 <IonLabel>Basic security</IonLabel>
               </IonItem>
             </IonList>
+            {isSelectable ? (
+              <IonButton
+                expand="block"
+                fill={selectedPlan === "free" ? "solid" : "outline"}
+                className="plan-select-btn"
+                onClick={() => onSelectPlan?.("free")}
+              >
+                {selectedPlan === "free" ? "Selected" : "Choose Free"}
+              </IonButton>
+            ) : null}
           </IonCardContent>
         </IonCard>
 
         {/* Plan Premium */}
-        <IonCard className="plan-card premium-card">
+        <IonCard
+          className={`plan-card premium-card ${
+            isSelectable && selectedPlan === "premium" ? "selected-plan-card" : ""
+          }`}
+        >
           <IonCardHeader>
             <IonCardTitle className="plan-name">PREMIUM</IonCardTitle>
             <div className="plan-price">
@@ -69,6 +104,16 @@ const PlansSection: React.FC = () => {
                 <IonLabel>Enhanced security (MFA)</IonLabel>
               </IonItem>
             </IonList>
+            {isSelectable ? (
+              <IonButton
+                expand="block"
+                fill={selectedPlan === "premium" ? "solid" : "outline"}
+                className="plan-select-btn"
+                onClick={() => onSelectPlan?.("premium")}
+              >
+                {selectedPlan === "premium" ? "Selected" : "Choose Premium"}
+              </IonButton>
+            ) : null}
           </IonCardContent>
         </IonCard>
       </div>

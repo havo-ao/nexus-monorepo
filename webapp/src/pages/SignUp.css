@@ -9,8 +9,8 @@
   padding: 28px;
   background: rgba(20, 22, 35, 0.9);
   border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(138, 39, 252, 0.35);
-  border: 1px solid rgba(138, 39, 252, 0.25);
+  box-shadow: 0 10px 30px rgba(var(--nexus-accent-rgb), 0.35);
+  border: 1px solid rgba(var(--nexus-accent-rgb), 0.25);
 }
 
 .signup-container h1 {
@@ -24,51 +24,26 @@
   color: rgba(244, 245, 248, 0.8);
 }
 
-.user-type-header h2 {
-  margin: 0 0 12px;
-  font-size: 1.05rem;
-}
-
-.user-type-buttons {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 22px;
-  flex-wrap: wrap;
-}
-
-.user-type-btn {
-  border: 1px solid rgba(138, 39, 252, 0.45);
-  background: rgba(138, 39, 252, 0.15);
-  color: var(--ion-text-color, #f4f5f8);
-  border-radius: 999px;
-  padding: 9px 18px;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 6px 14px rgba(138, 39, 252, 0.28);
-  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.user-type-btn:hover {
-  background: rgba(138, 39, 252, 0.35);
-  box-shadow: 0 10px 20px rgba(138, 39, 252, 0.35);
-  transform: translateY(-1px);
-}
-
-.user-type-btn.active {
-  background: rgba(138, 39, 252, 0.55);
-  border-color: rgba(196, 150, 255, 0.9);
-}
-
 .signup-form {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
+.signup-phone-row {
+  display: grid;
+  gap: 12px;
+}
+
+.signup-phone-code-item,
+.signup-phone-number-item {
+  width: 100%;
+}
+
 .signup-form ion-item {
   --background: rgba(255, 255, 255, 0.04);
   --color: var(--ion-text-color, #f4f5f8);
-  --border-color: rgba(138, 39, 252, 0.28);
+  --border-color: rgba(var(--nexus-accent-rgb), 0.28);
   border-radius: 10px;
 }
 
@@ -84,8 +59,8 @@
 
 .signup-submit {
   margin-top: 10px;
-  --background: #2dd55b;
-  --background-hover: #25b54a;
+  --background: var(--nexus-accent);
+  --background-hover: var(--nexus-accent);
 }
 
 .signup-helper-text {
@@ -98,8 +73,8 @@
   margin: 4px 0 8px;
   padding: 12px 14px;
   border-radius: 10px;
-  background: rgba(138, 39, 252, 0.08);
-  border: 1px solid rgba(138, 39, 252, 0.22);
+  background: rgba(var(--nexus-accent-rgb), 0.08);
+  border: 1px solid rgba(var(--nexus-accent-rgb), 0.22);
 }
 
 .password-rules-title {
@@ -130,7 +105,7 @@
 }
 
 .password-rules li.met {
-  color: #86efac;
+  color: var(--nexus-accent-text);
 }
 
 .password-rules-icon {
@@ -140,26 +115,15 @@
   font-weight: 700;
 }
 
-.signup-placeholder {
-  margin-top: 6px;
-  background: rgba(138, 39, 252, 0.12);
-  border: 1px dashed rgba(138, 39, 252, 0.45);
-  border-radius: 12px;
-  padding: 16px;
-}
-
-.signup-placeholder h3 {
-  margin: 0 0 8px;
-}
-
-.signup-placeholder p {
-  margin: 0;
-  color: rgba(244, 245, 248, 0.82);
-}
-
 @media (max-width: 768px) {
   .signup-container {
     margin: 24px auto;
     padding: 20px;
+  }
+}
+
+@media (min-width: 860px) {
+  .signup-phone-row {
+    grid-template-columns: 180px minmax(0, 1fr);
   }
 }

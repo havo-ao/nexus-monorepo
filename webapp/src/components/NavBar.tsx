@@ -1,25 +1,63 @@
-// src/components/NavBar.tsx
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { IonIcon } from '@ionic/react';
 import {
-  IonButton,
-  IonHeader,
-  IonIcon,
-  IonToolbar,
-  useIonViewDidEnter
-} from '@ionic/react';
-import { useHistory } from 'react-router-dom';
-import { logInOutline, logOutOutline, personAddOutline } from 'ionicons/icons';
+  albumsOutline,
+  analyticsOutline,
+  briefcaseOutline,
+  cardOutline,
+  gridOutline,
+  homeOutline,
+  informationCircleOutline,
+  logInOutline,
+  logOutOutline,
+  notificationsOutline,
+  personAddOutline,
+  personCircleOutline,
+  planetOutline,
+  pricetagsOutline,
+  ribbonOutline,
+  shieldCheckmarkOutline,
+  sparklesOutline
+} from 'ionicons/icons';
+import { useHistory, useLocation } from 'react-router-dom';
 import type { UserProfile } from '../api/types';
-import { clearAuthSession, formatUserDisplayName, getStoredUser } from '../auth/storage';
+import { clearAuthSession, formatUserDisplayName, getStoredUser, SESSION_CHANGE_EVENT } from '../auth/storage';
 import './NavBar.css';
+
+type NavItem = {
+  label: string;
+  icon: string;
+  path?: string;
+  hash?: string;
+  action: () => void;
+};
 
 const NavBar: React.FC = () => {
   const history = useHistory();
+  const location = useLocation();
   const [sessionUser, setSessionUser] = useState<UserProfile | null>(() => getStoredUser());
+  const isAdmin = sessionUser?.userRol === 'ADMIN';
 
-  useIonViewDidEnter(() => {
-    setSessionUser(getStoredUser());
-  });
+  useEffect(() => {
+    const handleSessionChange = () => setSessionUser(getStoredUser());
+    window.addEventListener(SESSION_CHANGE_EVENT, handleSessionChange);
+    return () => window.removeEventListener(SESSION_CHANGE_EVENT, handleSessionChange);
+  }, []);
+
+  useEffect(() => {
+    document.body.classList.add('nexus-sidebar-layout');
+    return () => {
+      document.body.classList.remove('nexus-sidebar-layout');
+    };
+  }, []);
+
+  const goToHomeSection = (sectionId: string) => {
+    history.push({ pathname: '/', hash: `#${sectionId}` });
+  };
+
+  const goToRoute = (path: string) => {
+    history.push(path);
+  };
 
   const handleLogout = () => {
     clearAuthSession();
@@ -27,59 +65,112 @@ const NavBar: React.FC = () => {
     history.push('/');
   };
 
-  const goToHomeSection = (sectionId: string) => {
-    history.push({ pathname: '/', hash: `#${sectionId}` });
+  const guestLinks = useMemo<NavItem[]>(
+    () => [
+      { label: 'Home', icon: homeOutline, path: '/', action: () => goToRoute('/') },
+      { label: 'About', icon: informationCircleOutline, path: '/', hash: '#about-section', action: () => goToHomeSection('about-section') },
+      { label: 'Plans', icon: pricetagsOutline, path: '/', hash: '#plans-section', action: () => goToHomeSection('plans-section') },
+      { label: 'Brokers', icon: briefcaseOutline, path: '/', hash: '#brokers-section', action: () => goToHomeSection('brokers-section') },
+      { label: 'Markets', icon: analyticsOutline, path: '/', hash: '#markets-section', action: () => goToHomeSection('markets-section') },
+      { label: 'Security', icon: shieldCheckmarkOutline, path: '/', hash: '#security-section', action: () => goToHomeSection('security-section') }
+    ],
+    [history]
+  );
+
+  const memberLinks = useMemo<NavItem[]>(
+    () => [
+      { label: 'Profile', icon: personCircleOutline, path: '/profile', action: () => goToRoute('/profile') },
+      { label: 'Subscription', icon: sparklesOutline, path: '/plan-selection', action: () => goToRoute('/plan-selection') },
+      { label: 'Notifications', icon: notificationsOutline, path: '/notifications', action: () => goToRoute('/notifications') },
+      { label: 'Dashboard', icon: gridOutline, path: '/dashboard', action: () => goToRoute('/dashboard') },
+      { label: 'Portfolio', icon: albumsOutline, path: '/portfolio', action: () => goToRoute('/portfolio') }
+    ],
+    [history]
+  );
+
+  const adminLinks = useMemo<NavItem[]>(
+    () => [
+      { label: 'Profile', icon: personCircleOutline, path: '/profile', action: () => goToRoute('/profile') },
+      { label: 'Manage Admins', icon: ribbonOutline, path: '/manage-admins', action: () => goToRoute('/manage-admins') },
+      { label: 'Manage Plans', icon: cardOutline, path: '/manage-plans', action: () => goToRoute('/manage-plans') }
+    ],
+    [history]
+  );
+
+  const navItems = sessionUser ? (isAdmin ? adminLinks : memberLinks) : guestLinks;
+
+  const isItemActive = (item: NavItem) => {
+    if (item.path && location.pathname !== item.path) {
+      return false;
+    }
+
+    if (item.hash) {
+      return location.hash === item.hash;
+    }
+
+    return item.path ? location.pathname === item.path : false;
   };
 
   return (
-    <IonHeader>
-      <IonToolbar className="landing-toolbar">
-        <div slot="start" className="toolbar-brand">
+    <aside className="nexus-sidebar" aria-label="Primary navigation">
+      <div className="nexus-sidebar-top">
+        <button
+          type="button"
+          className="nexus-sidebar-logo"
+          onClick={() => history.push('/')}
+          aria-label="Go to home"
+        >
+          <span className="nexus-sidebar-logo-mark">
+            <IonIcon icon={sparklesOutline} />
+          </span>
+          <span className="nexus-sidebar-logo-text">Nexus</span>
+        </button>
+
+        {sessionUser ? (
+          <div className="nexus-sidebar-user" aria-live="polite">
+            <strong>{formatUserDisplayName(sessionUser)}</strong>
+            <span>@{sessionUser.username}</span>
+          </div>
+        ) : (
+          <p className="nexus-sidebar-tagline">Smart trading tools and clearer decisions in one workspace.</p>
+        )}
+      </div>
+
+      <nav className="nexus-sidebar-nav">
+        {navItems.map((item) => (
           <button
             type="button"
-            className="logo clickable-logo"
-            onClick={() => history.push('/')}
-            aria-label="Go to home"
+            key={item.label}
+            className={`nexus-sidebar-link ${isItemActive(item) ? 'active' : ''}`}
+            onClick={item.action}
+            aria-current={isItemActive(item) ? 'page' : undefined}
           >
-            Nexus
+            <IonIcon icon={item.icon} />
+            <span>{item.label}</span>
           </button>
-        </div>
+        ))}
+      </nav>
 
-        <div className="nav-links">
-          <button type="button" onClick={() => goToHomeSection('about-section')}>About</button>
-          <button type="button" onClick={() => goToHomeSection('plans-section')}>Plans</button>
-          <button type="button" onClick={() => goToHomeSection('brokers-section')}>Brokers</button>
-          <button type="button" onClick={() => goToHomeSection('markets-section')}>Markets</button>
-          <button type="button" onClick={() => goToHomeSection('security-section')}>Security</button>
-        </div>
-
-        <div slot="end" className="action-buttons">
-          {sessionUser ? (
-            <>
-              <div className="nav-user-summary" aria-live="polite">
-                <span className="nav-user-name">{formatUserDisplayName(sessionUser)}</span>
-                <span className="nav-user-meta">@{sessionUser.username}</span>
-              </div>
-              <IonButton fill="clear" className="login-btn" onClick={handleLogout}>
-                <IonIcon slot="start" icon={logOutOutline} />
-                LOG OUT
-              </IonButton>
-            </>
-          ) : (
-            <>
-              <IonButton fill="clear" className="login-btn" routerLink="/login" routerDirection="forward">
-                <IonIcon slot="start" icon={logInOutline} />
-                LOG IN
-              </IonButton>
-              <IonButton fill="solid" className="signup-btn" routerLink="/signup" routerDirection="forward">
-                <IonIcon slot="start" icon={personAddOutline} />
-                SIGN UP
-              </IonButton>
-            </>
-          )}
-        </div>
-      </IonToolbar>
-    </IonHeader>
+      <div className="nexus-sidebar-footer">
+        {sessionUser ? (
+          <button type="button" className="nexus-sidebar-action nexus-sidebar-action--ghost" onClick={handleLogout}>
+            <IonIcon icon={logOutOutline} />
+            <span>Log Out</span>
+          </button>
+        ) : (
+          <>
+            <button type="button" className="nexus-sidebar-action nexus-sidebar-action--ghost" onClick={() => goToRoute('/login')}>
+              <IonIcon icon={logInOutline} />
+              <span>Log In</span>
+            </button>
+            <button type="button" className="nexus-sidebar-action nexus-sidebar-action--solid" onClick={() => goToRoute('/signup')}>
+              <IonIcon icon={personAddOutline} />
+              <span>Sign Up</span>
+            </button>
+          </>
+        )}
+      </div>
+    </aside>
   );
 };
 

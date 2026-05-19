@@ -13,7 +13,7 @@
   font-family: 'Montserrat', sans-serif;
   font-size: 5rem;
   font-weight: 900;
-  background: linear-gradient(135deg, #8a27fc, #1a8a3a);
+  background: var(--nexus-accent-gradient);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
