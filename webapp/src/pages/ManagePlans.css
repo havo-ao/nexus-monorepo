@@ -1,0 +1,202 @@
+.manage-plans-content {
+  --background:
+    radial-gradient(circle at top left, rgba(var(--nexus-accent-soft-rgb), 0.08), transparent 24%),
+    radial-gradient(circle at top center, rgba(var(--nexus-accent-rgb), 0.16), transparent 40%),
+    linear-gradient(180deg, #0b0818 0%, #15112f 100%);
+  color: #f4f5f8;
+  font-family: "Poppins", "Segoe UI", system-ui, sans-serif;
+}
+
+.manage-plans-container {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 28px 24px 44px;
+}
+
+.manage-plans-hero,
+.manage-plans-panel,
+.manage-plans-message,
+.manage-plans-result-card {
+  border-radius: 28px;
+  background: rgba(14, 10, 35, 0.88);
+  border: 1px solid rgba(var(--nexus-accent-rgb), 0.18);
+  box-shadow: 0 18px 54px rgba(11, 7, 28, 0.3);
+}
+
+.manage-plans-hero {
+  padding: 30px 28px;
+  background: var(--nexus-surface-gradient);
+}
+
+.manage-plans-kicker {
+  display: inline-block;
+  margin-bottom: 10px;
+  color: var(--nexus-accent-text);
+  font-family: "Montserrat", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+}
+
+.manage-plans-hero h1,
+.manage-plans-panel-head h2,
+.manage-plans-result-head h3 {
+  margin: 0;
+  font-family: "Montserrat", sans-serif;
+  font-weight: 800;
+  color: #fff;
+}
+
+.manage-plans-hero p,
+.manage-plans-panel-head p,
+.manage-plans-result-card p {
+  margin: 12px 0 0;
+  color: #d8d0ff;
+  line-height: 1.7;
+}
+
+.manage-plans-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.manage-plans-action-btn {
+  border: 1px solid rgba(var(--nexus-accent-rgb), 0.45);
+  background: rgba(var(--nexus-accent-rgb), 0.15);
+  color: #f4f5f8;
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 6px 14px rgba(var(--nexus-accent-rgb), 0.22);
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.manage-plans-action-btn:hover,
+.manage-plans-action-btn.active {
+  background: rgba(var(--nexus-accent-rgb), 0.45);
+  box-shadow: 0 10px 20px rgba(var(--nexus-accent-rgb), 0.32);
+  transform: translateY(-1px);
+}
+
+.manage-plans-message {
+  margin-top: 16px;
+  padding: 18px 20px;
+}
+
+.manage-plans-message--error {
+  color: #ffbfd0;
+  border-color: rgba(255, 120, 160, 0.24);
+}
+
+.manage-plans-panel {
+  margin-top: 18px;
+  padding: 24px;
+}
+
+.manage-plans-panel-head {
+  margin-bottom: 18px;
+}
+
+.manage-plans-form {
+  display: grid;
+  gap: 16px;
+}
+
+.manage-plans-form-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.manage-plans-form ion-item,
+.manage-plans-id-field {
+  --background: rgba(255, 255, 255, 0.04);
+  --color: #f4f5f8;
+  --border-color: rgba(var(--nexus-accent-rgb), 0.22);
+  border-radius: 18px;
+}
+
+.manage-plans-form ion-label,
+.manage-plans-id-field ion-label {
+  color: rgba(244, 245, 248, 0.88) !important;
+}
+
+.manage-plans-form ion-input,
+.manage-plans-form ion-select,
+.manage-plans-id-field ion-input {
+  --color: #f4f5f8;
+  --placeholder-color: rgba(244, 245, 248, 0.55);
+}
+
+.manage-plans-id-field {
+  margin-bottom: 16px;
+}
+
+.manage-plans-results {
+  display: grid;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.manage-plans-result-card {
+  padding: 18px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(var(--nexus-accent-rgb), 0.08));
+}
+
+.manage-plans-result-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.manage-plans-result-grid {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+  color: #d8d0ff;
+}
+
+.plan-status {
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255, 120, 160, 0.12);
+  border: 1px solid rgba(255, 120, 160, 0.24);
+  color: #ffd1df;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.plan-status--active {
+  background: rgba(var(--nexus-accent-rgb), 0.12);
+  border-color: rgba(var(--nexus-accent-rgb), 0.22);
+  color: var(--nexus-accent-text);
+}
+
+@media (min-width: 860px) {
+  .manage-plans-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .manage-plans-form-grid-wide {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 768px) {
+  .manage-plans-container {
+    padding: 22px 16px 36px;
+  }
+
+  .manage-plans-hero,
+  .manage-plans-panel {
+    padding: 22px;
+  }
+
+  .manage-plans-result-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
