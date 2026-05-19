@@ -39,7 +39,20 @@ describe('Login page', () => {
   });
 
   it('calls login and redirects to dashboard for a trader role', async () => {
-    mockedLogin.mockResolvedValue({ user: { userRol: 'TRADER' } });
+    mockedLogin.mockResolvedValue({
+      accessToken: 'token',
+      refreshToken: 'refresh',
+      tokenType: 'Bearer',
+      expiresIn: 3600,
+      user: {
+        id: 1,
+        name: 'Test',
+        surname: 'User',
+        email: 'user@example.com',
+        username: 'testuser',
+        userRol: 'TRADER'
+      }
+    });
     const history = createMemoryHistory({ initialEntries: ['/login'] });
 
     const { container } = render(
