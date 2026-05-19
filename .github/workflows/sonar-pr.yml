@@ -260,9 +260,13 @@ jobs:
           args: >
             -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
             -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
-            -Dsonar.javascript.lcov.reportPaths=services/trading-service/coverage/lcov.info,services/market-service/coverage/lcov.info,services/portfolio-service/coverage/lcov.info            
+            -Dsonar.sources=services/compliance-service/src/main/java,services/identity-service/src/main/java,services/market-service/src/main/java,services/portfolio-service/src/main/java,services/trading-service/src/main/java,webapp/src
+            -Dsonar.tests=services/compliance-service/src/test/java,services/identity-service/src/test/java,services/market-service/src/test/java,services/portfolio-service/src/test/java,services/trading-service/src/test/java,webapp/src
+            -Dsonar.test.inclusions=**/*Test.java,**/*Tests.java,**/*.spec.ts,**/*.test.ts,**/*.e2e-spec.ts,**/cypress/**/*.ts
+            -Dsonar.java.binaries=services/identity-service/target/classes
+            -Dsonar.javascript.lcov.reportPaths=services/trading-service/coverage/lcov.info,services/market-service/coverage/lcov.info,services/portfolio-service/coverage/lcov.info
             -Dsonar.coverage.jacoco.xmlReportPaths=services/identity-service/target/site/jacoco/jacoco.xml
             -Dsonar.coverage.exclusions=services/identity-service/src/main/java/com/nexus/identityservice/IdentityServiceApplication.java,services/identity-service/src/main/java/com/nexus/identityservice/config/**,services/identity-service/src/main/java/com/nexus/identityservice/controller/**,services/identity-service/src/main/java/com/nexus/identityservice/dto/**,services/identity-service/src/main/java/com/nexus/identityservice/exception/**,services/identity-service/src/main/java/com/nexus/identityservice/mapper/**,services/identity-service/src/main/java/com/nexus/identityservice/model/**
             -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/build/**,**/coverage/**,**/.next/**,**/.ionic/**,**/target/**,**/mvnw,**/mvnw.cmd,**/database/migrations/**,**/postman/**
-            -Dsonar.cpd.exclusions=**/*.spec.ts,**/*.e2e-spec.ts,**/*.test.ts,**/database/migrations/**,**/postman/**,services/portfolio-service/src/common/tracing/**,services/portfolio-service/src/portfolio/dto/**
+            -Dsonar.cpd.exclusions=**/*Test.java,**/*Tests.java,**/*.spec.ts,**/*.test.ts,**/*.e2e-spec.ts,**/database/migrations/**,**/postman/**,services/portfolio-service/src/common/tracing/**,services/portfolio-service/src/portfolio/dto/**
             -Dsonar.qualitygate.wait=true
