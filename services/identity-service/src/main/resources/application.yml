@@ -10,7 +10,7 @@ spring:
     hibernate:
       ddl-auto: update
     properties:
-      show-sql: true
+      show-sql: false
       hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
 
@@ -40,6 +40,6 @@ frontend-domain: ${FRONTEND_DOMAIN}
 
 logging:
   level:
-    com.nexus.identityservice: DEBUG # tus paquetes
-    org.springframework.web: DEBUG # peticiones HTTP entrantes
-    org.springframework.web.servlet.mvc.method.annotation: TRACE # más detalle
+    com.nexus.identityservice: INFO
+    org.springframework.web: INFO
+    org.springframework.web.servlet.mvc.method.annotation: INFO
