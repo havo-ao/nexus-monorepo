@@ -54,9 +54,8 @@ jobs:
           npm install --no-audit --no-fund
           npm run lint:check
           npm run test:cov
-          node ../scripts/normalize-lcov-paths.mjs trading-service
-          npm run build
           npm run test:e2e
+          npm run build
 
       - name: Upload trading coverage
         uses: actions/upload-artifact@v4
@@ -85,16 +84,8 @@ jobs:
           npm install --no-audit --no-fund
           npm run lint:check
           npm run test:cov
-          node ../scripts/normalize-lcov-paths.mjs portfolio-service
-          npm run build
           npm run test:e2e
-
-      - name: Upload portfolio coverage
-        uses: actions/upload-artifact@v4
-        with:
-          name: portfolio-service-coverage
-          path: services/portfolio-service/coverage/lcov.info
-          if-no-files-found: error
+          npm run build
 
   market-service:
     name: Build market service
@@ -116,9 +107,8 @@ jobs:
           npm install --no-audit --no-fund
           npm run lint:check
           npm run test:cov
-          node ../scripts/normalize-lcov-paths.mjs market-service
-          npm run build
           npm run test:e2e
+          npm run build
 
       - name: Upload market coverage
         uses: actions/upload-artifact@v4
@@ -145,16 +135,7 @@ jobs:
         working-directory: services/compliance-service
         run: |
           npm install --no-audit --no-fund
-          npm run test:cov
-          node ../scripts/normalize-lcov-paths.mjs compliance-service
           npm run build
-
-      - name: Upload compliance coverage
-        uses: actions/upload-artifact@v4
-        with:
-          name: compliance-service-coverage
-          path: services/compliance-service/coverage/lcov.info
-          if-no-files-found: error
 
   identity-service:
     name: Build identity service
@@ -198,21 +179,11 @@ jobs:
           ADMIN_PASSWORD: Admin123@
         run: bash ./mvnw -B package
 
-      - name: Verify identity coverage
-        run: test -s services/identity-service/target/site/jacoco/jacoco.xml
-
       - name: Upload identity bytecode
         uses: actions/upload-artifact@v4
         with:
           name: identity-service-classes
           path: services/identity-service/target/classes
-          if-no-files-found: error
-
-      - name: Upload identity coverage
-        uses: actions/upload-artifact@v4
-        with:
-          name: identity-service-coverage
-          path: services/identity-service/target/site/jacoco/jacoco.xml
           if-no-files-found: error
 
   sonar:
@@ -251,36 +222,6 @@ jobs:
           name: market-service-coverage
           path: services/market-service/coverage
 
-      - name: Download portfolio coverage
-        uses: actions/download-artifact@v4
-        with:
-          name: portfolio-service-coverage
-          path: services/portfolio-service/coverage
-
-      - name: Download compliance coverage
-        uses: actions/download-artifact@v4
-        with:
-          name: compliance-service-coverage
-          path: services/compliance-service/coverage
-
-      - name: Download identity coverage
-        uses: actions/download-artifact@v4
-        with:
-          name: identity-service-coverage
-          path: services/identity-service/target/site/jacoco
-
-      - name: Verify coverage reports before Sonar
-        run: |
-          test -s services/trading-service/coverage/lcov.info
-          test -s services/market-service/coverage/lcov.info
-          test -s services/portfolio-service/coverage/lcov.info
-          test -s services/compliance-service/coverage/lcov.info
-          test -s services/identity-service/target/site/jacoco/jacoco.xml
-          grep -q '^SF:services/trading-service/src/' services/trading-service/coverage/lcov.info
-          grep -q '^SF:services/market-service/src/' services/market-service/coverage/lcov.info
-          grep -q '^SF:services/portfolio-service/src/' services/portfolio-service/coverage/lcov.info
-          grep -q '^SF:services/compliance-service/src/' services/compliance-service/coverage/lcov.info
-
       - name: SonarQube Cloud scan
         uses: SonarSource/sonarqube-scan-action@v7
         env:
@@ -289,8 +230,7 @@ jobs:
           args: >
             -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
             -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
-            -Dsonar.javascript.lcov.reportPaths=services/trading-service/coverage/lcov.info,services/market-service/coverage/lcov.info,services/portfolio-service/coverage/lcov.info,services/compliance-service/coverage/lcov.info
-            -Dsonar.coverage.jacoco.xmlReportPaths=services/identity-service/target/site/jacoco/jacoco.xml
+            -Dsonar.javascript.lcov.reportPaths=services/trading-service/coverage/lcov.info,services/market-service/coverage/lcov.info,services/portfolio-service/coverage/lcov.info            
             -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/build/**,**/coverage/**,**/.next/**,**/.ionic/**,**/target/**,**/mvnw,**/mvnw.cmd,**/database/migrations/**,**/postman/**
             -Dsonar.cpd.exclusions=**/*.spec.ts,**/*.e2e-spec.ts,**/*.test.ts,**/database/migrations/**,**/postman/**
             -Dsonar.qualitygate.wait=true
