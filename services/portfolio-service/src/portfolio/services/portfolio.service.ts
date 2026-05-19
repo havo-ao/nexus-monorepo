@@ -1,5 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { RecordExecutedBuyDto } from '../../positions/dto/record-executed-buy.dto';
 import { PortfolioPositionsRepository } from '../../positions/repositories/portfolio-positions.repository';
+import { PositionsService } from '../../positions/services/positions.service';
 import { ValuationsService } from '../../valuations/services/valuations.service';
 import { PortfolioPositionResponseDto } from '../dto/portfolio-position-response.dto';
 import { PortfolioSectorDistributionResponseDto } from '../dto/portfolio-sector-distribution-response.dto';
@@ -9,6 +11,7 @@ import { PortfolioSummaryResponseDto } from '../dto/portfolio-summary-response.d
 export class PortfolioService {
   constructor(
     private readonly positionsRepository: PortfolioPositionsRepository,
+    private readonly positionsService: PositionsService,
     private readonly valuationsService: ValuationsService,
   ) {}
 
@@ -78,6 +81,14 @@ export class PortfolioService {
       totalValue: distribution.totalValue,
       sectors: distribution.sectors,
     };
+  }
+
+  async recordExecutedBuy(
+    dto: RecordExecutedBuyDto,
+  ): Promise<PortfolioPositionResponseDto> {
+    const position = await this.positionsService.recordExecutedBuy(dto);
+
+    return this.toPositionResponse(position);
   }
 
   calculateCurrentValue(
