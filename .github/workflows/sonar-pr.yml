@@ -31,8 +31,15 @@ jobs:
         working-directory: webapp
         run: |
           npm install --no-audit --no-fund
-          npm run test.unit -- --run
+          npm run test:cov
           npm run build
+
+      - name: Upload webapp coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: webapp-coverage
+          path: webapp/coverage/lcov.info
+          if-no-files-found: error
 
   trading-service:
     name: Build trading service
@@ -252,6 +259,12 @@ jobs:
           name: portfolio-service-coverage
           path: services/portfolio-service/coverage
 
+      - name: Download webapp coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: webapp-coverage
+          path: webapp/coverage
+
       - name: SonarQube Cloud scan
         uses: SonarSource/sonarqube-scan-action@v7
         env:
@@ -264,7 +277,7 @@ jobs:
             -Dsonar.tests=services/compliance-service/test,services/trading-service/test,services/market-service/test,services/portfolio-service/test,services/identity-service/src/test/java,webapp/src
             -Dsonar.test.inclusions=**/*Test.java,**/*Tests.java,**/*.spec.ts,**/*.test.ts,**/*.e2e-spec.ts,**/cypress/**/*.ts
             -Dsonar.java.binaries=services/identity-service/target/classes
-            -Dsonar.javascript.lcov.reportPaths=services/trading-service/coverage/lcov.info,services/market-service/coverage/lcov.info,services/portfolio-service/coverage/lcov.info
+            -Dsonar.javascript.lcov.reportPaths=webapp/coverage/lcov.info,services/trading-service/coverage/lcov.info,services/market-service/coverage/lcov.info,services/portfolio-service/coverage/lcov.info
             -Dsonar.coverage.jacoco.xmlReportPaths=services/identity-service/target/site/jacoco/jacoco.xml
             -Dsonar.coverage.exclusions=services/identity-service/src/main/java/com/nexus/identityservice/IdentityServiceApplication.java,services/identity-service/src/main/java/com/nexus/identityservice/config/**,services/identity-service/src/main/java/com/nexus/identityservice/controller/**,services/identity-service/src/main/java/com/nexus/identityservice/dto/**,services/identity-service/src/main/java/com/nexus/identityservice/exception/**,services/identity-service/src/main/java/com/nexus/identityservice/mapper/**,services/identity-service/src/main/java/com/nexus/identityservice/model/**
             -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/build/**,**/coverage/**,**/.next/**,**/.ionic/**,**/target/**,**/mvnw,**/mvnw.cmd,**/database/migrations/**,**/postman/**
