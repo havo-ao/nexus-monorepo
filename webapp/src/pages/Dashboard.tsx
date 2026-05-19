@@ -18,7 +18,7 @@ import {
   refreshOutline,
   walletOutline,
 } from "ionicons/icons";
-import AppLayout from "../layouts/AppLayout";
+import NavBar from "../components/NavBar";
 import {
   getMarketDashboard,
   type DashboardQuote,
@@ -134,39 +134,39 @@ const Dashboard: React.FC = () => {
 
   return (
     <IonPage>
+      <NavBar />
       <IonContent fullscreen className="dashboard-content">
-        <AppLayout>
-          <main className="dashboard-shell">
-            <header className="dashboard-header">
-              <div>
-                <h1>Dashboard</h1>
-                <p>Welcome back! Here&apos;s your portfolio overview.</p>
-              </div>
-              <IonButton
-                className="dashboard-refresh-button"
-                onClick={() => void loadDashboard()}
-                disabled={isLoading}
-              >
-                <IonIcon slot="start" icon={refreshOutline} />
-                Refresh
-              </IonButton>
-            </header>
+        <main className="dashboard-shell">
+          <header className="dashboard-header">
+            <div>
+              <h1>Dashboard</h1>
+              <p>Welcome back! Here&apos;s your portfolio overview.</p>
+            </div>
+            <IonButton
+              className="dashboard-refresh-button"
+              onClick={() => void loadDashboard()}
+              disabled={isLoading}
+            >
+              <IonIcon slot="start" icon={refreshOutline} />
+              Refresh
+            </IonButton>
+          </header>
 
-            {error && (
-              <section className="dashboard-alert" role="alert">
-                <IonIcon icon={alertCircleOutline} />
-                <span>{error}</span>
-              </section>
-            )}
+          {error && (
+            <section className="dashboard-alert" role="alert">
+              <IonIcon icon={alertCircleOutline} />
+              <span>{error}</span>
+            </section>
+          )}
 
-            {isLoading && !dashboard ? (
-              <section className="dashboard-loading">
-                <IonSpinner name="crescent" />
-                <span>Loading market dashboard</span>
-              </section>
-            ) : (
-              <>
-                <section className="dashboard-metric-grid">
+          {isLoading && !dashboard ? (
+            <section className="dashboard-loading">
+              <IonSpinner name="crescent" />
+              <span>Loading market dashboard</span>
+            </section>
+          ) : (
+            <>
+              <section className="dashboard-metric-grid">
                 <article className="dashboard-metric-card">
                   <div>
                     <span>Total Balance</span>
@@ -368,10 +368,9 @@ const Dashboard: React.FC = () => {
                   </div>
                 </article>
               </section>
-              </>
-            )}
-          </main>
-        </AppLayout>
+            </>
+          )}
+        </main>
       </IonContent>
     </IonPage>
   );
