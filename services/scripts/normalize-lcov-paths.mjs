@@ -20,7 +20,9 @@ try {
 const lcov = await readFile(lcovPath, 'utf8');
 
 const normalizedLcov = lcov.replace(/^SF:(.+)$/gm, (_line, sourceFile) => {
-  const normalizedSourceFile = sourceFile.replaceAll('\\', '/').replace(/^.\//, '');
+  const normalizedSourceFile = sourceFile
+    .replace(/\\/g, '/')
+    .replace(/^.\//, '');
 
   if (normalizedSourceFile.startsWith(servicePrefix)) {
     return `SF:${normalizedSourceFile}`;
