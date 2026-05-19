@@ -188,13 +188,20 @@ jobs:
           STRIPE_MONTHLY_PRICE: price_local_ci_monthly
           STRIPE_YEARLY_PRICE: price_local_ci_yearly
           FRONTEND_DOMAIN: http://localhost:8100
-        run: bash ./mvnw -B package
+        run: bash ./mvnw -B verify
 
       - name: Upload identity bytecode
         uses: actions/upload-artifact@v4
         with:
           name: identity-service-classes
           path: services/identity-service/target/classes
+          if-no-files-found: error
+
+      - name: Upload identity coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: identity-service-coverage
+          path: services/identity-service/target/site/jacoco/jacoco.xml
           if-no-files-found: error
 
   sonar:
@@ -220,6 +227,12 @@ jobs:
         with:
           name: identity-service-classes
           path: services/identity-service/target/classes
+
+      - name: Download identity coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: identity-service-coverage
+          path: services/identity-service/target/site/jacoco
 
       - name: Download trading coverage
         uses: actions/download-artifact@v4
@@ -248,6 +261,7 @@ jobs:
             -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
             -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
             -Dsonar.javascript.lcov.reportPaths=services/trading-service/coverage/lcov.info,services/market-service/coverage/lcov.info,services/portfolio-service/coverage/lcov.info            
+            -Dsonar.coverage.jacoco.xmlReportPaths=services/identity-service/target/site/jacoco/jacoco.xml
             -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/build/**,**/coverage/**,**/.next/**,**/.ionic/**,**/target/**,**/mvnw,**/mvnw.cmd,**/database/migrations/**,**/postman/**
             -Dsonar.cpd.exclusions=**/*.spec.ts,**/*.e2e-spec.ts,**/*.test.ts,**/database/migrations/**,**/postman/**,services/portfolio-service/src/common/tracing/**,services/portfolio-service/src/portfolio/dto/**
             -Dsonar.qualitygate.wait=true
