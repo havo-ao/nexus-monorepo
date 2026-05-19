@@ -30,7 +30,7 @@ public class StripeSubscriptionService {
     private final TraderSubscriptionRepository traderSubscriptionRepository;
 
     @Value("${frontend-domain}")
-    private String FRONT_END_DOMAIN;
+    private String frontEndDomain;
 
     @PostConstruct
     public void init() {
@@ -55,11 +55,11 @@ public class StripeSubscriptionService {
                         .setMode(SessionCreateParams.Mode.SUBSCRIPTION)
 
                         .setSuccessUrl(
-                                FRONT_END_DOMAIN.concat("/success?session_id={CHECKOUT_SESSION_ID}")
+                                buildCheckoutSuccessUrl()
                         )
 
                         .setCancelUrl(
-                                FRONT_END_DOMAIN.concat("/cancelledPayment")
+                                buildCheckoutCancelUrl()
                         )
                         .putMetadata("traderId", traderId.toString())
                         .putMetadata("planType", plan.toLowerCase())
@@ -124,5 +124,17 @@ public class StripeSubscriptionService {
                 traderRepository.save(trader);
             }
         }
+    }
+
+    String buildCheckoutSuccessUrl() {
+        return normalizedFrontEndDomain().concat("/success?session_id={CHECKOUT_SESSION_ID}");
+    }
+
+    String buildCheckoutCancelUrl() {
+        return normalizedFrontEndDomain().concat("/cancelledPayment");
+    }
+
+    private String normalizedFrontEndDomain() {
+        return frontEndDomain.replaceAll("/+$", "");
     }
 }

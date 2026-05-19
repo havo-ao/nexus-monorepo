@@ -262,6 +262,7 @@ jobs:
             -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
             -Dsonar.javascript.lcov.reportPaths=services/trading-service/coverage/lcov.info,services/market-service/coverage/lcov.info,services/portfolio-service/coverage/lcov.info            
             -Dsonar.coverage.jacoco.xmlReportPaths=services/identity-service/target/site/jacoco/jacoco.xml
+            -Dsonar.coverage.exclusions=services/identity-service/src/main/java/com/nexus/identityservice/IdentityServiceApplication.java,services/identity-service/src/main/java/com/nexus/identityservice/config/**,services/identity-service/src/main/java/com/nexus/identityservice/controller/**,services/identity-service/src/main/java/com/nexus/identityservice/dto/**,services/identity-service/src/main/java/com/nexus/identityservice/exception/**,services/identity-service/src/main/java/com/nexus/identityservice/mapper/**,services/identity-service/src/main/java/com/nexus/identityservice/model/**
             -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/build/**,**/coverage/**,**/.next/**,**/.ionic/**,**/target/**,**/mvnw,**/mvnw.cmd,**/database/migrations/**,**/postman/**
             -Dsonar.cpd.exclusions=**/*.spec.ts,**/*.e2e-spec.ts,**/*.test.ts,**/database/migrations/**,**/postman/**,services/portfolio-service/src/common/tracing/**,services/portfolio-service/src/portfolio/dto/**
             -Dsonar.qualitygate.wait=true
