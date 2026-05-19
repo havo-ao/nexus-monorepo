@@ -1,4 +1,5 @@
 import { InMemoryInstrumentsRepository } from './in-memory-instruments.repository';
+import { Instrument } from '../entities/instrument.entity';
 
 describe('InMemoryInstrumentsRepository', () => {
   it('returns configured active instruments sorted by symbol', () => {
@@ -30,5 +31,29 @@ describe('InMemoryInstrumentsRepository', () => {
     const repository = new InMemoryInstrumentsRepository();
 
     expect(repository.findBySymbol('ZZZZ')).toBeNull();
+  });
+
+  it('upserts synchronized instruments into the local catalog', () => {
+    const repository = new InMemoryInstrumentsRepository();
+
+    repository.saveInstruments([
+      Instrument.restore({
+        symbol: ' nvda ',
+        name: 'NVIDIA Corporation',
+        marketCode: 'nasdaq',
+        currency: 'usd',
+        sector: 'Unclassified',
+        status: 'ACTIVE',
+      }),
+    ]);
+
+    expect(repository.findBySymbol('NVDA')?.toSnapshot()).toEqual({
+      symbol: 'NVDA',
+      name: 'NVIDIA Corporation',
+      marketCode: 'NASDAQ',
+      currency: 'USD',
+      sector: 'Unclassified',
+      status: 'ACTIVE',
+    });
   });
 });

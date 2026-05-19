@@ -1,4 +1,4 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, HttpCode, Param, Post } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiNotFoundResponse,
@@ -9,7 +9,9 @@ import {
 } from '@nestjs/swagger';
 import { InstrumentDetailResponseDto } from '../dto/instrument-detail-response.dto';
 import { InstrumentResponseDto } from '../dto/instrument-response.dto';
+import { SyncInstrumentsResponseDto } from '../dto/sync-instruments-response.dto';
 import { InstrumentDetailService } from '../services/instrument-detail.service';
+import { InstrumentsSyncService } from '../services/instruments-sync.service';
 import { InstrumentsService } from '../services/instruments.service';
 
 @ApiTags('instruments')
@@ -21,7 +23,20 @@ export class InstrumentsController {
   constructor(
     private readonly instrumentsService: InstrumentsService,
     private readonly instrumentDetailService: InstrumentDetailService,
+    private readonly instrumentsSyncService: InstrumentsSyncService,
   ) {}
+
+  @Post('sync')
+  @HttpCode(200)
+  @ApiOperation({
+    summary: 'Synchronize available instruments catalog',
+    description:
+      'Subtarea NEX-104: sincroniza catalogo de acciones desde proveedor externo y conserva el ultimo catalogo valido si el proveedor falla. Trazabilidad: EC-MOD-02, EC-REND-03, ASR-19, ASR-24.',
+  })
+  @ApiOkResponse({ type: SyncInstrumentsResponseDto })
+  synchronizeInstruments(): Promise<SyncInstrumentsResponseDto> {
+    return this.instrumentsSyncService.synchronizeInstruments();
+  }
 
   @Get()
   @ApiOperation({

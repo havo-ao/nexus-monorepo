@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MYSQL_POOL } from '../../../database/database.module';
+import { Instrument } from '../entities/instrument.entity';
 import { MysqlInstrumentsRepository } from './mysql-instruments.repository';
 
 describe('MysqlInstrumentsRepository', () => {
@@ -53,6 +54,30 @@ describe('MysqlInstrumentsRepository', () => {
         status: 'ACTIVE',
       },
     ]);
+  });
+
+  it('upserts synchronized instruments', async () => {
+    const instrument = Instrument.restore({
+      symbol: 'nvda',
+      name: 'NVIDIA Corporation',
+      marketCode: 'nasdaq',
+      currency: 'usd',
+      sector: 'Unclassified',
+      status: 'ACTIVE',
+    });
+
+    await repository.saveInstruments([instrument]);
+
+    expect(pool.query).toHaveBeenCalledWith(
+      expect.stringContaining('ON DUPLICATE KEY UPDATE'),
+      ['NVDA', 'NVIDIA Corporation', 'NASDAQ', 'USD', 'Unclassified', 'ACTIVE'],
+    );
+  });
+
+  it('does not persist when synchronized catalog is empty', async () => {
+    await repository.saveInstruments([]);
+
+    expect(pool.query).not.toHaveBeenCalled();
   });
 
   it('rejects invalid stored metadata through the domain entity', async () => {

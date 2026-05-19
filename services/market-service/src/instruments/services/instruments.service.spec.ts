@@ -6,6 +6,7 @@ import { InstrumentsService } from './instruments.service';
 
 describe('InstrumentsService', () => {
   const repository: jest.Mocked<InstrumentsRepository> = {
+    saveInstruments: jest.fn(),
     findAvailable: jest.fn(),
     findBySymbol: jest.fn(),
   };

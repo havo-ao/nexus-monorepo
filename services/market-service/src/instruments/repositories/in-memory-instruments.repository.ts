@@ -64,12 +64,22 @@ function toActiveInstrumentSnapshot(
 
 @Injectable()
 export class InMemoryInstrumentsRepository implements InstrumentsRepository {
-  private readonly instruments = ACTIVE_INSTRUMENT_ROWS.map((row) =>
-    Instrument.restore(toActiveInstrumentSnapshot(row)),
+  private readonly instruments = new Map(
+    ACTIVE_INSTRUMENT_ROWS.map((row) => {
+      const instrument = Instrument.restore(toActiveInstrumentSnapshot(row));
+
+      return [instrument.toSnapshot().symbol, instrument];
+    }),
   );
 
+  saveInstruments(instruments: Instrument[]): void {
+    for (const instrument of instruments) {
+      this.instruments.set(instrument.toSnapshot().symbol, instrument);
+    }
+  }
+
   findAvailable(): Instrument[] {
-    return this.instruments
+    return [...this.instruments.values()]
       .filter((instrument) => instrument.isAvailable())
       .sort((leftInstrument, rightInstrument) =>
         leftInstrument
@@ -81,10 +91,6 @@ export class InMemoryInstrumentsRepository implements InstrumentsRepository {
   findBySymbol(symbol: string): Instrument | null {
     const normalizedSymbol = symbol.trim().toUpperCase();
 
-    return (
-      this.instruments.find(
-        (instrument) => instrument.toSnapshot().symbol === normalizedSymbol,
-      ) ?? null
-    );
+    return this.instruments.get(normalizedSymbol) ?? null;
   }
 }

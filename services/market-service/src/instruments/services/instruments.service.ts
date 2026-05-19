@@ -17,7 +17,7 @@ export class InstrumentsService {
     return instruments.map((instrument) => this.toResponse(instrument));
   }
 
-  private toResponse(instrument: Instrument): InstrumentResponseDto {
+  toResponse(instrument: Instrument): InstrumentResponseDto {
     const snapshot = instrument.toSnapshot();
 
     return {

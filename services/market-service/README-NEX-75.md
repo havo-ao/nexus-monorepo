@@ -36,7 +36,23 @@ postman/nexus-market-service-nex-75.postman_collection.json
 Endpoint principal:
 
 ```text
+POST /api/v1/instruments/sync
 GET /api/v1/instruments
+```
+
+La sincronizacion de la subtarea `NEX-104` usa `INSTRUMENT_CATALOG_PROVIDER`.
+Si existe `ALPHA_VANTAGE_API_KEY`, usa Alpha Vantage con `LISTING_STATUS`; si
+no existe, usa un proveedor estatico compatible para no romper el arranque
+local. Se puede forzar el modo estatico con `INSTRUMENT_CATALOG_PROVIDER=static`.
+
+Variables soportadas:
+
+```text
+INSTRUMENT_CATALOG_PROVIDER
+ALPHA_VANTAGE_API_KEY
+ALPHA_VANTAGE_BASE_URL
+ALPHA_VANTAGE_LISTING_STATE=active
+ALPHA_VANTAGE_TIMEOUT_MS=5000
 ```
 
 Resultado esperado:
@@ -72,6 +88,9 @@ Resultado esperado:
   modulo `instruments` o modulo `providers`; BD actualizacion de
   `market_instruments`; Pruebas con mock del proveedor, fallo controlado y
   conservacion del ultimo catalogo valido.
+- Implementacion: `POST /api/v1/instruments/sync` sincroniza el catalogo desde
+  el proveedor configurado, guarda con upsert en `market_instruments` y conserva
+  el ultimo catalogo valido si el proveedor externo falla.
 
 ## Verificacion
 

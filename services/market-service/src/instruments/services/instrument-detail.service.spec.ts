@@ -12,6 +12,7 @@ describe('InstrumentDetailService', () => {
   let service: InstrumentDetailService;
 
   const instrumentsRepository: jest.Mocked<InstrumentsRepository> = {
+    saveInstruments: jest.fn(),
     findAvailable: jest.fn(),
     findBySymbol: jest.fn(),
   };

@@ -35,6 +35,14 @@ interface InstrumentResponse {
   sector: string;
 }
 
+interface SyncInstrumentsResponse {
+  status: string;
+  provider: string;
+  updatedCount: number;
+  preservedLocalCatalog: boolean;
+  instruments: InstrumentResponse[];
+}
+
 interface InstrumentDetailResponse extends InstrumentResponse {
   quote: MarketQuoteResponse | null;
 }
@@ -204,6 +212,49 @@ describe('AppController (e2e)', () => {
               symbol: 'JPM',
               marketCode: 'NYSE',
               currency: 'USD',
+            }),
+          ]),
+        );
+      });
+  });
+
+  it('/api/v1/instruments/sync (POST) synchronizes available instruments', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/instruments/sync')
+      .expect(200)
+      .expect((response) => {
+        const body = response.body as SyncInstrumentsResponse;
+
+        expect(body).toEqual(
+          expect.objectContaining({
+            status: 'SUCCESS',
+            provider: 'alpha-vantage-listing-compatible',
+            preservedLocalCatalog: false,
+          }),
+        );
+        expect(body.updatedCount).toBeGreaterThan(0);
+        expect(body.instruments).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              symbol: 'AAPL',
+              marketCode: 'NASDAQ',
+              currency: 'USD',
+            }),
+          ]),
+        );
+      });
+
+    await request(app.getHttpServer())
+      .get('/api/v1/instruments')
+      .expect(200)
+      .expect((response) => {
+        const body = response.body as InstrumentResponse[];
+
+        expect(body).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              symbol: 'AAPL',
+              name: 'Apple Inc.',
             }),
           ]),
         );

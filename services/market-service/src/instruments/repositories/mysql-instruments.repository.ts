@@ -20,6 +20,36 @@ interface InstrumentRow extends RowDataPacket {
 export class MysqlInstrumentsRepository implements InstrumentsRepository {
   constructor(@Inject(MYSQL_POOL) private readonly pool: Pool) {}
 
+  async saveInstruments(instruments: Instrument[]): Promise<void> {
+    if (instruments.length === 0) {
+      return;
+    }
+
+    for (const instrument of instruments) {
+      const snapshot = instrument.toSnapshot();
+
+      await this.pool.query(
+        `INSERT INTO market_instruments
+          (symbol, name, market_code, currency, sector, status)
+         VALUES (?, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE
+          name = VALUES(name),
+          market_code = VALUES(market_code),
+          currency = VALUES(currency),
+          sector = VALUES(sector),
+          status = VALUES(status)`,
+        [
+          snapshot.symbol,
+          snapshot.name,
+          snapshot.marketCode,
+          snapshot.currency,
+          snapshot.sector,
+          snapshot.status,
+        ],
+      );
+    }
+  }
+
   async findAvailable(): Promise<Instrument[]> {
     const [rows] = await this.pool.query<InstrumentRow[]>(
       `SELECT symbol, name, market_code, currency, sector, status
