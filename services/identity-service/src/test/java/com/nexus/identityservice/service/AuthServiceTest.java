@@ -1,8 +1,12 @@
 package com.nexus.identityservice.service;
 
+import com.nexus.identityservice.dto.admin.AdminCreateRequest;
+import com.nexus.identityservice.dto.admin.AdminResponse;
 import com.nexus.identityservice.dto.auth.AuthResponse;
 import com.nexus.identityservice.dto.auth.LoginRequest;
 import com.nexus.identityservice.dto.auth.UserResponse;
+import com.nexus.identityservice.dto.trader.TraderCreateRequest;
+import com.nexus.identityservice.dto.trader.TraderResponse;
 import com.nexus.identityservice.exception.UserBannedException;
 import com.nexus.identityservice.mapper.UserMapper;
 import com.nexus.identityservice.model.Genre;
@@ -57,6 +61,30 @@ class AuthServiceTest {
                 traderService,
                 adminService
         );
+    }
+
+    @Test
+    void registerTraderDelegatesToTraderService() {
+        TraderCreateRequest request = new TraderCreateRequest();
+        TraderResponse response = new TraderResponse();
+        when(traderService.create(request)).thenReturn(response);
+
+        TraderResponse result = authService.registerTrader(request);
+
+        assertThat(result).isEqualTo(response);
+        verify(traderService).create(request);
+    }
+
+    @Test
+    void registerAdminDelegatesToAdminService() {
+        AdminCreateRequest request = AdminCreateRequest.builder().build();
+        AdminResponse response = new AdminResponse();
+        when(adminService.create(request)).thenReturn(response);
+
+        AdminResponse result = authService.registerAdmin(request);
+
+        assertThat(result).isEqualTo(response);
+        verify(adminService).create(request);
     }
 
     @Test

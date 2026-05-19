@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -69,6 +70,75 @@ class SubscriptionPlanServiceTest {
                 .hasMessage("Subscription plan with name 'Premium' already exists");
 
         verify(subscriptionPlanRepository, never()).save(any());
+    }
+
+    @Test
+    void getAllReturnsListOfResponses() {
+        SubscriptionPlan plan = new SubscriptionPlan();
+        SubscriptionPlanResponse response = new SubscriptionPlanResponse();
+        when(subscriptionPlanRepository.findAll()).thenReturn(List.of(plan));
+        when(subscriptionPlanMapper.toResponse(plan)).thenReturn(response);
+
+        List<SubscriptionPlanResponse> result = subscriptionPlanService.getAll();
+
+        assertThat(result).hasSize(1).contains(response);
+    }
+
+    @Test
+    void getByIdReturnsResponse() {
+        Long id = 1L;
+        SubscriptionPlan plan = new SubscriptionPlan();
+        SubscriptionPlanResponse response = new SubscriptionPlanResponse();
+        when(subscriptionPlanRepository.findById(id)).thenReturn(Optional.of(plan));
+        when(subscriptionPlanMapper.toResponse(plan)).thenReturn(response);
+
+        SubscriptionPlanResponse result = subscriptionPlanService.getById(id);
+
+        assertThat(result).isEqualTo(response);
+    }
+
+    @Test
+    void updateModifiesExistingPlan() {
+        Long id = 1L;
+        SubscriptionPlanRequest request = request("Updated Premium");
+        SubscriptionPlan existing = new SubscriptionPlan();
+        existing.setName("Premium");
+        SubscriptionPlanResponse response = new SubscriptionPlanResponse();
+
+        when(subscriptionPlanRepository.findById(id)).thenReturn(Optional.of(existing));
+        when(subscriptionPlanRepository.existsByName("Updated Premium")).thenReturn(false);
+        when(subscriptionPlanRepository.save(existing)).thenReturn(existing);
+        when(subscriptionPlanMapper.toResponse(existing)).thenReturn(response);
+
+        SubscriptionPlanResponse result = subscriptionPlanService.update(id, request);
+
+        assertThat(result).isEqualTo(response);
+        verify(subscriptionPlanMapper).updateEntity(existing, request);
+        assertThat(existing.getUpdatedAt()).isNotNull();
+    }
+
+    @Test
+    void updateRejectsDuplicateNameForDifferentPlan() {
+        Long id = 1L;
+        SubscriptionPlanRequest request = request("Already Taken");
+        SubscriptionPlan existing = new SubscriptionPlan();
+        existing.setName("Premium");
+
+        when(subscriptionPlanRepository.findById(id)).thenReturn(Optional.of(existing));
+        when(subscriptionPlanRepository.existsByName("Already Taken")).thenReturn(true);
+
+        assertThatThrownBy(() -> subscriptionPlanService.update(id, request))
+                .isInstanceOf(DuplicateResourceException.class);
+    }
+
+    @Test
+    void deleteRemovesPlanWhenExists() {
+        Long id = 1L;
+        when(subscriptionPlanRepository.existsById(id)).thenReturn(true);
+
+        subscriptionPlanService.delete(id);
+
+        verify(subscriptionPlanRepository).deleteById(id);
     }
 
     @Test

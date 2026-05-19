@@ -15,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Instant;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -76,6 +77,30 @@ class UserLookupServiceTest {
         assertThat(trader.getFailedLoginAttempts()).isEqualTo(5);
         assertThat(trader.getBanUntil()).isNotNull();
         assertThat(trader.getStatus()).isEqualTo(UserStatus.BANNED_FOR_TRIES);
+        verify(traderRepository).save(trader);
+    }
+
+    @Test
+    void existsByEmailChecksAllRoleTables() {
+        when(traderRepository.existsByEmail("test@test.com")).thenReturn(false);
+        when(brokerRepository.existsByEmail("test@test.com")).thenReturn(false);
+        when(adminRepository.existsByEmail("test@test.com")).thenReturn(true);
+
+        assertThat(userLookupService.existsByEmail("test@test.com")).isTrue();
+    }
+
+    @Test
+    void updateLastLoginByIdResetsAttemptsAndBan() {
+        Trader trader = trader();
+        trader.setFailedLoginAttempts(3);
+        trader.setBanUntil(Instant.now());
+        when(traderRepository.findById(7L)).thenReturn(Optional.of(trader));
+
+        userLookupService.updateLastLoginById(7L, "TRADER");
+
+        assertThat(trader.getLastLogin()).isNotNull();
+        assertThat(trader.getFailedLoginAttempts()).isZero();
+        assertThat(trader.getBanUntil()).isNull();
         verify(traderRepository).save(trader);
     }
 
