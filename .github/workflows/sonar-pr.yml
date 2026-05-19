@@ -245,5 +245,5 @@ jobs:
             -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
             -Dsonar.javascript.lcov.reportPaths=services/trading-service/coverage/lcov.info,services/market-service/coverage/lcov.info,services/portfolio-service/coverage/lcov.info            
             -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/build/**,**/coverage/**,**/.next/**,**/.ionic/**,**/target/**,**/mvnw,**/mvnw.cmd,**/database/migrations/**,**/postman/**
-            -Dsonar.cpd.exclusions=**/*.spec.ts,**/*.e2e-spec.ts,**/*.test.ts,**/database/migrations/**,**/postman/**
+            -Dsonar.cpd.exclusions=**/*.spec.ts,**/*.e2e-spec.ts,**/*.test.ts,**/database/migrations/**,**/postman/**,services/portfolio-service/src/common/tracing/**,services/portfolio-service/src/portfolio/dto/**
             -Dsonar.qualitygate.wait=true

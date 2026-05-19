@@ -123,6 +123,53 @@ describe('PortfolioService', () => {
     });
   });
 
+  it('keeps consolidated current value null when one position cannot be valued', async () => {
+    valuationsService.valuePosition
+      .mockResolvedValueOnce({
+        currentPrice: 189.42,
+        currentValue: 1894.2,
+        profitLoss: 370.7,
+        returnPercentage: 24.3321,
+      })
+      .mockResolvedValueOnce({
+        currentPrice: null,
+        currentValue: null,
+        profitLoss: null,
+        returnPercentage: null,
+      });
+    valuationsService.calculateProfitLoss.mockReturnValue(null);
+    valuationsService.calculateReturnPercentage.mockReturnValue(null);
+    positionsRepository.findByTraderId.mockResolvedValue([
+      {
+        id: '15',
+        traderId: '7',
+        stockId: '25',
+        symbol: 'AAPL',
+        quantity: 10,
+        avgBuyPrice: '152.35',
+        totalInvested: '1523.50',
+        lastUpdated: new Date('2026-05-10T22:15:00.000Z'),
+      },
+      {
+        id: '16',
+        traderId: '7',
+        stockId: '26',
+        symbol: null,
+        quantity: 3,
+        avgBuyPrice: '100.00',
+        totalInvested: '300.00',
+        lastUpdated: new Date('2026-05-10T22:15:00.000Z'),
+      },
+    ]);
+
+    await expect(service.getConsolidatedPortfolio('7')).resolves.toMatchObject({
+      traderId: '7',
+      currentValue: null,
+      profitLoss: null,
+      returnPercentage: null,
+    });
+  });
+
   it('calculates current value only when a current price exists', () => {
     expect(service.calculateCurrentValue(10, null)).toBeNull();
     expect(service.calculateCurrentValue(10, 170.25)).toBe(1702.5);
