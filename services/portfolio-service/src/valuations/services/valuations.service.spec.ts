@@ -135,4 +135,23 @@ describe('ValuationsService', () => {
       ],
     });
   });
+
+  it('uses unknown sector without calling market-service when symbol is missing', async () => {
+    await expect(
+      service.calculateSectorDistribution([
+        { symbol: null, currentValue: 200, totalInvested: 150 },
+      ]),
+    ).resolves.toEqual({
+      totalValue: 200,
+      sectors: [
+        {
+          sector: 'Unknown',
+          value: 200,
+          percentage: 100,
+          positions: 1,
+        },
+      ],
+    });
+    expect(marketInstrumentsClient.getSector.mock.calls).toHaveLength(0);
+  });
 });
