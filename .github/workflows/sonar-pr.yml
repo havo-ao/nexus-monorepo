@@ -181,9 +181,13 @@ jobs:
           SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3307/nexus
           SPRING_DATASOURCE_USERNAME: nexus_user
           SPRING_DATASOURCE_PASSWORD: nexus_password
-          JWT_SECRET: local-ci-jwt-secret-change-before-production-123456
+          NEXUS_JWT_SECRET: local-ci-jwt-secret-change-before-production-123456
           ADMIN_EMAIL: admin@nexus.local
           ADMIN_PASSWORD: Admin123@
+          STRIPE_SECRET_KEY: sk_test_local_ci_placeholder
+          STRIPE_MONTHLY_PRICE: price_local_ci_monthly
+          STRIPE_YEARLY_PRICE: price_local_ci_yearly
+          FRONTEND_DOMAIN: http://localhost:8100
         run: bash ./mvnw -B package
 
       - name: Upload identity bytecode
