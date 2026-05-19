@@ -260,8 +260,8 @@ jobs:
           args: >
             -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
             -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
-            -Dsonar.sources=services/compliance-service/src/main/java,services/identity-service/src/main/java,services/market-service/src/main/java,services/portfolio-service/src/main/java,services/trading-service/src/main/java,webapp/src
-            -Dsonar.tests=services/compliance-service/src/test/java,services/identity-service/src/test/java,services/market-service/src/test/java,services/portfolio-service/src/test/java,services/trading-service/src/test/java,webapp/src
+            -Dsonar.sources=services/compliance-service/src,services/trading-service/src,services/market-service/src,services/portfolio-service/src,services/identity-service/src/main/java,webapp/src
+            -Dsonar.tests=services/compliance-service/test,services/trading-service/test,services/market-service/test,services/portfolio-service/test,services/identity-service/src/test/java,webapp/src
             -Dsonar.test.inclusions=**/*Test.java,**/*Tests.java,**/*.spec.ts,**/*.test.ts,**/*.e2e-spec.ts,**/cypress/**/*.ts
             -Dsonar.java.binaries=services/identity-service/target/classes
             -Dsonar.javascript.lcov.reportPaths=services/trading-service/coverage/lcov.info,services/market-service/coverage/lcov.info,services/portfolio-service/coverage/lcov.info
