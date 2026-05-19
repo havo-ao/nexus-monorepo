@@ -6,7 +6,10 @@ import {
   IonInput,
   IonItem,
   IonLabel,
+  IonList,
   IonPage,
+  IonPopover,
+  IonSearchbar,
   IonSelect,
   IonSelectOption,
   IonText,
@@ -54,6 +57,8 @@ const Profile: React.FC = () => {
   const [countries, setCountries] = useState<CountryOption[]>([]);
   const [isLoadingCountries, setIsLoadingCountries] = useState(true);
   const [countryLoadError, setCountryLoadError] = useState("");
+  const [activePicker, setActivePicker] = useState<"phoneCode" | "nationality" | "timezone" | null>(null);
+  const [pickerSearch, setPickerSearch] = useState("");
   const [sessionUser, setSessionUser] = useState(() => getStoredUser());
   const [editValues, setEditValues] = useState<{
     phone: string;
@@ -135,6 +140,57 @@ const Profile: React.FC = () => {
     const generatedTimeZones = intlWithSupportedValues.supportedValuesOf?.("timeZone") ?? [];
     return generatedTimeZones.length > 0 ? generatedTimeZones : FALLBACK_TIME_ZONES;
   }, []);
+
+  const normalizedPickerQuery = pickerSearch.trim().toLowerCase();
+
+  const filteredPhoneCodes = useMemo(
+    () =>
+      countries
+        .filter((country) => country.dialCode)
+        .filter((country) => {
+          if (!normalizedPickerQuery) return true;
+          return (
+            country.name.toLowerCase().includes(normalizedPickerQuery) ||
+            country.code.toLowerCase().includes(normalizedPickerQuery) ||
+            country.dialCode?.toLowerCase().includes(normalizedPickerQuery)
+          );
+        })
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    [countries, normalizedPickerQuery]
+  );
+
+  const filteredNationalities = useMemo(
+    () =>
+      countries
+        .filter((country) => {
+          if (!normalizedPickerQuery) return true;
+          return (
+            country.name.toLowerCase().includes(normalizedPickerQuery) ||
+            country.code.toLowerCase().includes(normalizedPickerQuery)
+          );
+        })
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    [countries, normalizedPickerQuery]
+  );
+
+  const filteredTimeZones = useMemo(
+    () =>
+      timeZoneOptions.filter((timeZone) => {
+        if (!normalizedPickerQuery) return true;
+        return timeZone.toLowerCase().includes(normalizedPickerQuery);
+      }),
+    [timeZoneOptions, normalizedPickerQuery]
+  );
+
+  const closePicker = () => {
+    setActivePicker(null);
+    setPickerSearch("");
+  };
+
+  const handlePickerSelect = (field: "phoneCode" | "nationalityCode" | "timeZone", value: string) => {
+    setEditValues((prev) => ({ ...prev, [field]: value }));
+    closePicker();
+  };
 
   const countryNameByCode = useMemo(
     () =>
@@ -361,10 +417,8 @@ const Profile: React.FC = () => {
                 <div className="profile-summary-list">
                   {renderStaticField("Email", profile.email, mailOutline)}
                   {renderStaticField("Username", profile.username, personCircleOutline)}
-                  {renderStaticField("Role", roleLabel, ribbonOutline)}
-                  {isAdmin
-                    ? renderStaticField("Department", departmentLabel || "-", businessOutline)
-                    : renderStaticField("Nationality", nationalityLabel, flagOutline)}
+                  {isAdmin ? null : renderStaticField("Role", roleLabel, ribbonOutline)}
+                  {isAdmin ? null : renderStaticField("Nationality", nationalityLabel, flagOutline)}
                 </div>
               </aside>
 
@@ -404,23 +458,14 @@ const Profile: React.FC = () => {
                           </div>
                           {editing ? (
                             <div className="phone-input-row">
-                              <IonItem className="phone-code-item">
+                              <IonItem
+                                className="phone-code-item"
+                                button
+                                detail
+                                onClick={() => setActivePicker("phoneCode")}
+                              >
                                 <IonLabel position="stacked">Phone code</IonLabel>
-                                <IonSelect
-                                  interface="popover"
-                                  value={editValues.phoneCode || undefined}
-                                  placeholder="+XX"
-                                  onIonChange={(e) => handleFieldChange("phoneCode", String(e.detail.value ?? ""))}
-                                  required
-                                >
-                                  {countries
-                                    .filter((country) => country.dialCode)
-                                    .map((country) => (
-                                      <IonSelectOption key={`${country.code}-${country.dialCode}`} value={country.dialCode}>
-                                        {country.name} ({country.dialCode})
-                                      </IonSelectOption>
-                                    ))}
-                                </IonSelect>
+                                <IonInput readonly value={editValues.phoneCode} placeholder="+XX" />
                               </IonItem>
                               <IonItem className="phone-number-item">
                                 <IonLabel position="stacked">Phone number</IonLabel>
@@ -465,22 +510,17 @@ const Profile: React.FC = () => {
                           </div>
                           {editing ? (
                             !countryLoadError ? (
-                              <IonItem>
+                              <IonItem
+                                button
+                                detail
+                                onClick={() => setActivePicker("nationality")}
+                              >
                                 <IonLabel position="stacked">Country</IonLabel>
-                                <IonSelect
-                                  interface="alert"
+                                <IonInput
+                                  readonly
+                                  value={editValues.nationalityCode}
                                   placeholder={isLoadingCountries ? "Loading countries..." : "Select your country"}
-                                  disabled={isLoadingCountries}
-                                  value={editValues.nationalityCode || undefined}
-                                  onIonChange={(e) => handleFieldChange("nationalityCode", String(e.detail.value ?? ""))}
-                                  required
-                                >
-                                  {countries.map((country) => (
-                                    <IonSelectOption key={country.code} value={country.code}>
-                                      {country.name}
-                                    </IonSelectOption>
-                                  ))}
-                                </IonSelect>
+                                />
                               </IonItem>
                             ) : (
                               <IonItem>
@@ -524,21 +564,13 @@ const Profile: React.FC = () => {
                             <span>Time zone</span>
                           </div>
                           {editing ? (
-                            <IonItem>
+                            <IonItem
+                              button
+                              detail
+                              onClick={() => setActivePicker("timezone")}
+                            >
                               <IonLabel position="stacked">Time zone</IonLabel>
-                              <IonSelect
-                                interface="alert"
-                                placeholder="Select your timezone"
-                                value={editValues.timeZone || undefined}
-                                onIonChange={(e) => handleFieldChange("timeZone", String(e.detail.value ?? ""))}
-                                required
-                              >
-                                {timeZoneOptions.map((timeZone) => (
-                                  <IonSelectOption key={timeZone} value={timeZone}>
-                                    {timeZone}
-                                  </IonSelectOption>
-                                ))}
-                              </IonSelect>
+                              <IonInput readonly value={editValues.timeZone} placeholder="Select your timezone" />
                             </IonItem>
                           ) : (
                             <p className="profile-field-value">{String(profile.timeZone ?? "-")}</p>
@@ -587,6 +619,53 @@ const Profile: React.FC = () => {
                       </IonButton>
                     </div>
                   ) : null}
+
+                  <IonPopover isOpen={activePicker !== null} onDidDismiss={closePicker}>
+                    <div className="picker-popover-wrapper">
+                      <IonSearchbar
+                        value={pickerSearch}
+                        onIonInput={(e) => setPickerSearch(String(e.detail.value ?? ""))}
+                        placeholder="Search..."
+                      />
+                      <IonList>
+                        {activePicker === "phoneCode" &&
+                          filteredPhoneCodes.map((country) => (
+                            <IonItem
+                              key={`${country.code}-${country.dialCode}`}
+                              button
+                              onClick={() => handlePickerSelect("phoneCode", String(country.dialCode ?? ""))}
+                            >
+                              {country.name} ({country.dialCode})
+                            </IonItem>
+                          ))}
+                        {activePicker === "nationality" &&
+                          filteredNationalities.map((country) => (
+                            <IonItem
+                              key={country.code}
+                              button
+                              onClick={() => handlePickerSelect("nationalityCode", country.code)}
+                            >
+                              {country.name} ({country.code})
+                            </IonItem>
+                          ))}
+                        {activePicker === "timezone" &&
+                          filteredTimeZones.map((timeZone) => (
+                            <IonItem key={timeZone} button onClick={() => handlePickerSelect("timeZone", timeZone)}>
+                              {timeZone}
+                            </IonItem>
+                          ))}
+                        {activePicker && ![
+                          filteredPhoneCodes.length,
+                          filteredNationalities.length,
+                          filteredTimeZones.length,
+                        ].some(Boolean) && (
+                          <IonItem>
+                            No results found.
+                          </IonItem>
+                        )}
+                      </IonList>
+                    </div>
+                  </IonPopover>
                 </form>
               </section>
             </div>

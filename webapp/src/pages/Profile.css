@@ -285,3 +285,12 @@
     grid-column: auto;
   }
 }
+
+.picker-popover-wrapper {
+  max-height: 100vh;
+  min-width: 280px;
+}
+
+.picker-popover-wrapper ion-searchbar {
+  margin: 0;
+}

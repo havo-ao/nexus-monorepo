@@ -5,7 +5,10 @@ import {
   IonInput,
   IonItem,
   IonLabel,
+  IonList,
   IonPage,
+  IonPopover,
+  IonSearchbar,
   IonSelect,
   IonSelectOption,
   IonText,
@@ -54,6 +57,8 @@ const SignUp: React.FC = () => {
   const [isLoadingCountries, setIsLoadingCountries] = useState(true);
   const [countryLoadError, setCountryLoadError] = useState("");
   const [traderForm, setTraderForm] = useState(emptyTraderForm);
+  const [activePicker, setActivePicker] = useState<"phoneCode" | "nationality" | "timezone" | null>(null);
+  const [pickerSearch, setPickerSearch] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const passwordRuleState = evaluatePasswordRules(traderForm.password);
@@ -69,6 +74,57 @@ const SignUp: React.FC = () => {
     const generatedTimeZones = intlWithSupportedValues.supportedValuesOf?.("timeZone") ?? [];
     return generatedTimeZones.length > 0 ? generatedTimeZones : FALLBACK_TIME_ZONES;
   }, []);
+
+  const normalizedPickerQuery = pickerSearch.trim().toLowerCase();
+
+  const filteredPhoneCodes = useMemo(
+    () =>
+      countries
+        .filter((country) => country.dialCode)
+        .filter((country) => {
+          if (!normalizedPickerQuery) return true;
+          return (
+            country.name.toLowerCase().includes(normalizedPickerQuery) ||
+            country.code.toLowerCase().includes(normalizedPickerQuery) ||
+            country.dialCode?.toLowerCase().includes(normalizedPickerQuery)
+          );
+        })
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    [countries, normalizedPickerQuery]
+  );
+
+  const filteredNationalities = useMemo(
+    () =>
+      countries
+        .filter((country) => {
+          if (!normalizedPickerQuery) return true;
+          return (
+            country.name.toLowerCase().includes(normalizedPickerQuery) ||
+            country.code.toLowerCase().includes(normalizedPickerQuery)
+          );
+        })
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    [countries, normalizedPickerQuery]
+  );
+
+  const filteredTimeZones = useMemo(
+    () =>
+      timeZoneOptions.filter((timeZone) => {
+        if (!normalizedPickerQuery) return true;
+        return timeZone.toLowerCase().includes(normalizedPickerQuery);
+      }),
+    [timeZoneOptions, normalizedPickerQuery]
+  );
+
+  const closePicker = () => {
+    setActivePicker(null);
+    setPickerSearch("");
+  };
+
+  const handlePickerSelect = (field: "phoneCode" | "nationalityCode" | "timeZone", value: string) => {
+    setTraderForm((f) => ({ ...f, [field]: value }));
+    closePicker();
+  };
 
   useEffect(() => {
     const abortController = new AbortController();
@@ -300,24 +356,18 @@ const SignUp: React.FC = () => {
 
             <div className="signup-phone-row">
               {!countryLoadError ? (
-                <IonItem className="signup-phone-code-item">
+                <IonItem
+                  className="signup-phone-code-item"
+                  button
+                  detail
+                  onClick={() => setActivePicker("phoneCode")}
+                >
                   <IonLabel position="stacked">Phone code</IonLabel>
-                  <IonSelect
-                    interface="popover"
-                    value={traderForm.phoneCode || undefined}
+                  <IonInput
+                    readonly
+                    value={traderForm.phoneCode}
                     placeholder="+XX"
-                    disabled={isLoadingCountries}
-                    onIonChange={(e) => setTraderForm((f) => ({ ...f, phoneCode: String(e.detail.value ?? "") }))}
-                    required
-                  >
-                    {countries
-                      .filter((country) => country.dialCode)
-                      .map((country) => (
-                        <IonSelectOption key={`${country.code}-${country.dialCode}`} value={country.dialCode}>
-                          {country.name} ({country.dialCode})
-                        </IonSelectOption>
-                      ))}
-                  </IonSelect>
+                  />
                 </IonItem>
               ) : (
                 <IonItem className="signup-phone-code-item">
@@ -359,23 +409,17 @@ const SignUp: React.FC = () => {
             </IonItem>
 
             {!countryLoadError ? (
-              <IonItem>
+              <IonItem
+                button
+                detail
+                onClick={() => setActivePicker("nationality")}
+              >
                 <IonLabel position="stacked">Nationality</IonLabel>
-                <IonSelect
-                  interface="alert"
+                <IonInput
+                  readonly
+                  value={traderForm.nationalityCode}
                   placeholder={isLoadingCountries ? "Loading countries..." : "Select your country"}
-                  disabled={isLoadingCountries}
-                  value={traderForm.nationalityCode || undefined}
-                  onIonChange={(e) =>
-                    setTraderForm((f) => ({ ...f, nationalityCode: String(e.detail.value ?? "") }))
-                  }
-                >
-                  {countries.map((country) => (
-                    <IonSelectOption key={country.code} value={country.code}>
-                      {country.name}
-                    </IonSelectOption>
-                  ))}
-                </IonSelect>
+                />
               </IonItem>
             ) : (
               <IonItem>
@@ -395,22 +439,17 @@ const SignUp: React.FC = () => {
             )}
             {countryLoadError && <p className="signup-helper-text">{countryLoadError}</p>}
 
-            <IonItem>
+            <IonItem
+              button
+              detail
+              onClick={() => setActivePicker("timezone")}
+            >
               <IonLabel position="stacked">Timezone</IonLabel>
-              <IonSelect
-                interface="alert"
+              <IonInput
+                readonly
+                value={traderForm.timeZone}
                 placeholder="Select your timezone"
-                value={traderForm.timeZone || undefined}
-                onIonChange={(e) =>
-                  setTraderForm((f) => ({ ...f, timeZone: String(e.detail.value ?? "") }))
-                }
-              >
-                {timeZoneOptions.map((timeZone) => (
-                  <IonSelectOption key={timeZone} value={timeZone}>
-                    {timeZone}
-                  </IonSelectOption>
-                ))}
-              </IonSelect>
+              />
             </IonItem>
 
             <IonItem>
@@ -433,6 +472,53 @@ const SignUp: React.FC = () => {
               {isSubmitting ? "Creating account..." : "Create Trader account"}
             </IonButton>
           </form>
+
+          <IonPopover isOpen={activePicker !== null} onDidDismiss={closePicker}>
+            <div className="picker-popover-wrapper">
+              <IonSearchbar
+                value={pickerSearch}
+                onIonInput={(e) => setPickerSearch(String(e.detail.value ?? ""))}
+                placeholder="Search..."
+              />
+              <IonList>
+                {activePicker === "phoneCode" &&
+                  filteredPhoneCodes.map((country) => (
+                    <IonItem
+                      key={`${country.code}-${country.dialCode}`}
+                      button
+                      onClick={() => handlePickerSelect("phoneCode", String(country.dialCode ?? ""))}
+                    >
+                      {country.name} ({country.dialCode})
+                    </IonItem>
+                  ))}
+                {activePicker === "nationality" &&
+                  filteredNationalities.map((country) => (
+                    <IonItem
+                      key={country.code}
+                      button
+                      onClick={() => handlePickerSelect("nationalityCode", country.code)}
+                    >
+                      {country.name} ({country.code})
+                    </IonItem>
+                  ))}
+                {activePicker === "timezone" &&
+                  filteredTimeZones.map((timeZone) => (
+                    <IonItem key={timeZone} button onClick={() => handlePickerSelect("timeZone", timeZone)}>
+                      {timeZone}
+                    </IonItem>
+                  ))}
+                {activePicker !== null && [
+                  (activePicker === "phoneCode" && filteredPhoneCodes.length === 0),
+                  (activePicker === "nationality" && filteredNationalities.length === 0),
+                  (activePicker === "timezone" && filteredTimeZones.length === 0)
+                ].some(Boolean) ? (
+                  <IonItem lines="none">
+                    No results found.
+                  </IonItem>
+                ) : null}
+              </IonList>
+            </div>
+          </IonPopover>
         </div>
       </IonContent>
     </IonPage>

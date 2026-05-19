@@ -84,6 +84,19 @@
   color: rgba(244, 245, 248, 0.88);
 }
 
+.picker-popover-wrapper {
+  width: min(100%, 360px);
+  padding: 10px 0;
+}
+
+.picker-popover-wrapper ion-searchbar {
+  margin: 0 0 8px;
+}
+
+.picker-popover-wrapper ion-item {
+  --background: transparent;
+}
+
 .password-rules ul {
   margin: 0;
   padding: 0;
