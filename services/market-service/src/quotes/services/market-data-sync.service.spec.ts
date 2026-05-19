@@ -8,6 +8,7 @@ import { MarketDataSyncService } from './market-data-sync.service';
 
 describe('MarketDataSyncService', () => {
   let service: MarketDataSyncService;
+  const originalSyncSymbols = process.env.MARKET_DATA_SYNC_SYMBOLS;
 
   const repository: jest.Mocked<QuotesRepository> = {
     saveQuotes: jest.fn(),
@@ -24,6 +25,7 @@ describe('MarketDataSyncService', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+    delete process.env.MARKET_DATA_SYNC_SYMBOLS;
     repository.saveQuotes.mockResolvedValue();
     repository.recordSyncEvent.mockResolvedValue();
 
@@ -42,6 +44,10 @@ describe('MarketDataSyncService', () => {
     }).compile();
 
     service = module.get<MarketDataSyncService>(MarketDataSyncService);
+  });
+
+  afterAll(() => {
+    process.env.MARKET_DATA_SYNC_SYMBOLS = originalSyncSymbols;
   });
 
   it('updates quotes when the provider responds successfully', async () => {
@@ -153,6 +159,33 @@ describe('MarketDataSyncService', () => {
       'AAPL',
       'MSFT',
       'TSLA',
+      'GOOGL',
+      'AMZN',
+      'NVDA',
+      'META',
+    ]);
+  });
+
+  it('uses configured startup symbols when request does not provide a symbols list', async () => {
+    process.env.MARKET_DATA_SYNC_SYMBOLS = 'amd, nflx';
+    provider.fetchQuote.mockImplementation((symbol: string) =>
+      Promise.resolve({
+        symbol,
+        price: 190,
+        bid: 189.95,
+        ask: 190.05,
+        currency: 'USD',
+        provider: 'test-provider',
+        asOf: new Date('2026-05-14T14:00:00.000Z'),
+      }),
+    );
+
+    const response = await service.synchronizeMarketData({});
+
+    expect(response.status).toBe('SUCCESS');
+    expect(response.updatedQuotes.map((quote) => quote.symbol)).toEqual([
+      'AMD',
+      'NFLX',
     ]);
   });
 

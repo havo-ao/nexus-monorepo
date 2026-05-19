@@ -15,6 +15,7 @@ import { InMemoryQuotesRepository } from './repositories/in-memory-quotes.reposi
 import { MysqlQuotesRepository } from './repositories/mysql-quotes.repository';
 import { QUOTES_REPOSITORY } from './repositories/quotes.repository';
 import { MarketDataSyncService } from './services/market-data-sync.service';
+import { MarketDataStartupSyncService } from './services/market-data-startup-sync.service';
 import { QuoteHistorySyncService } from './services/quote-history-sync.service';
 import { QuoteHistoryService } from './services/quote-history.service';
 import { QuoteQueryService } from './services/quote-query.service';
@@ -28,6 +29,7 @@ import { QuoteQueryService } from './services/quote-query.service';
   ],
   providers: [
     MarketDataSyncService,
+    MarketDataStartupSyncService,
     QuoteHistoryService,
     QuoteHistorySyncService,
     QuoteQueryService,

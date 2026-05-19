@@ -5,6 +5,61 @@ $repositoryRoot = Resolve-Path (Join-Path $scriptDirectory "../..")
 $envFile = Join-Path $scriptDirectory ".env"
 $composeFile = Join-Path $scriptDirectory "docker-compose.yml"
 
+function Add-MissingEnvValue {
+  param (
+    [string] $Path,
+    [string] $Key,
+    [string] $Value
+  )
+
+  $content = Get-Content -Path $Path -Raw
+
+  if ($content -notmatch "(?m)^$([regex]::Escape($Key))=") {
+    Add-Content -Path $Path -Value "$Key=$Value"
+  }
+}
+
+function Get-EnvValue {
+  param (
+    [string] $Path,
+    [string] $Key
+  )
+
+  $line = Get-Content -Path $Path |
+    Where-Object { $_ -match "^$([regex]::Escape($Key))=" } |
+    Select-Object -First 1
+
+  if (-not $line) {
+    return ""
+  }
+
+  return $line.Substring($Key.Length + 1).Trim()
+}
+
+function Set-EnvValue {
+  param (
+    [string] $Path,
+    [string] $Key,
+    [string] $Value
+  )
+
+  $updated = $false
+  $nextContent = Get-Content -Path $Path | ForEach-Object {
+    if ($_ -match "^$([regex]::Escape($Key))=") {
+      $updated = $true
+      "$Key=$Value"
+    } else {
+      $_
+    }
+  }
+
+  if ($updated) {
+    Set-Content -Path $Path -Value $nextContent
+  } else {
+    Add-Content -Path $Path -Value "$Key=$Value"
+  }
+}
+
 function New-LocalSecret {
   param (
     [string] $Prefix
@@ -31,12 +86,52 @@ if (-not (Test-Path $envFile)) {
     "NEXUS_MYSQL_PASSWORD=$(New-LocalSecret "mysql-app")"
     "NEXUS_JWT_SECRET=$(New-LocalSecret "jwt")"
     "NEXUS_ADMIN_PASSWORD=$(New-LocalSecret "admin")"
+    ""
+    "# Market Service providers."
+    "# Leave providers empty for automatic mode:"
+    "# - with ALPHA_VANTAGE_API_KEY, the service uses Alpha Vantage."
+    "# - without ALPHA_VANTAGE_API_KEY, the service falls back to static data."
+    "MARKET_DATA_PROVIDER="
+    "MARKET_HISTORY_PROVIDER="
+    "INSTRUMENT_CATALOG_PROVIDER="
+    "ALPHA_VANTAGE_API_KEY="
+    "ALPHA_VANTAGE_BASE_URL=https://www.alphavantage.co/query"
+    "ALPHA_VANTAGE_HISTORY_OUTPUT_SIZE=compact"
+    "ALPHA_VANTAGE_LISTING_STATE=active"
+    "ALPHA_VANTAGE_TIMEOUT_MS=5000"
+    "MARKET_DATA_SYNC_ON_STARTUP=true"
+    "MARKET_DATA_SYNC_SYMBOLS=AAPL,MSFT,TSLA,GOOGL,AMZN,NVDA,META"
   )
 
   Set-Content -Path $envFile -Value $envContent
   Write-Host "Created local Docker environment file at $envFile"
 } else {
   Write-Host "Using existing local Docker environment file at $envFile"
+}
+
+Add-MissingEnvValue $envFile "MARKET_DATA_PROVIDER" ""
+Add-MissingEnvValue $envFile "MARKET_HISTORY_PROVIDER" ""
+Add-MissingEnvValue $envFile "INSTRUMENT_CATALOG_PROVIDER" ""
+Add-MissingEnvValue $envFile "ALPHA_VANTAGE_API_KEY" ""
+Add-MissingEnvValue $envFile "ALPHA_VANTAGE_BASE_URL" "https://www.alphavantage.co/query"
+Add-MissingEnvValue $envFile "ALPHA_VANTAGE_HISTORY_OUTPUT_SIZE" "compact"
+Add-MissingEnvValue $envFile "ALPHA_VANTAGE_LISTING_STATE" "active"
+Add-MissingEnvValue $envFile "ALPHA_VANTAGE_TIMEOUT_MS" "5000"
+Add-MissingEnvValue $envFile "MARKET_DATA_SYNC_ON_STARTUP" "true"
+Add-MissingEnvValue $envFile "MARKET_DATA_SYNC_SYMBOLS" "AAPL,MSFT,TSLA,GOOGL,AMZN,NVDA,META"
+
+if (Get-EnvValue $envFile "ALPHA_VANTAGE_API_KEY") {
+  if ((Get-EnvValue $envFile "MARKET_DATA_PROVIDER") -eq "static") {
+    Set-EnvValue $envFile "MARKET_DATA_PROVIDER" ""
+  }
+
+  if ((Get-EnvValue $envFile "MARKET_HISTORY_PROVIDER") -eq "static") {
+    Set-EnvValue $envFile "MARKET_HISTORY_PROVIDER" ""
+  }
+
+  if ((Get-EnvValue $envFile "INSTRUMENT_CATALOG_PROVIDER") -eq "static") {
+    Set-EnvValue $envFile "INSTRUMENT_CATALOG_PROVIDER" ""
+  }
 }
 
 Push-Location $repositoryRoot
