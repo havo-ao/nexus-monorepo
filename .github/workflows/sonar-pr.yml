@@ -145,6 +145,7 @@ jobs:
         working-directory: services/compliance-service
         run: |
           npm install --no-audit --no-fund
+          node ../scripts/normalize-lcov-paths.mjs compliance-service
           npm run build
 
       - name: Upload compliance coverage
