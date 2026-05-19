@@ -13,7 +13,15 @@ import type { QuotesRepository } from '../repositories/quotes.repository';
 
 @Injectable()
 export class MarketDataSyncService {
-  private readonly defaultSymbols = ['AAPL', 'MSFT', 'TSLA'];
+  private readonly defaultSymbols = [
+    'AAPL',
+    'MSFT',
+    'TSLA',
+    'GOOGL',
+    'AMZN',
+    'NVDA',
+    'META',
+  ];
 
   constructor(
     @Inject(QUOTES_REPOSITORY)
@@ -73,7 +81,9 @@ export class MarketDataSyncService {
 
   private resolveSymbols(symbols?: string[]): string[] {
     const inputSymbols =
-      symbols && symbols.length > 0 ? symbols : this.defaultSymbols;
+      symbols && symbols.length > 0
+        ? symbols
+        : this.resolveDefaultSymbolsFromEnvironment();
     const normalizedSymbols = inputSymbols.map((symbol) => {
       if (typeof symbol !== 'string' || !symbol.trim()) {
         throw new BadRequestException('Symbols must be non-empty strings');
@@ -83,6 +93,16 @@ export class MarketDataSyncService {
     });
 
     return [...new Set(normalizedSymbols)];
+  }
+
+  private resolveDefaultSymbolsFromEnvironment(): string[] {
+    const configuredSymbols = process.env.MARKET_DATA_SYNC_SYMBOLS?.split(',')
+      .map((symbol) => symbol.trim())
+      .filter(Boolean);
+
+    return configuredSymbols && configuredSymbols.length > 0
+      ? configuredSymbols
+      : this.defaultSymbols;
   }
 
   private resolveRequestedBy(requestedBy?: string): string {
