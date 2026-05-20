@@ -68,8 +68,8 @@ describe('AppController (e2e)', () => {
       .expect(404);
   });
 
-  it('/api/v1/portfolio/positions/purchases (POST)', () => {
-    return request(app.getHttpServer())
+  it('/api/v1/portfolio/positions/purchases (POST)', async () => {
+    const response = await request(app.getHttpServer())
       .post('/api/v1/portfolio/positions/purchases')
       .send({
         traderId: '1',
@@ -78,24 +78,25 @@ describe('AppController (e2e)', () => {
         executionPrice: 152.35,
         executedAt: '2026-05-17T22:15:00.000Z',
       })
-      .expect(201)
-      .expect({
-        positionId: '0',
-        stockId: '25',
-        symbol: null,
-        quantity: 10,
-        averageBuyPrice: 152.35,
-        totalInvested: 1523.5,
-        currentPrice: null,
-        currentValue: null,
-        profitLoss: null,
-        returnPercentage: null,
-        lastUpdated: '2026-05-17T22:15:00.000Z',
-      });
+      .expect(201);
+
+    expect(response.body).toEqual({
+      positionId: '0',
+      stockId: '25',
+      symbol: null,
+      quantity: 10,
+      averageBuyPrice: 152.35,
+      totalInvested: 1523.5,
+      currentPrice: null,
+      currentValue: null,
+      profitLoss: null,
+      returnPercentage: null,
+      lastUpdated: '2026-05-17T22:15:00.000Z',
+    });
   });
 
-  it('/api/v1/portfolio/positions/sales (POST)', () => {
-    return request(app.getHttpServer())
+  it('/api/v1/portfolio/positions/sales (POST)', async () => {
+    const response = await request(app.getHttpServer())
       .post('/api/v1/portfolio/positions/sales')
       .send({
         traderId: '1',
@@ -104,19 +105,20 @@ describe('AppController (e2e)', () => {
         executionPrice: 178.45,
         executedAt: '2026-05-18T20:45:00.000Z',
       })
-      .expect(201)
-      .expect({
-        positionId: '0',
-        stockId: '25',
-        symbol: null,
-        quantity: 0,
-        averageBuyPrice: 0,
-        totalInvested: 0,
-        currentPrice: null,
-        currentValue: null,
-        profitLoss: null,
-        returnPercentage: null,
-        lastUpdated: '2026-05-18T20:45:00.000Z',
-      });
+      .expect(201);
+
+    expect(response.body).toEqual({
+      positionId: '0',
+      stockId: '25',
+      symbol: null,
+      quantity: 0,
+      averageBuyPrice: 0,
+      totalInvested: 0,
+      currentPrice: null,
+      currentValue: null,
+      profitLoss: null,
+      returnPercentage: null,
+      lastUpdated: '2026-05-18T20:45:00.000Z',
+    });
   });
 });
