@@ -3,6 +3,7 @@ import { NotFoundException } from '@nestjs/common';
 import { PortfolioPositionsRepository } from '../../positions/repositories/portfolio-positions.repository';
 import { PositionsService } from '../../positions/services/positions.service';
 import { ValuationsService } from '../../valuations/services/valuations.service';
+import { WalletsService } from '../../wallets/services/wallets.service';
 import { PortfolioService } from './portfolio.service';
 
 describe('PortfolioService', () => {
@@ -10,6 +11,7 @@ describe('PortfolioService', () => {
   let positionsRepository: jest.Mocked<PortfolioPositionsRepository>;
   let positionsService: jest.Mocked<PositionsService>;
   let valuationsService: jest.Mocked<ValuationsService>;
+  let walletsService: jest.Mocked<WalletsService>;
 
   beforeEach(async () => {
     const repositoryMock: jest.Mocked<PortfolioPositionsRepository> = {
@@ -54,6 +56,9 @@ describe('PortfolioService', () => {
       totalValue: 0,
       sectors: [],
     });
+    walletsService = {
+      getAvailableBalance: jest.fn(),
+    } as unknown as jest.Mocked<WalletsService>;
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -69,6 +74,10 @@ describe('PortfolioService', () => {
         {
           provide: ValuationsService,
           useValue: valuationsService,
+        },
+        {
+          provide: WalletsService,
+          useValue: walletsService,
         },
       ],
     }).compile();
@@ -269,6 +278,26 @@ describe('PortfolioService', () => {
         },
       ],
     });
+  });
+
+  it('returns wallet balance for a trader', async () => {
+    walletsService.getAvailableBalance.mockResolvedValue({
+      traderId: '7',
+      availableBalance: 750.25,
+      reservedBalance: 249.75,
+      totalBalance: 1000,
+      currency: 'USD',
+    });
+
+    await expect(service.getAvailableBalance('7')).resolves.toEqual({
+      traderId: '7',
+      availableBalance: 750.25,
+      reservedBalance: 249.75,
+      totalBalance: 1000,
+      currency: 'USD',
+    });
+
+    expect(walletsService.getAvailableBalance.mock.calls[0][0]).toBe('7');
   });
 
   it('returns the updated position after an executed buy is recorded', async () => {

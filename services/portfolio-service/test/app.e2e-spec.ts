@@ -62,6 +62,20 @@ describe('AppController (e2e)', () => {
       });
   });
 
+  it('/api/v1/portfolio/:traderId/balance (GET)', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/api/v1/portfolio/1/balance')
+      .expect(200);
+
+    expect(response.body).toEqual({
+      traderId: '1',
+      availableBalance: 0,
+      reservedBalance: 0,
+      totalBalance: 0,
+      currency: 'USD',
+    });
+  });
+
   it('/api/v1/portfolio/:traderId/positions/:positionId (GET)', () => {
     return request(app.getHttpServer())
       .get('/api/v1/portfolio/1/positions/99')

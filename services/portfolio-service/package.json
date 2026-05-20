@@ -73,6 +73,7 @@
       "app.controller.ts",
       "portfolio/services/**/*.ts",
       "positions/services/**/*.ts",
+      "wallets/services/**/*.ts",
       "valuations/services/**/*.ts",
       "!**/*.spec.ts"
     ],

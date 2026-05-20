@@ -4,6 +4,8 @@ import { RecordExecutedSellDto } from '../../positions/dto/record-executed-sell.
 import { PortfolioPositionsRepository } from '../../positions/repositories/portfolio-positions.repository';
 import { PositionsService } from '../../positions/services/positions.service';
 import { ValuationsService } from '../../valuations/services/valuations.service';
+import { WalletBalanceResponseDto } from '../../wallets/dto/wallet-balance-response.dto';
+import { WalletsService } from '../../wallets/services/wallets.service';
 import { PortfolioPositionResponseDto } from '../dto/portfolio-position-response.dto';
 import { PortfolioSectorDistributionResponseDto } from '../dto/portfolio-sector-distribution-response.dto';
 import { PortfolioSummaryResponseDto } from '../dto/portfolio-summary-response.dto';
@@ -14,6 +16,7 @@ export class PortfolioService {
     private readonly positionsRepository: PortfolioPositionsRepository,
     private readonly positionsService: PositionsService,
     private readonly valuationsService: ValuationsService,
+    private readonly walletsService: WalletsService,
   ) {}
 
   async getConsolidatedPortfolio(
@@ -82,6 +85,10 @@ export class PortfolioService {
       totalValue: distribution.totalValue,
       sectors: distribution.sectors,
     };
+  }
+
+  getAvailableBalance(traderId: string): Promise<WalletBalanceResponseDto> {
+    return this.walletsService.getAvailableBalance(traderId);
   }
 
   async recordExecutedBuy(
