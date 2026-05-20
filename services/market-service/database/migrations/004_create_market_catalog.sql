@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS market_catalog (
   country VARCHAR(80) NOT NULL,
   currency CHAR(3) NOT NULL,
   timezone VARCHAR(80) NOT NULL,
+  representative_symbols JSON NULL,
   status ENUM('ACTIVE', 'INACTIVE') NOT NULL DEFAULT 'ACTIVE',
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -23,18 +24,20 @@ INSERT INTO market_catalog (
   name,
   country,
   currency,
-  timezone
+  timezone,
+  representative_symbols
 ) VALUES
-  ('NYSE', 'New York Stock Exchange', 'United States', 'USD', 'America/New_York'),
-  ('NASDAQ', 'NASDAQ Stock Market', 'United States', 'USD', 'America/New_York'),
-  ('LSE', 'London Stock Exchange', 'United Kingdom', 'GBP', 'Europe/London'),
-  ('TSE', 'Tokyo Stock Exchange', 'Japan', 'JPY', 'Asia/Tokyo'),
-  ('ASX', 'Australian Securities Exchange', 'Australia', 'AUD', 'Australia/Sydney')
+  ('NYSE', 'New York Stock Exchange', 'United States', 'USD', 'America/New_York', CAST('["AAPL","JPM","KO"]' AS JSON)),
+  ('NASDAQ', 'NASDAQ Stock Market', 'United States', 'USD', 'America/New_York', CAST('["MSFT","GOOGL","TSLA"]' AS JSON)),
+  ('LSE', 'London Stock Exchange', 'United Kingdom', 'GBP', 'Europe/London', CAST('["HSBC","BP","VOD"]' AS JSON)),
+  ('TSE', 'Tokyo Stock Exchange', 'Japan', 'JPY', 'Asia/Tokyo', CAST('["7203.T","6758.T","9984.T"]' AS JSON)),
+  ('ASX', 'Australian Securities Exchange', 'Australia', 'AUD', 'Australia/Sydney', CAST('["BHP","CBA","WBC"]' AS JSON))
 ON DUPLICATE KEY UPDATE
   name = VALUES(name),
   country = VALUES(country),
   currency = VALUES(currency),
-  timezone = VALUES(timezone);
+  timezone = VALUES(timezone),
+  representative_symbols = VALUES(representative_symbols);
 
 INSERT INTO market_representative_symbols (market_code, symbol) VALUES
   ('NYSE', 'AAPL'),
