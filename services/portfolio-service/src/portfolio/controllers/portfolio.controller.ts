@@ -1,5 +1,19 @@
-import { Controller, Get, Param, ParseIntPipe } from '@nestjs/common';
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+} from '@nestjs/common';
+import {
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
+import { RecordExecutedBuyDto } from '../../positions/dto/record-executed-buy.dto';
+import { RecordExecutedSellDto } from '../../positions/dto/record-executed-sell.dto';
 import { PortfolioPositionResponseDto } from '../dto/portfolio-position-response.dto';
 import { PortfolioSectorDistributionResponseDto } from '../dto/portfolio-sector-distribution-response.dto';
 import { PortfolioSummaryResponseDto } from '../dto/portfolio-summary-response.dto';
@@ -45,5 +59,27 @@ export class PortfolioController {
       String(traderId),
       String(positionId),
     );
+  }
+
+  @Post('positions/purchases')
+  @ApiOperation({
+    summary: 'NEX-64 Actualizar holdings tras compra ejecutada',
+  })
+  @ApiCreatedResponse({ type: PortfolioPositionResponseDto })
+  recordExecutedBuy(
+    @Body() dto: RecordExecutedBuyDto,
+  ): Promise<PortfolioPositionResponseDto> {
+    return this.portfolioService.recordExecutedBuy(dto);
+  }
+
+  @Post('positions/sales')
+  @ApiOperation({
+    summary: 'NEX-65 Actualizar holdings tras venta ejecutada',
+  })
+  @ApiCreatedResponse({ type: PortfolioPositionResponseDto })
+  recordExecutedSell(
+    @Body() dto: RecordExecutedSellDto,
+  ): Promise<PortfolioPositionResponseDto> {
+    return this.portfolioService.recordExecutedSell(dto);
   }
 }
