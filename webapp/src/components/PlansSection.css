@@ -14,7 +14,7 @@
   font-family: 'Montserrat', sans-serif;
   font-size: 3rem;
   font-weight: 800;
-  background: linear-gradient(135deg, #2dd55b, #1a8a3a);
+  background: var(--nexus-accent-gradient);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -50,8 +50,13 @@
   box-shadow: 0 16px 32px rgba(0,0,0,0.12);
 }
 
+.selected-plan-card {
+  border: 2px solid var(--ion-color-primary);
+  box-shadow: 0 16px 32px rgba(var(--nexus-accent-rgb), 0.25);
+}
+
 .premium-card {
-  border: 2px solid #2dd55b;
+  border: 2px solid var(--nexus-accent);
   position: relative;
 }
 
@@ -83,11 +88,15 @@
 
 .upgrade-btn {
   margin-top: 24px;
-  --background: #2dd55b;
-  --background-hover: #25b54a;
+  --background: var(--nexus-accent);
+  --background-hover: var(--nexus-accent);
   --border-radius: 40px;
   font-weight: 600;
   text-transform: none;
+}
+
+.plan-select-btn {
+  margin-top: 16px;
 }
 
 /* Ajustes para Ionic items dentro del card */

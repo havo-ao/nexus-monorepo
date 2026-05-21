@@ -3,12 +3,14 @@ package com.nexus.identityservice.controller;
 import com.nexus.identityservice.dto.admin.AdminResponse;
 import com.nexus.identityservice.dto.admin.AdminUpdateRequest;
 import com.nexus.identityservice.dto.trader.TraderAuditResponse;
+import com.nexus.identityservice.model.User;
 import com.nexus.identityservice.service.AdminService;
 import com.nexus.identityservice.service.TraderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +25,13 @@ public class AdminController {
 
 
     // ==================== ADMIN CRUD ====================
+
+    @GetMapping("/me")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<AdminResponse> getMe(@AuthenticationPrincipal User user) {
+        AdminResponse response = adminService.getAdminById(user.getId());
+        return ResponseEntity.ok(response);
+    }
 
     @PatchMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")

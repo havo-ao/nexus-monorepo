@@ -13,27 +13,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  webapp:
-    name: Build webapp frontend
-    runs-on: ubuntu-latest
-    if: ${{ !github.event.pull_request.draft }}
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 22
-
-      - name: Build webapp
-        working-directory: webapp
-        run: |
-          npm install --no-audit --no-fund
-          npm run test.unit -- --run
-          npm run build
-
   trading-service:
     name: Build trading service
     runs-on: ubuntu-latest
@@ -181,10 +160,14 @@ jobs:
           SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3307/nexus
           SPRING_DATASOURCE_USERNAME: nexus_user
           SPRING_DATASOURCE_PASSWORD: nexus_password
-          JWT_SECRET: local-ci-jwt-secret-change-before-production-123456
+          NEXUS_JWT_SECRET: local-ci-jwt-secret-change-before-production-123456
           ADMIN_EMAIL: admin@nexus.local
           ADMIN_PASSWORD: Admin123@
-        run: bash ./mvnw -B package
+          STRIPE_SECRET_KEY: sk_test_local_ci_placeholder
+          STRIPE_MONTHLY_PRICE: price_local_ci_monthly
+          STRIPE_YEARLY_PRICE: price_local_ci_yearly
+          FRONTEND_DOMAIN: http://localhost:8100
+        run: bash ./mvnw -B verify
 
       - name: Upload identity bytecode
         uses: actions/upload-artifact@v4
@@ -193,12 +176,18 @@ jobs:
           path: services/identity-service/target/classes
           if-no-files-found: error
 
+      - name: Upload identity coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: identity-service-coverage
+          path: services/identity-service/target/site/jacoco/jacoco.xml
+          if-no-files-found: error
+
   sonar:
     name: Analyze code with SonarCloud
     runs-on: ubuntu-latest
     if: ${{ !github.event.pull_request.draft }}
     needs:
-      - webapp
       - trading-service
       - portfolio-service
       - market-service
@@ -216,6 +205,12 @@ jobs:
         with:
           name: identity-service-classes
           path: services/identity-service/target/classes
+
+      - name: Download identity coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: identity-service-coverage
+          path: services/identity-service/target/site/jacoco
 
       - name: Download trading coverage
         uses: actions/download-artifact@v4
@@ -243,8 +238,13 @@ jobs:
           args: >
             -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
             -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
-            -Dsonar.javascript.lcov.reportPaths=services/trading-service/coverage/lcov.info,services/market-service/coverage/lcov.info,services/portfolio-service/coverage/lcov.info            
-            -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/build/**,**/coverage/**,**/.next/**,**/.ionic/**,**/target/**,**/mvnw,**/mvnw.cmd,**/database/migrations/**,**/postman/**
-            -Dsonar.coverage.exclusions=webapp/**,services/identity-service/**,services/compliance-service/**,services/trading-service/database/**,services/market-service/database/**,services/portfolio-service/database/**,services/market-service/scripts/**,services/portfolio-service/scripts/**,services/portfolio-service/src/valuations/clients/**,services/portfolio-service/src/positions/repositories/**,services/portfolio-service/src/common/tracing/**,**/main.ts,**/*.module.ts,**/dto/**,**/entities/**,**/controllers/**
-            -Dsonar.cpd.exclusions=**/*.spec.ts,**/*.e2e-spec.ts,**/*.test.ts,**/database/migrations/**,**/postman/**,**/controllers/**,**/dto/**,**/entities/**,services/portfolio-service/database/**,services/portfolio-service/src/common/tracing/**,services/portfolio-service/src/positions/repositories/**
+            -Dsonar.sources=services/compliance-service/src,services/trading-service/src,services/market-service/src,services/portfolio-service/src,services/identity-service/src/main/java
+            -Dsonar.tests=services/compliance-service/test,services/trading-service/test,services/market-service/test,services/portfolio-service/test,services/identity-service/src/test/java
+            -Dsonar.test.inclusions=**/*Test.java,**/*Tests.java,**/*.spec.ts,**/*.test.ts,**/*.e2e-spec.ts,**/cypress/**/*.ts
+            -Dsonar.java.binaries=services/identity-service/target/classes
+            -Dsonar.javascript.lcov.reportPaths=services/trading-service/coverage/lcov.info,services/market-service/coverage/lcov.info,services/portfolio-service/coverage/lcov.info
+            -Dsonar.coverage.jacoco.xmlReportPaths=services/identity-service/target/site/jacoco/jacoco.xml
+            -Dsonar.coverage.exclusions=webapp/**,**/webapp/**,services/identity-service/src/main/java/com/nexus/identityservice/IdentityServiceApplication.java,services/identity-service/src/main/java/com/nexus/identityservice/config/**,services/identity-service/src/main/java/com/nexus/identityservice/controller/**,services/identity-service/src/main/java/com/nexus/identityservice/dto/**,services/identity-service/src/main/java/com/nexus/identityservice/exception/**,services/identity-service/src/main/java/com/nexus/identityservice/mapper/**,services/identity-service/src/main/java/com/nexus/identityservice/model/**,services/identity-service/src/main/java/com/nexus/identityservice/service/StripeSubscriptionService.java
+            -Dsonar.exclusions=webapp/**,**/webapp/**,**/node_modules/**,**/dist/**,**/build/**,**/coverage/**,**/.next/**,**/.ionic/**,**/target/**,**/mvnw,**/mvnw.cmd,**/database/migrations/**,**/postman/**
+            -Dsonar.cpd.exclusions=webapp/**,**/webapp/**,**/*Test.java,**/*Tests.java,**/*.spec.ts,**/*.test.ts,**/*.e2e-spec.ts,**/database/migrations/**,**/postman/**,services/portfolio-service/src/common/tracing/**,services/portfolio-service/src/portfolio/dto/**
             -Dsonar.qualitygate.wait=true

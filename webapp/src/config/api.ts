@@ -48,4 +48,17 @@ export const API_PATHS = {
   tradingValidateBuyFunds: "/api/v1/validations/funds/buy",
   tradingValidateMarketStatus: "/api/v1/validations/market/status",
   marketDashboard: "/api/v1/dashboard",
+  authRegisterAdmin: "/api/auth/register/admin",
+  subscriptionCheckout: "/api/subscriptions/checkout",
+  subscriptionStatus: "/api/subscriptions/status",
+  tradersMe: "/api/traders/me",
+  tradersUpdate: "/api/traders",
+  adminBase: "/api/admin",
+  adminMe: "/api/admin/me",
+  adminAudit: "/api/admin/audit",
+  adminCount: "/api/admin/count",
+  adminTraderAudit: "/api/admin/audit/traders",
+  adminTraderCount: "/api/admin/traders/count",
+  adminSubscriptionPlans: "/api/admin/subscription-plans",
+  subscriptionVerify: "/api/subscriptions/verify"
 } as const;

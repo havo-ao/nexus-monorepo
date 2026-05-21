@@ -1,5 +1,7 @@
 import type { AuthResponse, UserProfile, UserRol } from "../api/types";
 
+export const SESSION_CHANGE_EVENT = "nexus_session_change";
+
 const SESSION_KEY = "nexus_session";
 /** @deprecated Legacy keys — cleared when migrating to nexus_session */
 const LEGACY_ACCESS = "nexus_access_token";
@@ -24,6 +26,7 @@ export function persistAuthSession(auth: AuthResponse): void {
   localStorage.setItem(SESSION_KEY, JSON.stringify(session));
   localStorage.removeItem(LEGACY_ACCESS);
   localStorage.removeItem(LEGACY_REFRESH);
+  window.dispatchEvent(new Event(SESSION_CHANGE_EVENT));
 }
 
 export function getStoredSession(): StoredSession | null {
@@ -59,6 +62,7 @@ export function clearAuthSession(): void {
   localStorage.removeItem(SESSION_KEY);
   localStorage.removeItem(LEGACY_ACCESS);
   localStorage.removeItem(LEGACY_REFRESH);
+  window.dispatchEvent(new Event(SESSION_CHANGE_EVENT));
 }
 
 export function formatUserDisplayName(user: UserProfile): string {
