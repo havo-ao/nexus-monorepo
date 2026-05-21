@@ -1,12 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException } from '@nestjs/common';
 import { PortfolioPositionsRepository } from '../../positions/repositories/portfolio-positions.repository';
+import { PositionsService } from '../../positions/services/positions.service';
 import { ValuationsService } from '../../valuations/services/valuations.service';
 import { PortfolioService } from './portfolio.service';
 
 describe('PortfolioService', () => {
   let service: PortfolioService;
   let positionsRepository: jest.Mocked<PortfolioPositionsRepository>;
+  let positionsService: jest.Mocked<PositionsService>;
   let valuationsService: jest.Mocked<ValuationsService>;
 
   beforeEach(async () => {
@@ -15,6 +17,10 @@ describe('PortfolioService', () => {
       findByTraderIdAndPositionId: jest.fn(),
     };
     positionsRepository = repositoryMock;
+    positionsService = {
+      recordExecutedBuy: jest.fn(),
+      recordExecutedSell: jest.fn(),
+    } as unknown as jest.Mocked<PositionsService>;
     valuationsService = {
       valuePosition: jest.fn(),
       calculateCurrentValue: jest.fn(),
@@ -55,6 +61,10 @@ describe('PortfolioService', () => {
         {
           provide: PortfolioPositionsRepository,
           useValue: positionsRepository,
+        },
+        {
+          provide: PositionsService,
+          useValue: positionsService,
         },
         {
           provide: ValuationsService,
@@ -258,6 +268,86 @@ describe('PortfolioService', () => {
           positions: 1,
         },
       ],
+    });
+  });
+
+  it('returns the updated position after an executed buy is recorded', async () => {
+    valuationsService.valuePosition.mockResolvedValue({
+      currentPrice: 190,
+      currentValue: 1900,
+      profitLoss: 376.5,
+      returnPercentage: 24.7135,
+    });
+    positionsService.recordExecutedBuy.mockResolvedValue({
+      id: '15',
+      traderId: '7',
+      stockId: '25',
+      symbol: 'AAPL',
+      quantity: 10,
+      avgBuyPrice: '152.35',
+      totalInvested: '1523.50',
+      lastUpdated: new Date('2026-05-17T22:15:00.000Z'),
+    });
+
+    await expect(
+      service.recordExecutedBuy({
+        traderId: '7',
+        stockId: '25',
+        quantity: 10,
+        executionPrice: 152.35,
+      }),
+    ).resolves.toEqual({
+      positionId: '15',
+      stockId: '25',
+      symbol: 'AAPL',
+      quantity: 10,
+      averageBuyPrice: 152.35,
+      totalInvested: 1523.5,
+      currentPrice: 190,
+      currentValue: 1900,
+      profitLoss: 376.5,
+      returnPercentage: 24.7135,
+      lastUpdated: '2026-05-17T22:15:00.000Z',
+    });
+  });
+
+  it('returns the updated position after an executed sell is recorded', async () => {
+    valuationsService.valuePosition.mockResolvedValue({
+      currentPrice: 190,
+      currentValue: 1140,
+      profitLoss: 225.9,
+      returnPercentage: 24.7135,
+    });
+    positionsService.recordExecutedSell.mockResolvedValue({
+      id: '15',
+      traderId: '7',
+      stockId: '25',
+      symbol: 'AAPL',
+      quantity: 6,
+      avgBuyPrice: '152.35',
+      totalInvested: '914.10',
+      lastUpdated: new Date('2026-05-18T20:45:00.000Z'),
+    });
+
+    await expect(
+      service.recordExecutedSell({
+        traderId: '7',
+        stockId: '25',
+        quantity: 4,
+        executionPrice: 178.45,
+      }),
+    ).resolves.toEqual({
+      positionId: '15',
+      stockId: '25',
+      symbol: 'AAPL',
+      quantity: 6,
+      averageBuyPrice: 152.35,
+      totalInvested: 914.1,
+      currentPrice: 190,
+      currentValue: 1140,
+      profitLoss: 225.9,
+      returnPercentage: 24.7135,
+      lastUpdated: '2026-05-18T20:45:00.000Z',
     });
   });
 });

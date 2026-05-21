@@ -111,6 +111,9 @@ services:
     volumes:
       - ../../services/portfolio-service:/app
       - /app/node_modules
+    command: >
+      sh -c "npm run db:migrate &&
+      npm run start:dev"
 
   market-service:
     build:
