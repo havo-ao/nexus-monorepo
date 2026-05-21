@@ -20,6 +20,31 @@ export class InstrumentDetailResponseDto {
   @ApiProperty({ example: 'ACTIVE' })
   status: string;
 
+  @ApiPropertyOptional({ example: 'Common Stock', nullable: true })
+  assetType: string | null;
+
+  @ApiPropertyOptional({ example: 'Consumer Electronics', nullable: true })
+  industry: string | null;
+
+  @ApiPropertyOptional({ example: 'USA', nullable: true })
+  country: string | null;
+
+  @ApiPropertyOptional({
+    example:
+      'Apple Inc. designs, manufactures, and markets smartphones, personal computers, tablets, wearables, and accessories.',
+    nullable: true,
+  })
+  description: string | null;
+
+  @ApiPropertyOptional({ example: 'alpha-vantage-overview', nullable: true })
+  metadataProvider: string | null;
+
+  @ApiPropertyOptional({
+    example: '2026-05-20T18:00:00.000Z',
+    nullable: true,
+  })
+  metadataUpdatedAt: string | null;
+
   @ApiPropertyOptional({
     type: MarketQuoteResponseDto,
     nullable: true,

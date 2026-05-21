@@ -34,6 +34,25 @@
       }
     },
     {
+      "name": "Synchronize AAPL metadata",
+      "request": {
+        "method": "POST",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/instruments/AAPL/metadata/sync",
+          "host": ["{{baseUrl}}"],
+          "path": [
+            "api",
+            "v1",
+            "instruments",
+            "AAPL",
+            "metadata",
+            "sync"
+          ]
+        },
+        "description": "Enriches instrument detail metadata from the configured external provider."
+      }
+    },
+    {
       "name": "Get AAPL detail",
       "request": {
         "method": "GET",

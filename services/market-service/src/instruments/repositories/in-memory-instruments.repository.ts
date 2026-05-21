@@ -78,6 +78,27 @@ export class InMemoryInstrumentsRepository implements InstrumentsRepository {
     }
   }
 
+  updateInstrumentMetadata(
+    symbol: string,
+    metadata: Partial<InstrumentSnapshot>,
+  ): void {
+    const normalizedSymbol = symbol.trim().toUpperCase();
+    const instrument = this.instruments.get(normalizedSymbol);
+
+    if (!instrument) {
+      return;
+    }
+
+    this.instruments.set(
+      normalizedSymbol,
+      Instrument.restore({
+        ...instrument.toSnapshot(),
+        ...metadata,
+        symbol: normalizedSymbol,
+      }),
+    );
+  }
+
   findAvailable(): Instrument[] {
     return [...this.instruments.values()]
       .filter((instrument) => instrument.isAvailable())

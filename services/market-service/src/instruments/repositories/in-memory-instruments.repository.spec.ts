@@ -56,4 +56,40 @@ describe('InMemoryInstrumentsRepository', () => {
       status: 'ACTIVE',
     });
   });
+
+  it('updates metadata for an existing local instrument', () => {
+    const repository = new InMemoryInstrumentsRepository();
+    const metadataUpdatedAt = new Date('2026-05-20T18:00:00.000Z');
+
+    repository.updateInstrumentMetadata(' aapl ', {
+      sector: 'Technology',
+      industry: 'Consumer Electronics',
+      country: 'USA',
+      description: 'Apple overview',
+      metadataProvider: 'alpha-vantage-overview-compatible',
+      metadataUpdatedAt,
+    });
+
+    expect(repository.findBySymbol('AAPL')?.toSnapshot()).toEqual(
+      expect.objectContaining({
+        symbol: 'AAPL',
+        sector: 'Technology',
+        industry: 'Consumer Electronics',
+        country: 'USA',
+        description: 'Apple overview',
+        metadataProvider: 'alpha-vantage-overview-compatible',
+        metadataUpdatedAt,
+      }),
+    );
+  });
+
+  it('ignores metadata updates for unknown instruments', () => {
+    const repository = new InMemoryInstrumentsRepository();
+
+    repository.updateInstrumentMetadata('ZZZZ', {
+      sector: 'Technology',
+    });
+
+    expect(repository.findBySymbol('ZZZZ')).toBeNull();
+  });
 });

@@ -21,6 +21,7 @@ describe('WatchlistsService', () => {
   };
   const instrumentsRepository: jest.Mocked<InstrumentsRepository> = {
     saveInstruments: jest.fn(),
+    updateInstrumentMetadata: jest.fn(),
     findAvailable: jest.fn(),
     findBySymbol: jest.fn(),
   };

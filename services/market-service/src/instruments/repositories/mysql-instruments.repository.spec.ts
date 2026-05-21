@@ -70,8 +70,133 @@ describe('MysqlInstrumentsRepository', () => {
 
     expect(pool.query).toHaveBeenCalledWith(
       expect.stringContaining('ON DUPLICATE KEY UPDATE'),
-      ['NVDA', 'NVIDIA Corporation', 'NASDAQ', 'USD', 'Unclassified', 'ACTIVE'],
+      [
+        'NVDA',
+        'NVIDIA Corporation',
+        'NASDAQ',
+        'USD',
+        'Unclassified',
+        'ACTIVE',
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+      ],
     );
+    expect(pool.query).toHaveBeenCalledWith(
+      expect.stringContaining("SET status = 'INACTIVE'"),
+      ['NVDA'],
+    );
+    expect(pool.query).toHaveBeenCalledWith(
+      expect.stringContaining('DELETE instruments'),
+      ['NVDA'],
+    );
+  });
+
+  it('persists synchronized instruments in batches', async () => {
+    const instruments = [
+      Instrument.restore({
+        symbol: 'AAPL',
+        name: 'Apple Inc.',
+        marketCode: 'NASDAQ',
+        currency: 'USD',
+        sector: 'Technology',
+        status: 'ACTIVE',
+      }),
+      Instrument.restore({
+        symbol: 'MSFT',
+        name: 'Microsoft Corporation',
+        marketCode: 'NASDAQ',
+        currency: 'USD',
+        sector: 'Technology',
+        status: 'ACTIVE',
+      }),
+    ];
+
+    await repository.saveInstruments(instruments);
+
+    expect(pool.query.mock.calls[0]).toEqual([
+      expect.stringContaining(
+        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      ),
+      [
+        'AAPL',
+        'Apple Inc.',
+        'NASDAQ',
+        'USD',
+        'Technology',
+        'ACTIVE',
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        'MSFT',
+        'Microsoft Corporation',
+        'NASDAQ',
+        'USD',
+        'Technology',
+        'ACTIVE',
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+      ],
+    ]);
+  });
+
+  it('updates external metadata for an instrument', async () => {
+    const metadataUpdatedAt = new Date('2026-05-20T18:00:00.000Z');
+
+    await repository.updateInstrumentMetadata(' aapl ', {
+      name: 'Apple Inc.',
+      sector: 'Technology',
+      assetType: 'Common Stock',
+      industry: 'Consumer Electronics',
+      country: 'USA',
+      description: 'Apple overview',
+      metadataProvider: 'alpha-vantage-overview',
+      metadataUpdatedAt,
+    });
+
+    expect(pool.query).toHaveBeenCalledWith(
+      expect.stringContaining('metadata_updated_at = ?'),
+      [
+        'Apple Inc.',
+        'Technology',
+        'Common Stock',
+        'Consumer Electronics',
+        'USA',
+        'Apple overview',
+        'alpha-vantage-overview',
+        metadataUpdatedAt,
+        'AAPL',
+      ],
+    );
+  });
+
+  it('stores null values when optional metadata is absent', async () => {
+    await repository.updateInstrumentMetadata('AAPL', {
+      name: 'Apple Inc.',
+      sector: 'Technology',
+    });
+
+    expect(pool.query).toHaveBeenCalledWith(expect.any(String), [
+      'Apple Inc.',
+      'Technology',
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      'AAPL',
+    ]);
   });
 
   it('does not persist when synchronized catalog is empty', async () => {

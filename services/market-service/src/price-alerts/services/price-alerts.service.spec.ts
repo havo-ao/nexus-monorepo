@@ -16,6 +16,7 @@ describe('PriceAlertsService', () => {
     repository = new InMemoryPriceAlertsRepository();
     instrumentsRepository = {
       saveInstruments: jest.fn(),
+      updateInstrumentMetadata: jest.fn(),
       findAvailable: jest.fn(),
       findBySymbol: jest.fn().mockResolvedValue(
         Instrument.restore({

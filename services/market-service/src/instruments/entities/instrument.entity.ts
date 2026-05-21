@@ -13,6 +13,12 @@ export interface InstrumentSnapshot {
   currency: string;
   sector: string;
   status: InstrumentStatus;
+  assetType?: string | null;
+  industry?: string | null;
+  country?: string | null;
+  description?: string | null;
+  metadataProvider?: string | null;
+  metadataUpdatedAt?: Date | null;
 }
 
 export class Instrument {
@@ -56,6 +62,12 @@ export class Instrument {
       currency: snapshot.currency.trim().toUpperCase(),
       sector: snapshot.sector.trim(),
       status: snapshot.status,
+      assetType: this.normalizeOptionalText(snapshot.assetType),
+      industry: this.normalizeOptionalText(snapshot.industry),
+      country: this.normalizeOptionalText(snapshot.country),
+      description: this.normalizeOptionalText(snapshot.description),
+      metadataProvider: this.normalizeOptionalText(snapshot.metadataProvider),
+      metadataUpdatedAt: this.normalizeOptionalDate(snapshot.metadataUpdatedAt),
     });
   }
 
@@ -65,5 +77,17 @@ export class Instrument {
 
   toSnapshot(): InstrumentSnapshot {
     return { ...this.snapshot };
+  }
+
+  private static normalizeOptionalText(value: unknown): string | undefined {
+    return typeof value === 'string' && value.trim() ? value.trim() : undefined;
+  }
+
+  private static normalizeOptionalDate(value: unknown): Date | undefined {
+    if (!(value instanceof Date) || Number.isNaN(value.getTime())) {
+      return undefined;
+    }
+
+    return new Date(value);
   }
 }

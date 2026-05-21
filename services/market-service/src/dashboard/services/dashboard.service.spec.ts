@@ -28,6 +28,7 @@ describe('DashboardService', () => {
     };
     instrumentsRepository = {
       saveInstruments: jest.fn(),
+      updateInstrumentMetadata: jest.fn(),
       findAvailable: jest.fn().mockResolvedValue([
         Instrument.restore({
           symbol: 'AAPL',

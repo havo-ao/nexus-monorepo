@@ -62,6 +62,12 @@ export class InstrumentDetailService {
       currency: snapshot.currency,
       sector: snapshot.sector,
       status: snapshot.status,
+      assetType: snapshot.assetType ?? null,
+      industry: snapshot.industry ?? null,
+      country: snapshot.country ?? null,
+      description: snapshot.description ?? null,
+      metadataProvider: snapshot.metadataProvider ?? null,
+      metadataUpdatedAt: snapshot.metadataUpdatedAt?.toISOString() ?? null,
       quote: quote ? toMarketQuoteResponse(quote) : null,
     };
   }
