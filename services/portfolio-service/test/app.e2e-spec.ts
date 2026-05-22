@@ -76,6 +76,31 @@ describe('AppController (e2e)', () => {
     });
   });
 
+  it('/api/v1/portfolio/:traderId/deposits (POST)', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/portfolio/1/deposits')
+      .send({
+        amount: 250,
+        currency: 'USD',
+        sourceTransactionId: 'pay_123456',
+        depositedAt: '2026-05-21T22:15:00.000Z',
+      })
+      .expect(201);
+
+    expect(response.body).toEqual({
+      movementId: '0',
+      traderId: '1',
+      amount: 250,
+      availableBalance: 250,
+      reservedBalance: 0,
+      totalBalance: 250,
+      currency: 'USD',
+      movementType: 'DEPOSIT',
+      sourceTransactionId: 'pay_123456',
+      createdAt: '2026-05-21T22:15:00.000Z',
+    });
+  });
+
   it('/api/v1/portfolio/:traderId/positions/:positionId (GET)', () => {
     return request(app.getHttpServer())
       .get('/api/v1/portfolio/1/positions/99')

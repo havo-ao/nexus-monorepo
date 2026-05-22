@@ -10,6 +10,7 @@ describe('WalletsService', () => {
   beforeEach(async () => {
     walletsRepository = {
       findBalanceByTraderId: jest.fn(),
+      recordDeposit: jest.fn(),
     } as unknown as jest.Mocked<WalletsRepository>;
 
     const module: TestingModule = await Test.createTestingModule({
@@ -50,5 +51,68 @@ describe('WalletsService', () => {
     await expect(service.getAvailableBalance(' ')).rejects.toBeInstanceOf(
       BadRequestException,
     );
+  });
+
+  it('records a deposit and returns the updated balance', async () => {
+    const createdAt = new Date('2026-05-21T22:15:00.000Z');
+    walletsRepository.recordDeposit.mockResolvedValue({
+      movementId: '9001',
+      traderId: '101',
+      amount: 250,
+      availableBalance: 1250,
+      reservedBalance: 0,
+      currency: 'USD',
+      sourceTransactionId: 'pay_123456',
+      createdAt,
+    });
+
+    await expect(
+      service.recordDeposit(' 101 ', {
+        amount: 250,
+        currency: 'usd',
+        sourceTransactionId: ' pay_123456 ',
+        depositedAt: createdAt.toISOString(),
+      }),
+    ).resolves.toEqual({
+      movementId: '9001',
+      traderId: '101',
+      amount: 250,
+      availableBalance: 1250,
+      reservedBalance: 0,
+      totalBalance: 1250,
+      currency: 'USD',
+      movementType: 'DEPOSIT',
+      sourceTransactionId: 'pay_123456',
+      createdAt: createdAt.toISOString(),
+    });
+
+    expect(walletsRepository.recordDeposit.mock.calls[0][0]).toEqual({
+      traderId: '101',
+      amount: 250,
+      currency: 'USD',
+      sourceTransactionId: 'pay_123456',
+      depositedAt: createdAt,
+    });
+  });
+
+  it('rejects deposit amounts that are not positive', async () => {
+    await expect(
+      service.recordDeposit('101', { amount: 0 }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('rejects deposit currencies that are not ISO-4217 codes', async () => {
+    await expect(
+      service.recordDeposit('101', { amount: 100, currency: 'USDT' }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('rejects deposit dates that cannot be parsed', async () => {
+    await expect(
+      service.recordDeposit('101', {
+        amount: 100,
+        depositedAt: 'not-a-date',
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 });
