@@ -15,7 +15,7 @@
   font-family: 'Montserrat', sans-serif;
   font-size: 2.5rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #2dd55b, #1a8a3a);
+  background: var(--nexus-accent-gradient);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -75,8 +75,8 @@
 }
 
 .operational-icon {
-  color: #2dd55b;
-  background: rgba(45, 213, 91, 0.1);
+  color: var(--nexus-accent);
+  background: rgba(var(--nexus-accent-rgb), 0.12);
   padding: 16px;
 }
 
@@ -165,7 +165,7 @@
 
 .why-icon {
   font-size: 48px;
-  color: #2dd55b;
+  color: var(--nexus-accent);
   margin-bottom: 20px;
 }
 
@@ -188,7 +188,7 @@
   font-family: 'Montserrat', sans-serif;
   font-size: 1.2rem;
   font-weight: 600;
-  color: #2dd55b;
+  color: var(--nexus-accent-text);
   max-width: 600px;
   margin: 0 auto;
   padding-top: 20px;

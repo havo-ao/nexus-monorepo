@@ -1,168 +1,198 @@
-/* src/components/NavBar.css */
-.landing-toolbar {
-  padding: 0 40px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  min-height: 80px;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+:root {
+  --nexus-sidebar-width: 272px;
+  --nexus-sidebar-width-mobile: 212px;
 }
 
-.toolbar-brand {
-  flex-shrink: 0;
-  z-index: 2;
-}
-
-.logo {
-  /* Do not use `font: inherit` here — it resets font-family/size/weight and overrides the lines above (strikethrough in DevTools). */
-  font-family: "Montserrat", sans-serif;
-  font-size: 1.65rem;
-  font-weight: 900;
-  font-style: normal;
-  line-height: 1.2;
-  letter-spacing: -0.02em;
-  background: linear-gradient(135deg, #8a27fc, #06ff4c);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  margin: 0;
-  border: 0;
-  padding: 0;
-  cursor: pointer;
-  -webkit-appearance: none;
-  appearance: none;
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-}
-
-.clickable-logo:focus-visible {
-  outline: 2px solid rgba(138, 39, 252, 0.65);
-  outline-offset: 3px;
-  border-radius: 6px;
-}
-
-/* True horizontal center of nav links (independent of start/end slot widths) */
-.nav-links {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  display: flex;
-  gap: 48px;
-  align-items: center;
-  justify-content: center;
-  z-index: 1;
-  pointer-events: auto;
-  max-width: min(90vw, 720px);
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.nav-links button {
-  margin: 0;
-  padding: 8px 4px;
-  border: 0;
-  background: transparent;
-  -webkit-appearance: none;
-  appearance: none;
-  font: inherit;
-  font-weight: 500;
-  font-size: 16px;
-  color: #b885ff;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: color 0.3s ease;
-}
-
-.nav-links button:hover {
-  color: #d5b2ff;
-}
-
-.nav-links button:focus-visible {
-  outline: 2px solid rgba(138, 39, 252, 0.6);
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
-.action-buttons {
-  min-width: 0;
-  margin-left: auto;
-  flex-shrink: 0;
-  z-index: 2;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 14px;
-}
-
-.nav-user-summary {
+.nexus-sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: var(--nexus-sidebar-width);
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
-  max-width: min(220px, 28vw);
-  text-align: right;
+  justify-content: space-between;
+  background: linear-gradient(180deg, #0d1730 0%, #10192f 100%);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 18px 0 40px rgba(3, 7, 18, 0.34);
+  z-index: 1000;
 }
 
-.nav-user-name {
-  font-weight: 600;
-  font-size: 0.9rem;
-  color: var(--ion-text-color, #f4f5f8);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+body.nexus-sidebar-layout .ion-page {
+  padding-left: var(--nexus-sidebar-width);
+}
+
+.nexus-sidebar-top {
+  padding: 20px 18px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.nexus-sidebar-logo {
   width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: 0;
+  background: transparent;
+  color: #ffffff;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
 }
 
-.nav-user-meta {
-  font-size: 0.72rem;
-  color: rgba(184, 133, 255, 0.95);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.nexus-sidebar-logo-mark {
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: var(--nexus-accent-gradient);
+  color: #ffffff;
+  box-shadow: 0 14px 28px rgba(var(--nexus-accent-rgb), 0.32);
+  flex-shrink: 0;
+}
+
+.nexus-sidebar-logo-mark ion-icon {
+  font-size: 1.15rem;
+}
+
+.nexus-sidebar-logo-text {
+  font-family: "Montserrat", sans-serif;
+  font-size: 1.6rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+}
+
+.nexus-sidebar-user,
+.nexus-sidebar-tagline {
+  margin: 16px 2px 0;
+}
+
+.nexus-sidebar-user {
+  display: grid;
+  gap: 4px;
+}
+
+.nexus-sidebar-user strong {
+  color: #f8fbff;
+  font-size: 0.96rem;
+}
+
+.nexus-sidebar-user span,
+.nexus-sidebar-tagline {
+  color: rgba(191, 219, 254, 0.82);
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+.nexus-sidebar-nav {
+  flex: 1;
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  padding: 18px 14px;
+  overflow-y: auto;
+}
+
+.nexus-sidebar-link,
+.nexus-sidebar-action {
   width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  padding: 12px 14px;
+  background: transparent;
+  color: #d8e4ff;
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
-.login-btn {
-  --color: #f4f5f8;
-  --background: rgba(138, 39, 252, 0.18);
-  --background-hover: rgba(138, 39, 252, 0.32);
-  --border-color: rgba(138, 39, 252, 0.55);
-  margin-right: 12px;
-  font-weight: 600;
-  --box-shadow: 0 8px 18px rgba(138, 39, 252, 0.25);
+.nexus-sidebar-link ion-icon,
+.nexus-sidebar-action ion-icon {
+  font-size: 1.1rem;
+  color: rgba(191, 219, 254, 0.86);
+  flex-shrink: 0;
 }
 
-.signup-btn {
-  --background: #8a27fc;
-  --background-hover: #a146ff;
-  --color: #ffffff;
-  font-weight: 600;
-  --box-shadow: 0 10px 22px rgba(138, 39, 252, 0.35);
+.nexus-sidebar-link span,
+.nexus-sidebar-action span {
+  white-space: nowrap;
 }
 
-/* Mobile */
+.nexus-sidebar-link:hover,
+.nexus-sidebar-action:hover {
+  background: rgba(var(--nexus-accent-rgb), 0.14);
+  border-color: rgba(var(--nexus-accent-rgb), 0.22);
+  color: #ffffff;
+  transform: translateX(2px);
+}
+
+.nexus-sidebar-link:hover ion-icon,
+.nexus-sidebar-action:hover ion-icon {
+  color: #ffffff;
+}
+
+.nexus-sidebar-link.active {
+  background: rgba(var(--nexus-accent-rgb), 0.18);
+  border-color: rgba(var(--nexus-accent-rgb), 0.3);
+  color: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(var(--nexus-accent-rgb), 0.08);
+}
+
+.nexus-sidebar-link.active ion-icon {
+  color: #ffffff;
+}
+
+.nexus-sidebar-footer {
+  display: grid;
+  gap: 10px;
+  padding: 18px 14px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.nexus-sidebar-action--ghost {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.nexus-sidebar-action--solid {
+  background: var(--nexus-accent);
+  border-color: rgba(var(--nexus-accent-rgb), 0.56);
+  color: #ffffff;
+  box-shadow: 0 12px 24px rgba(var(--nexus-accent-rgb), 0.26);
+}
+
+.nexus-sidebar-action--solid ion-icon {
+  color: #ffffff;
+}
+
+.nexus-sidebar-action--solid:hover {
+  background: var(--nexus-accent);
+  border-color: rgba(var(--nexus-accent-rgb), 0.7);
+}
+
 @media (max-width: 768px) {
-  .landing-toolbar {
-    padding: 0 15px;
+  .nexus-sidebar {
+    width: var(--nexus-sidebar-width-mobile);
   }
 
-  .nav-links {
-    display: none;
+  body.nexus-sidebar-layout .ion-page {
+    padding-left: var(--nexus-sidebar-width-mobile);
   }
 
-  .action-buttons {
-    min-width: auto;
-    gap: 8px;
+  .nexus-sidebar-logo-text {
+    font-size: 1.35rem;
   }
 
-  .nav-user-summary {
-    display: none;
-  }
-
-  .logo {
-    font-size: 1.4rem;
+  .nexus-sidebar-link,
+  .nexus-sidebar-action {
+    gap: 12px;
+    padding: 11px 12px;
+    font-size: 0.92rem;
   }
 }

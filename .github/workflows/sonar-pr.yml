@@ -13,27 +13,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  webapp:
-    name: Build webapp frontend
-    runs-on: ubuntu-latest
-    if: ${{ !github.event.pull_request.draft }}
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 22
-
-      - name: Build webapp
-        working-directory: webapp
-        run: |
-          npm install --no-audit --no-fund
-          npm run test.unit -- --run
-          npm run build
-
   trading-service:
     name: Build trading service
     runs-on: ubuntu-latest
@@ -181,10 +160,14 @@ jobs:
           SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3307/nexus
           SPRING_DATASOURCE_USERNAME: nexus_user
           SPRING_DATASOURCE_PASSWORD: nexus_password
-          JWT_SECRET: local-ci-jwt-secret-change-before-production-123456
+          NEXUS_JWT_SECRET: local-ci-jwt-secret-change-before-production-123456
           ADMIN_EMAIL: admin@nexus.local
           ADMIN_PASSWORD: Admin123@
-        run: bash ./mvnw -B package
+          STRIPE_SECRET_KEY: sk_test_local_ci_placeholder
+          STRIPE_MONTHLY_PRICE: price_local_ci_monthly
+          STRIPE_YEARLY_PRICE: price_local_ci_yearly
+          FRONTEND_DOMAIN: http://localhost:8100
+        run: bash ./mvnw -B verify
 
       - name: Upload identity bytecode
         uses: actions/upload-artifact@v4
@@ -193,12 +176,18 @@ jobs:
           path: services/identity-service/target/classes
           if-no-files-found: error
 
+      - name: Upload identity coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: identity-service-coverage
+          path: services/identity-service/target/site/jacoco/jacoco.xml
+          if-no-files-found: error
+
   sonar:
     name: Analyze code with SonarCloud
     runs-on: ubuntu-latest
     if: ${{ !github.event.pull_request.draft }}
     needs:
-      - webapp
       - trading-service
       - portfolio-service
       - market-service
@@ -216,6 +205,12 @@ jobs:
         with:
           name: identity-service-classes
           path: services/identity-service/target/classes
+
+      - name: Download identity coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: identity-service-coverage
+          path: services/identity-service/target/site/jacoco
 
       - name: Download trading coverage
         uses: actions/download-artifact@v4

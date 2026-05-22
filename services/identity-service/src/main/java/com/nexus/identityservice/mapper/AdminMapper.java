@@ -34,7 +34,7 @@ public interface AdminMapper {
     @Mapping(target = "failedLoginAttempts", ignore = true)
     @Mapping(target = "lastFailedLogin", ignore = true)
     @Mapping(target = "banUntil", ignore = true)
-    //Ignore UserDetails fields
+    // Ignore UserDetails fields
     @Mapping(target = "authorities", ignore = true)
     @Mapping(target = "accountNonExpired", ignore = true)
     @Mapping(target = "accountNonLocked", ignore = true)
@@ -44,6 +44,5 @@ public interface AdminMapper {
 
     @Mapping(source = "userNickname", target = "username")
     AdminResponse toResponse(Admin admin);
-
 
 }

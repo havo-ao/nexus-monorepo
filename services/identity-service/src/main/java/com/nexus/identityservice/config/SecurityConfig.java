@@ -47,6 +47,7 @@ public class SecurityConfig {
 
                                 // Admin endpoints (ADMIN only)
                                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                                .requestMatchers("/actuator/**").hasRole("ADMIN")
 
                                 .anyRequest().authenticated()
                 )
@@ -61,7 +62,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of("*"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

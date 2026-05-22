@@ -23,4 +23,5 @@ public class TraderAuditResponse extends UserAuditResponse{
     private UserStatus status;
     private boolean emailVerified;
     private boolean phoneVerified;
+    private boolean activePremiumPlan;
 }

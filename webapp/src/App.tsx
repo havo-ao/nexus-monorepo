@@ -6,6 +6,14 @@ import Login from './pages/Login';
 import SignUp from './pages/SignUp';
 import TraderPanel from './pages/TraderPanel';
 import Dashboard from './pages/Dashboard';
+import PlanSelection from './pages/PlanSelection';
+import Profile from './pages/Profile';
+import Notifications from './pages/Notifications';
+import Portfolio from './pages/Portfolio';
+import Success from './pages/Success';
+import ManageAdmins from './pages/ManageAdmins';
+import ManagePlans from './pages/ManagePlans';
+import CancelledPayment from './pages/CancelledPayment';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -55,11 +63,32 @@ const App: React.FC = () => (
         <Route exact path="/signup">
           <SignUp />
         </Route>
+        <Route exact path="/plan-selection">
+          <PlanSelection />
+        </Route>
+        <Route exact path="/success">
+          <Success />
+        </Route>
+        <Route exact path="/cancelledPayment">
+          <CancelledPayment />
+        </Route>
         <Route exact path="/dashboard">
           <Dashboard />
         </Route>
-        <Route exact path="/trader-panel">
-          <TraderPanel />
+        <Route exact path="/profile">
+          <Profile />
+        </Route>
+        <Route exact path="/notifications">
+          <Notifications />
+        </Route>
+        <Route exact path="/portfolio">
+          <Portfolio />
+        </Route>
+        <Route exact path="/manage-admins">
+          <ManageAdmins />
+        </Route>
+        <Route exact path="/manage-plans">
+          <ManagePlans />
         </Route>
         <Route render={() => <Redirect to="/" />} />
       </IonRouterOutlet>

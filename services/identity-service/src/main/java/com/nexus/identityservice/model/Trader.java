@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -13,7 +16,7 @@ import lombok.experimental.SuperBuilder;
 @Entity
 @Table
 public class Trader extends User {
-    @Column(length = 12, nullable = false)
+    @Column(length = 16, nullable = false)
     private String phone;
     @Column(length = 100, nullable = false)
     private String address;
@@ -32,5 +35,12 @@ public class Trader extends User {
     private boolean emailVerified;
     @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean phoneVerified;
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean activePremiumPlan;
+
+    @OneToMany(mappedBy = "trader", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<TraderSubscription> subscriptions = new ArrayList<>();
+
 
 }

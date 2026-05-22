@@ -9,8 +9,8 @@
   padding: 28px;
   background: rgba(20, 22, 35, 0.9);
   border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(138, 39, 252, 0.35);
-  border: 1px solid rgba(138, 39, 252, 0.25);
+  box-shadow: 0 10px 30px rgba(var(--nexus-accent-rgb), 0.35);
+  border: 1px solid rgba(var(--nexus-accent-rgb), 0.25);
 }
 
 .trader-panel-card h1 {
@@ -42,7 +42,7 @@
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: rgba(184, 133, 255, 0.95);
+  color: rgba(var(--nexus-accent-soft-rgb), 0.95);
   margin-bottom: 4px;
 }
 
