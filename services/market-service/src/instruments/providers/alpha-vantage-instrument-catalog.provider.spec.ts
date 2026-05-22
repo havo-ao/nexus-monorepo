@@ -77,6 +77,39 @@ describe('AlphaVantageInstrumentCatalogProvider', () => {
     expect(instruments[0].status).toBe('INACTIVE');
   });
 
+  it('limits synchronized instruments using the configured provider limit', async () => {
+    process.env.ALPHA_VANTAGE_INSTRUMENT_LIMIT = '2';
+    mockFetchResponse(
+      [
+        'symbol,name,exchange,assetType,ipoDate,delistingDate,status',
+        'AAPL,Apple Inc.,NASDAQ,Stock,1980-12-12,null,Active',
+        'MSFT,Microsoft Corporation,NASDAQ,Stock,1986-03-13,null,Active',
+        'JPM,JPMorgan Chase & Co.,NYSE,Stock,1969-03-05,null,Active',
+      ].join('\n'),
+    );
+    const provider = new AlphaVantageInstrumentCatalogProvider();
+
+    const instruments = await provider.fetchInstruments();
+
+    expect(instruments.map((instrument) => instrument.symbol)).toEqual([
+      'AAPL',
+      'MSFT',
+    ]);
+  });
+
+  it('falls back to the default instrument limit when configured limit is invalid', async () => {
+    process.env.ALPHA_VANTAGE_INSTRUMENT_LIMIT = 'invalid-limit';
+    mockFetchResponse(
+      [
+        'symbol,name,exchange,assetType,ipoDate,delistingDate,status',
+        'AAPL,Apple Inc.,NASDAQ,Stock,1980-12-12,null,Active',
+      ].join('\n'),
+    );
+    const provider = new AlphaVantageInstrumentCatalogProvider();
+
+    await expect(provider.fetchInstruments()).resolves.toHaveLength(1);
+  });
+
   it('uses configured base URL and falls back to default timeout when invalid', async () => {
     process.env.ALPHA_VANTAGE_BASE_URL = 'https://example.test/query';
     process.env.ALPHA_VANTAGE_TIMEOUT_MS = 'invalid-timeout';
