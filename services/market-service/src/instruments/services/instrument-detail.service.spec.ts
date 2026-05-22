@@ -12,6 +12,8 @@ describe('InstrumentDetailService', () => {
   let service: InstrumentDetailService;
 
   const instrumentsRepository: jest.Mocked<InstrumentsRepository> = {
+    saveInstruments: jest.fn(),
+    updateInstrumentMetadata: jest.fn(),
     findAvailable: jest.fn(),
     findBySymbol: jest.fn(),
   };
@@ -73,6 +75,12 @@ describe('InstrumentDetailService', () => {
       currency: 'USD',
       sector: 'Technology',
       status: 'ACTIVE',
+      assetType: null,
+      industry: null,
+      country: null,
+      description: null,
+      metadataProvider: null,
+      metadataUpdatedAt: null,
       quote: {
         symbol: 'AAPL',
         price: 190,

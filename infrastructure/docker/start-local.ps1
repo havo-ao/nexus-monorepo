@@ -94,9 +94,11 @@ if (-not (Test-Path $envFile)) {
     "MARKET_DATA_PROVIDER="
     "MARKET_HISTORY_PROVIDER="
     "INSTRUMENT_CATALOG_PROVIDER="
+    "INSTRUMENT_METADATA_PROVIDER="
     "ALPHA_VANTAGE_API_KEY="
     "ALPHA_VANTAGE_BASE_URL=https://www.alphavantage.co/query"
     "ALPHA_VANTAGE_HISTORY_OUTPUT_SIZE=compact"
+    "ALPHA_VANTAGE_INSTRUMENT_LIMIT=500"
     "ALPHA_VANTAGE_LISTING_STATE=active"
     "ALPHA_VANTAGE_TIMEOUT_MS=5000"
     "MARKET_DATA_SYNC_ON_STARTUP=true"
@@ -112,9 +114,11 @@ if (-not (Test-Path $envFile)) {
 Add-MissingEnvValue $envFile "MARKET_DATA_PROVIDER" ""
 Add-MissingEnvValue $envFile "MARKET_HISTORY_PROVIDER" ""
 Add-MissingEnvValue $envFile "INSTRUMENT_CATALOG_PROVIDER" ""
+Add-MissingEnvValue $envFile "INSTRUMENT_METADATA_PROVIDER" ""
 Add-MissingEnvValue $envFile "ALPHA_VANTAGE_API_KEY" ""
 Add-MissingEnvValue $envFile "ALPHA_VANTAGE_BASE_URL" "https://www.alphavantage.co/query"
 Add-MissingEnvValue $envFile "ALPHA_VANTAGE_HISTORY_OUTPUT_SIZE" "compact"
+Add-MissingEnvValue $envFile "ALPHA_VANTAGE_INSTRUMENT_LIMIT" "500"
 Add-MissingEnvValue $envFile "ALPHA_VANTAGE_LISTING_STATE" "active"
 Add-MissingEnvValue $envFile "ALPHA_VANTAGE_TIMEOUT_MS" "5000"
 Add-MissingEnvValue $envFile "MARKET_DATA_SYNC_ON_STARTUP" "true"
@@ -131,6 +135,10 @@ if (Get-EnvValue $envFile "ALPHA_VANTAGE_API_KEY") {
 
   if ((Get-EnvValue $envFile "INSTRUMENT_CATALOG_PROVIDER") -eq "static") {
     Set-EnvValue $envFile "INSTRUMENT_CATALOG_PROVIDER" ""
+  }
+
+  if ((Get-EnvValue $envFile "INSTRUMENT_METADATA_PROVIDER") -eq "static") {
+    Set-EnvValue $envFile "INSTRUMENT_METADATA_PROVIDER" ""
   }
 }
 

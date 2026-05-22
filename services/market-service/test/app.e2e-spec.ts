@@ -35,8 +35,30 @@ interface InstrumentResponse {
   sector: string;
 }
 
+interface SyncInstrumentsResponse {
+  status: string;
+  provider: string;
+  updatedCount: number;
+  preservedLocalCatalog: boolean;
+  instruments: InstrumentResponse[];
+}
+
 interface InstrumentDetailResponse extends InstrumentResponse {
+  assetType: string | null;
+  industry: string | null;
+  country: string | null;
+  description: string | null;
+  metadataProvider: string | null;
+  metadataUpdatedAt: string | null;
   quote: MarketQuoteResponse | null;
+}
+
+interface SyncInstrumentMetadataResponse {
+  status: string;
+  provider: string;
+  symbol: string;
+  preservedLastKnownMetadata: boolean;
+  instrument: InstrumentDetailResponse;
 }
 
 interface MarketQuoteResponse {
@@ -210,6 +232,49 @@ describe('AppController (e2e)', () => {
       });
   });
 
+  it('/api/v1/instruments/sync (POST) synchronizes available instruments', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/instruments/sync')
+      .expect(200)
+      .expect((response) => {
+        const body = response.body as SyncInstrumentsResponse;
+
+        expect(body).toEqual(
+          expect.objectContaining({
+            status: 'SUCCESS',
+            provider: 'alpha-vantage-listing-compatible',
+            preservedLocalCatalog: false,
+          }),
+        );
+        expect(body.updatedCount).toBeGreaterThan(0);
+        expect(body.instruments).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              symbol: 'AAPL',
+              marketCode: 'NASDAQ',
+              currency: 'USD',
+            }),
+          ]),
+        );
+      });
+
+    await request(app.getHttpServer())
+      .get('/api/v1/instruments')
+      .expect(200)
+      .expect((response) => {
+        const body = response.body as InstrumentResponse[];
+
+        expect(body).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              symbol: 'AAPL',
+              name: 'Apple Inc.',
+            }),
+          ]),
+        );
+      });
+  });
+
   it('/api/v1/instruments/:symbol (GET) returns instrument detail', async () => {
     await request(app.getHttpServer())
       .post('/api/v1/quotes/sync')
@@ -233,6 +298,12 @@ describe('AppController (e2e)', () => {
             currency: 'USD',
             sector: 'Technology',
             status: 'ACTIVE',
+            assetType: null,
+            industry: null,
+            country: null,
+            description: null,
+            metadataProvider: null,
+            metadataUpdatedAt: null,
           }),
         );
         expect(body.quote).toEqual(
@@ -242,6 +313,43 @@ describe('AppController (e2e)', () => {
             provider: 'alpha-vantage-compatible',
           }),
         );
+      });
+  });
+
+  it('/api/v1/instruments/:symbol/metadata/sync (POST) enriches instrument detail', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/instruments/AAPL/metadata/sync')
+      .expect(200)
+      .expect((response) => {
+        const body = response.body as SyncInstrumentMetadataResponse;
+
+        expect(body).toEqual(
+          expect.objectContaining({
+            status: 'SUCCESS',
+            provider: 'alpha-vantage-overview-compatible',
+            symbol: 'AAPL',
+            preservedLastKnownMetadata: false,
+          }),
+        );
+        expect(body.instrument).toEqual(
+          expect.objectContaining({
+            symbol: 'AAPL',
+            assetType: 'Common Stock',
+            industry: 'Consumer Electronics',
+            country: 'USA',
+            metadataProvider: 'alpha-vantage-overview-compatible',
+          }),
+        );
+      });
+
+    await request(app.getHttpServer())
+      .get('/api/v1/instruments/AAPL')
+      .expect(200)
+      .expect((response) => {
+        const body = response.body as InstrumentDetailResponse;
+
+        expect(body.description).toContain('Apple Inc.');
+        expect(body.metadataUpdatedAt).toEqual(expect.any(String));
       });
   });
 

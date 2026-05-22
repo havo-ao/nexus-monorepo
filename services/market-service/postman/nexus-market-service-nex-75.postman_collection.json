@@ -6,6 +6,20 @@
   },
   "item": [
     {
+      "name": "Synchronize instruments catalog",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{marketServiceBaseUrl}}/api/v1/instruments/sync",
+          "host": ["{{marketServiceBaseUrl}}"],
+          "path": ["api", "v1", "instruments", "sync"]
+        },
+        "description": "Synchronizes available instruments from the configured catalog provider."
+      },
+      "response": []
+    },
+    {
       "name": "List available instruments",
       "request": {
         "method": "GET",

@@ -17,11 +17,14 @@ actual, el servicio consume el contrato `QuotesRepository` exportado por
 La respuesta incluye:
 
 - metadata del instrumento desde `market_instruments`;
+- metadata enriquecida del proveedor externo cuando se sincroniza
+  `POST /api/v1/instruments/{symbol}/metadata/sync`;
 - cotizacion actual desde `market_quotes`, cuando existe;
 - `quote: null` cuando el activo existe pero aun no hay cotizacion disponible.
 
-No se agrega migracion nueva porque NEX-75 creo `market_instruments` y NEX-79
-creo `market_quotes`.
+La subtarea `NEX-109` agrega la migracion `009_add_instrument_metadata.sql`
+para guardar `asset_type`, `industry`, `country`, `description`,
+`metadata_provider` y `metadata_updated_at` en `market_instruments`.
 
 ## Validacion Manual
 
@@ -35,6 +38,7 @@ Endpoints principales:
 
 ```text
 POST /api/v1/quotes/sync
+POST /api/v1/instruments/AAPL/metadata/sync
 GET /api/v1/instruments/AAPL
 ```
 
@@ -48,6 +52,12 @@ Resultado esperado:
   "currency": "USD",
   "sector": "Technology",
   "status": "ACTIVE",
+  "assetType": "Common Stock",
+  "industry": "Consumer Electronics",
+  "country": "USA",
+  "description": "Apple Inc. designs, manufactures, and markets smartphones...",
+  "metadataProvider": "alpha-vantage-overview",
+  "metadataUpdatedAt": "2026-05-20T18:00:00.000Z",
   "quote": {
     "symbol": "AAPL",
     "price": 186.4,
@@ -80,6 +90,9 @@ Resultado esperado:
 - Alcance esperado: Integracion con proveedor externo; Back adaptador en
   `providers`; BD actualizacion de metadata en `market_instruments`; Pruebas con
   mock del proveedor, timeout y conservacion del ultimo dato valido.
+- Implementacion: `POST /api/v1/instruments/{symbol}/metadata/sync` consulta
+  Alpha Vantage `OVERVIEW` cuando existe API key, guarda metadata enriquecida y
+  mantiene el ultimo detalle valido si el proveedor falla.
 
 ## Verificacion
 
