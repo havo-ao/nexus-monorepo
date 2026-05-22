@@ -14,7 +14,9 @@ import {
 } from '@nestjs/swagger';
 import { RecordExecutedBuyDto } from '../../positions/dto/record-executed-buy.dto';
 import { RecordExecutedSellDto } from '../../positions/dto/record-executed-sell.dto';
+import { RecordDepositDto } from '../../wallets/dto/record-deposit.dto';
 import { WalletBalanceResponseDto } from '../../wallets/dto/wallet-balance-response.dto';
+import { WalletDepositResponseDto } from '../../wallets/dto/wallet-deposit-response.dto';
 import { PortfolioPositionResponseDto } from '../dto/portfolio-position-response.dto';
 import { PortfolioSectorDistributionResponseDto } from '../dto/portfolio-sector-distribution-response.dto';
 import { PortfolioSummaryResponseDto } from '../dto/portfolio-summary-response.dto';
@@ -56,6 +58,18 @@ export class PortfolioController {
     @Param('traderId', ParseIntPipe) traderId: number,
   ): Promise<WalletBalanceResponseDto> {
     return this.portfolioService.getAvailableBalance(String(traderId));
+  }
+
+  @Post(':traderId/deposits')
+  @ApiOperation({
+    summary: 'NEX-67 Depositar fondos',
+  })
+  @ApiCreatedResponse({ type: WalletDepositResponseDto })
+  recordDeposit(
+    @Param('traderId', ParseIntPipe) traderId: number,
+    @Body() dto: RecordDepositDto,
+  ): Promise<WalletDepositResponseDto> {
+    return this.portfolioService.recordDeposit(String(traderId), dto);
   }
 
   @Get(':traderId/positions/:positionId')

@@ -58,6 +58,7 @@ describe('PortfolioService', () => {
     });
     walletsService = {
       getAvailableBalance: jest.fn(),
+      recordDeposit: jest.fn(),
     } as unknown as jest.Mocked<WalletsService>;
 
     const module: TestingModule = await Test.createTestingModule({
@@ -298,6 +299,34 @@ describe('PortfolioService', () => {
     });
 
     expect(walletsService.getAvailableBalance.mock.calls[0][0]).toBe('7');
+  });
+
+  it('records a deposit for a trader wallet', async () => {
+    const response = {
+      movementId: '9001',
+      traderId: '7',
+      amount: 250,
+      availableBalance: 1000,
+      reservedBalance: 0,
+      totalBalance: 1000,
+      currency: 'USD',
+      movementType: 'DEPOSIT' as const,
+      sourceTransactionId: 'pay_123456',
+      createdAt: '2026-05-21T22:15:00.000Z',
+    };
+    const request = {
+      amount: 250,
+      currency: 'USD',
+      sourceTransactionId: 'pay_123456',
+      depositedAt: '2026-05-21T22:15:00.000Z',
+    };
+    walletsService.recordDeposit.mockResolvedValue(response);
+
+    await expect(service.recordDeposit('7', request)).resolves.toEqual(
+      response,
+    );
+
+    expect(walletsService.recordDeposit.mock.calls[0]).toEqual(['7', request]);
   });
 
   it('returns the updated position after an executed buy is recorded', async () => {
