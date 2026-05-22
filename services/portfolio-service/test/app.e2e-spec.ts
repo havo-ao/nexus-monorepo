@@ -101,6 +101,56 @@ describe('AppController (e2e)', () => {
     });
   });
 
+  it('/api/v1/portfolio/:traderId/reservations (POST)', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/portfolio/1/reservations')
+      .send({
+        amount: 125,
+        currency: 'USD',
+        sourceOrderId: 'order_123456',
+        reservedAt: '2026-05-22T14:15:00.000Z',
+      })
+      .expect(201);
+
+    expect(response.body).toEqual({
+      movementId: '0',
+      traderId: '1',
+      amount: 125,
+      availableBalance: 0,
+      reservedBalance: 125,
+      totalBalance: 125,
+      currency: 'USD',
+      movementType: 'RESERVE',
+      sourceOrderId: 'order_123456',
+      createdAt: '2026-05-22T14:15:00.000Z',
+    });
+  });
+
+  it('/api/v1/portfolio/:traderId/reservations/releases (POST)', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/portfolio/1/reservations/releases')
+      .send({
+        amount: 125,
+        currency: 'USD',
+        sourceOrderId: 'order_123456',
+        releasedAt: '2026-05-22T14:30:00.000Z',
+      })
+      .expect(201);
+
+    expect(response.body).toEqual({
+      movementId: '0',
+      traderId: '1',
+      amount: 125,
+      availableBalance: 125,
+      reservedBalance: 0,
+      totalBalance: 125,
+      currency: 'USD',
+      movementType: 'RELEASE',
+      sourceOrderId: 'order_123456',
+      createdAt: '2026-05-22T14:30:00.000Z',
+    });
+  });
+
   it('/api/v1/portfolio/:traderId/positions/:positionId (GET)', () => {
     return request(app.getHttpServer())
       .get('/api/v1/portfolio/1/positions/99')

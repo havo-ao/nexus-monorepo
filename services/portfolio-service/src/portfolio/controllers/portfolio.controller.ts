@@ -14,9 +14,12 @@ import {
 } from '@nestjs/swagger';
 import { RecordExecutedBuyDto } from '../../positions/dto/record-executed-buy.dto';
 import { RecordExecutedSellDto } from '../../positions/dto/record-executed-sell.dto';
+import { RecordBalanceReservationDto } from '../../wallets/dto/record-balance-reservation.dto';
 import { RecordDepositDto } from '../../wallets/dto/record-deposit.dto';
+import { ReleaseBalanceReservationDto } from '../../wallets/dto/release-balance-reservation.dto';
 import { WalletBalanceResponseDto } from '../../wallets/dto/wallet-balance-response.dto';
 import { WalletDepositResponseDto } from '../../wallets/dto/wallet-deposit-response.dto';
+import { WalletReservationResponseDto } from '../../wallets/dto/wallet-reservation-response.dto';
 import { PortfolioPositionResponseDto } from '../dto/portfolio-position-response.dto';
 import { PortfolioSectorDistributionResponseDto } from '../dto/portfolio-sector-distribution-response.dto';
 import { PortfolioSummaryResponseDto } from '../dto/portfolio-summary-response.dto';
@@ -70,6 +73,30 @@ export class PortfolioController {
     @Body() dto: RecordDepositDto,
   ): Promise<WalletDepositResponseDto> {
     return this.portfolioService.recordDeposit(String(traderId), dto);
+  }
+
+  @Post(':traderId/reservations')
+  @ApiOperation({
+    summary: 'NEX-68 Reservar saldo para una orden',
+  })
+  @ApiCreatedResponse({ type: WalletReservationResponseDto })
+  reserveBalance(
+    @Param('traderId', ParseIntPipe) traderId: number,
+    @Body() dto: RecordBalanceReservationDto,
+  ): Promise<WalletReservationResponseDto> {
+    return this.portfolioService.reserveBalance(String(traderId), dto);
+  }
+
+  @Post(':traderId/reservations/releases')
+  @ApiOperation({
+    summary: 'NEX-68 Liberar saldo reservado',
+  })
+  @ApiCreatedResponse({ type: WalletReservationResponseDto })
+  releaseReservedBalance(
+    @Param('traderId', ParseIntPipe) traderId: number,
+    @Body() dto: ReleaseBalanceReservationDto,
+  ): Promise<WalletReservationResponseDto> {
+    return this.portfolioService.releaseReservedBalance(String(traderId), dto);
   }
 
   @Get(':traderId/positions/:positionId')

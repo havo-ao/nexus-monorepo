@@ -1,5 +1,9 @@
 import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import {
+  InsufficientReservedBalanceError,
+  InsufficientWalletBalanceError,
+} from '../repositories/wallets.repository';
 import { WalletsRepository } from '../repositories/wallets.repository';
 import { WalletsService } from './wallets.service';
 
@@ -11,6 +15,8 @@ describe('WalletsService', () => {
     walletsRepository = {
       findBalanceByTraderId: jest.fn(),
       recordDeposit: jest.fn(),
+      reserveBalance: jest.fn(),
+      releaseReservedBalance: jest.fn(),
     } as unknown as jest.Mocked<WalletsRepository>;
 
     const module: TestingModule = await Test.createTestingModule({
@@ -114,5 +120,135 @@ describe('WalletsService', () => {
         depositedAt: 'not-a-date',
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('reserves available balance for an order', async () => {
+    const createdAt = new Date('2026-05-22T14:15:00.000Z');
+    walletsRepository.reserveBalance.mockResolvedValue({
+      movementId: '9101',
+      traderId: '101',
+      amount: 450,
+      availableBalance: 550,
+      reservedBalance: 450,
+      currency: 'USD',
+      movementType: 'RESERVE',
+      sourceOrderId: 'order_123456',
+      createdAt,
+    });
+
+    await expect(
+      service.reserveBalance(' 101 ', {
+        amount: 450,
+        currency: 'usd',
+        sourceOrderId: ' order_123456 ',
+        reservedAt: createdAt.toISOString(),
+      }),
+    ).resolves.toEqual({
+      movementId: '9101',
+      traderId: '101',
+      amount: 450,
+      availableBalance: 550,
+      reservedBalance: 450,
+      totalBalance: 1000,
+      currency: 'USD',
+      movementType: 'RESERVE',
+      sourceOrderId: 'order_123456',
+      createdAt: createdAt.toISOString(),
+    });
+
+    expect(walletsRepository.reserveBalance.mock.calls[0][0]).toEqual({
+      traderId: '101',
+      amount: 450,
+      currency: 'USD',
+      sourceOrderId: 'order_123456',
+      occurredAt: createdAt,
+    });
+  });
+
+  it('rejects reservations when available balance is insufficient', async () => {
+    walletsRepository.reserveBalance.mockRejectedValue(
+      new InsufficientWalletBalanceError(),
+    );
+
+    await expect(
+      service.reserveBalance('101', { amount: 450 }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('rejects reservation amounts that are not positive', async () => {
+    await expect(
+      service.reserveBalance('101', { amount: -1 }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('rejects reservation dates that cannot be parsed', async () => {
+    await expect(
+      service.reserveBalance('101', {
+        amount: 100,
+        reservedAt: 'not-a-date',
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('propagates unexpected reservation errors', async () => {
+    const error = new Error('database unavailable');
+    walletsRepository.reserveBalance.mockRejectedValue(error);
+
+    await expect(service.reserveBalance('101', { amount: 100 })).rejects.toBe(
+      error,
+    );
+  });
+
+  it('releases reserved balance for an order', async () => {
+    const createdAt = new Date('2026-05-22T14:30:00.000Z');
+    walletsRepository.releaseReservedBalance.mockResolvedValue({
+      movementId: '9102',
+      traderId: '101',
+      amount: 200,
+      availableBalance: 750,
+      reservedBalance: 250,
+      currency: 'USD',
+      movementType: 'RELEASE',
+      sourceOrderId: 'order_123456',
+      createdAt,
+    });
+
+    await expect(
+      service.releaseReservedBalance('101', {
+        amount: 200,
+        sourceOrderId: 'order_123456',
+        releasedAt: createdAt.toISOString(),
+      }),
+    ).resolves.toEqual({
+      movementId: '9102',
+      traderId: '101',
+      amount: 200,
+      availableBalance: 750,
+      reservedBalance: 250,
+      totalBalance: 1000,
+      currency: 'USD',
+      movementType: 'RELEASE',
+      sourceOrderId: 'order_123456',
+      createdAt: createdAt.toISOString(),
+    });
+  });
+
+  it('rejects releases when reserved balance is insufficient', async () => {
+    walletsRepository.releaseReservedBalance.mockRejectedValue(
+      new InsufficientReservedBalanceError(),
+    );
+
+    await expect(
+      service.releaseReservedBalance('101', { amount: 450 }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('propagates unexpected release errors', async () => {
+    const error = new Error('database unavailable');
+    walletsRepository.releaseReservedBalance.mockRejectedValue(error);
+
+    await expect(
+      service.releaseReservedBalance('101', { amount: 100 }),
+    ).rejects.toBe(error);
   });
 });

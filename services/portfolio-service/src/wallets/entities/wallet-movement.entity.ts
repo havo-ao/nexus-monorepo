@@ -29,6 +29,14 @@ export class WalletMovement {
   })
   sourceTransactionId?: string | null;
 
+  @Column({
+    name: 'source_order_id',
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+  })
+  sourceOrderId?: string | null;
+
   @Column({ name: 'created_at', type: 'timestamp' })
   createdAt!: Date;
 }
