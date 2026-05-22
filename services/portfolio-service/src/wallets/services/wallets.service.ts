@@ -1,8 +1,16 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { RecordBalanceReservationDto } from '../dto/record-balance-reservation.dto';
 import { RecordDepositDto } from '../dto/record-deposit.dto';
+import { ReleaseBalanceReservationDto } from '../dto/release-balance-reservation.dto';
 import { WalletBalanceResponseDto } from '../dto/wallet-balance-response.dto';
 import { WalletDepositResponseDto } from '../dto/wallet-deposit-response.dto';
-import { WalletsRepository } from '../repositories/wallets.repository';
+import { WalletReservationResponseDto } from '../dto/wallet-reservation-response.dto';
+import {
+  InsufficientReservedBalanceError,
+  InsufficientWalletBalanceError,
+  WalletReservation,
+  WalletsRepository,
+} from '../repositories/wallets.repository';
 
 @Injectable()
 export class WalletsService {
@@ -62,6 +70,58 @@ export class WalletsService {
     };
   }
 
+  async reserveBalance(
+    traderId: string,
+    dto: RecordBalanceReservationDto,
+  ): Promise<WalletReservationResponseDto> {
+    this.assertValidTraderId(traderId);
+    this.assertValidReservation(dto, dto.reservedAt);
+
+    try {
+      const reservation = await this.walletsRepository.reserveBalance({
+        traderId: traderId.trim(),
+        amount: Number(dto.amount),
+        currency: this.normalizeCurrency(dto.currency),
+        sourceOrderId: dto.sourceOrderId?.trim() || undefined,
+        occurredAt: dto.reservedAt ? new Date(dto.reservedAt) : undefined,
+      });
+
+      return this.toReservationResponse(reservation);
+    } catch (error) {
+      if (error instanceof InsufficientWalletBalanceError) {
+        throw new BadRequestException('available balance is insufficient');
+      }
+
+      throw error;
+    }
+  }
+
+  async releaseReservedBalance(
+    traderId: string,
+    dto: ReleaseBalanceReservationDto,
+  ): Promise<WalletReservationResponseDto> {
+    this.assertValidTraderId(traderId);
+    this.assertValidReservation(dto, dto.releasedAt);
+
+    try {
+      const reservation = await this.walletsRepository.releaseReservedBalance({
+        traderId: traderId.trim(),
+        amount: Number(dto.amount),
+        currency: this.normalizeCurrency(dto.currency),
+        sourceOrderId: dto.sourceOrderId?.trim() || undefined,
+        occurredAt: dto.releasedAt ? new Date(dto.releasedAt) : undefined,
+      });
+
+      return this.toReservationResponse(reservation);
+    } catch (error) {
+      if (error instanceof InsufficientReservedBalanceError) {
+        throw new BadRequestException('reserved balance is insufficient');
+      }
+
+      throw error;
+    }
+  }
+
   private assertValidTraderId(traderId: string): void {
     if (!traderId || traderId.trim().length === 0) {
       throw new BadRequestException('traderId is required');
@@ -73,12 +133,54 @@ export class WalletsService {
       throw new BadRequestException('amount must be greater than zero');
     }
 
-    if (dto.currency && !/^[A-Za-z]{3}$/.test(dto.currency.trim())) {
-      throw new BadRequestException('currency must be an ISO-4217 code');
-    }
+    this.assertValidCurrency(dto.currency);
 
     if (dto.depositedAt && Number.isNaN(new Date(dto.depositedAt).getTime())) {
       throw new BadRequestException('depositedAt must be a valid date');
     }
+  }
+
+  private assertValidReservation(
+    dto: RecordBalanceReservationDto | ReleaseBalanceReservationDto,
+    occurredAt?: string,
+  ): void {
+    if (!Number.isFinite(Number(dto.amount)) || Number(dto.amount) <= 0) {
+      throw new BadRequestException('amount must be greater than zero');
+    }
+
+    this.assertValidCurrency(dto.currency);
+
+    if (occurredAt && Number.isNaN(new Date(occurredAt).getTime())) {
+      throw new BadRequestException('reservation date must be valid');
+    }
+  }
+
+  private assertValidCurrency(currency?: string): void {
+    if (currency && !/^[A-Za-z]{3}$/.test(currency.trim())) {
+      throw new BadRequestException('currency must be an ISO-4217 code');
+    }
+  }
+
+  private normalizeCurrency(currency?: string): string {
+    return currency?.trim().toUpperCase() || 'USD';
+  }
+
+  private toReservationResponse(
+    reservation: WalletReservation,
+  ): WalletReservationResponseDto {
+    return {
+      movementId: reservation.movementId,
+      traderId: reservation.traderId,
+      amount: reservation.amount,
+      availableBalance: reservation.availableBalance,
+      reservedBalance: reservation.reservedBalance,
+      totalBalance: Number(
+        (reservation.availableBalance + reservation.reservedBalance).toFixed(2),
+      ),
+      currency: reservation.currency,
+      movementType: reservation.movementType,
+      sourceOrderId: reservation.sourceOrderId,
+      createdAt: reservation.createdAt.toISOString(),
+    };
   }
 }

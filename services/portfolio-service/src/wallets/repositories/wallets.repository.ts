@@ -29,6 +29,26 @@ export interface RecordDepositInput {
   depositedAt?: Date;
 }
 
+export interface WalletReservation {
+  movementId: string;
+  traderId: string;
+  amount: number;
+  availableBalance: number;
+  reservedBalance: number;
+  currency: string;
+  movementType: 'RESERVE' | 'RELEASE';
+  sourceOrderId?: string;
+  createdAt: Date;
+}
+
+export interface RecordReservationInput {
+  traderId: string;
+  amount: number;
+  currency: string;
+  sourceOrderId?: string;
+  occurredAt?: Date;
+}
+
 @Injectable()
 export class WalletsRepository {
   constructor(@Optional() private readonly dataSource?: DataSource) {}
@@ -127,6 +147,164 @@ export class WalletsRepository {
     });
   }
 
+  async reserveBalance(
+    input: RecordReservationInput,
+  ): Promise<WalletReservation> {
+    if (!this.dataSource) {
+      const createdAt = input.occurredAt ?? new Date();
+      return {
+        movementId: '0',
+        traderId: input.traderId,
+        amount: input.amount,
+        availableBalance: 0,
+        reservedBalance: input.amount,
+        currency: input.currency,
+        movementType: 'RESERVE',
+        sourceOrderId: input.sourceOrderId,
+        createdAt,
+      };
+    }
+
+    return this.dataSource.transaction(async (manager) => {
+      const walletRepository = manager.getRepository(Wallet);
+      const movementRepository = manager.getRepository(WalletMovement);
+      const createdAt = input.occurredAt ?? new Date();
+      const wallet = await walletRepository.findOne({
+        where: { traderId: input.traderId },
+      });
+
+      if (!wallet || Number(wallet.availableBalance) < input.amount) {
+        throw new InsufficientWalletBalanceError();
+      }
+
+      wallet.availableBalance = (
+        Number(wallet.availableBalance) - input.amount
+      ).toFixed(2);
+      wallet.reservedBalance = (
+        Number(wallet.reservedBalance) + input.amount
+      ).toFixed(2);
+      wallet.updatedAt = createdAt;
+
+      const savedWallet = await walletRepository.save(wallet);
+      await this.syncTotalBalance(manager, savedWallet);
+      const movement = await this.saveReservationMovement(
+        movementRepository,
+        input,
+        savedWallet.currency,
+        'RESERVE',
+        createdAt,
+      );
+
+      return this.toReservationResult(movement, savedWallet, input.amount);
+    });
+  }
+
+  async releaseReservedBalance(
+    input: RecordReservationInput,
+  ): Promise<WalletReservation> {
+    if (!this.dataSource) {
+      const createdAt = input.occurredAt ?? new Date();
+      return {
+        movementId: '0',
+        traderId: input.traderId,
+        amount: input.amount,
+        availableBalance: input.amount,
+        reservedBalance: 0,
+        currency: input.currency,
+        movementType: 'RELEASE',
+        sourceOrderId: input.sourceOrderId,
+        createdAt,
+      };
+    }
+
+    return this.dataSource.transaction(async (manager) => {
+      const walletRepository = manager.getRepository(Wallet);
+      const movementRepository = manager.getRepository(WalletMovement);
+      const createdAt = input.occurredAt ?? new Date();
+      const wallet = await walletRepository.findOne({
+        where: { traderId: input.traderId },
+      });
+
+      if (!wallet || Number(wallet.reservedBalance) < input.amount) {
+        throw new InsufficientReservedBalanceError();
+      }
+
+      wallet.availableBalance = (
+        Number(wallet.availableBalance) + input.amount
+      ).toFixed(2);
+      wallet.reservedBalance = (
+        Number(wallet.reservedBalance) - input.amount
+      ).toFixed(2);
+      wallet.updatedAt = createdAt;
+
+      const savedWallet = await walletRepository.save(wallet);
+      await this.syncTotalBalance(manager, savedWallet);
+      const movement = await this.saveReservationMovement(
+        movementRepository,
+        input,
+        savedWallet.currency,
+        'RELEASE',
+        createdAt,
+      );
+
+      return this.toReservationResult(movement, savedWallet, input.amount);
+    });
+  }
+
+  private async syncTotalBalance(
+    manager: {
+      query: (query: string, parameters: unknown[]) => Promise<unknown>;
+    },
+    wallet: Wallet,
+  ): Promise<void> {
+    await manager.query('UPDATE wallet SET balance = ? WHERE id = ?', [
+      (
+        Number(wallet.availableBalance) + Number(wallet.reservedBalance)
+      ).toFixed(2),
+      wallet.id,
+    ]);
+  }
+
+  private async saveReservationMovement(
+    movementRepository: {
+      create: (input: Partial<WalletMovement>) => WalletMovement;
+      save: (input: WalletMovement) => Promise<WalletMovement>;
+    },
+    input: RecordReservationInput,
+    currency: string,
+    movementType: 'RESERVE' | 'RELEASE',
+    createdAt: Date,
+  ): Promise<WalletMovement> {
+    return movementRepository.save(
+      movementRepository.create({
+        traderId: input.traderId,
+        movementType,
+        amount: input.amount.toFixed(2),
+        currency,
+        sourceOrderId: input.sourceOrderId ?? null,
+        createdAt,
+      }),
+    );
+  }
+
+  private toReservationResult(
+    movement: WalletMovement,
+    wallet: Wallet,
+    amount: number,
+  ): WalletReservation {
+    return {
+      movementId: movement.id,
+      traderId: wallet.traderId,
+      amount,
+      availableBalance: Number(wallet.availableBalance),
+      reservedBalance: Number(wallet.reservedBalance),
+      currency: wallet.currency,
+      movementType: movement.movementType as 'RESERVE' | 'RELEASE',
+      sourceOrderId: movement.sourceOrderId ?? undefined,
+      createdAt: movement.createdAt,
+    };
+  }
+
   private emptyBalance(traderId: string): WalletBalance {
     return {
       traderId,
@@ -134,5 +312,17 @@ export class WalletsRepository {
       reservedBalance: 0,
       currency: 'USD',
     };
+  }
+}
+
+export class InsufficientWalletBalanceError extends Error {
+  constructor() {
+    super('Insufficient available balance');
+  }
+}
+
+export class InsufficientReservedBalanceError extends Error {
+  constructor() {
+    super('Insufficient reserved balance');
   }
 }

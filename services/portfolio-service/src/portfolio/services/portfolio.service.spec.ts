@@ -59,6 +59,8 @@ describe('PortfolioService', () => {
     walletsService = {
       getAvailableBalance: jest.fn(),
       recordDeposit: jest.fn(),
+      reserveBalance: jest.fn(),
+      releaseReservedBalance: jest.fn(),
     } as unknown as jest.Mocked<WalletsService>;
 
     const module: TestingModule = await Test.createTestingModule({
@@ -327,6 +329,63 @@ describe('PortfolioService', () => {
     );
 
     expect(walletsService.recordDeposit.mock.calls[0]).toEqual(['7', request]);
+  });
+
+  it('reserves balance for a trader order', async () => {
+    const response = {
+      movementId: '9101',
+      traderId: '7',
+      amount: 450,
+      availableBalance: 550,
+      reservedBalance: 450,
+      totalBalance: 1000,
+      currency: 'USD',
+      movementType: 'RESERVE' as const,
+      sourceOrderId: 'order_123456',
+      createdAt: '2026-05-22T14:15:00.000Z',
+    };
+    const request = {
+      amount: 450,
+      sourceOrderId: 'order_123456',
+      reservedAt: '2026-05-22T14:15:00.000Z',
+    };
+    walletsService.reserveBalance.mockResolvedValue(response);
+
+    await expect(service.reserveBalance('7', request)).resolves.toEqual(
+      response,
+    );
+
+    expect(walletsService.reserveBalance.mock.calls[0]).toEqual(['7', request]);
+  });
+
+  it('releases reserved balance for a trader order', async () => {
+    const response = {
+      movementId: '9102',
+      traderId: '7',
+      amount: 200,
+      availableBalance: 750,
+      reservedBalance: 250,
+      totalBalance: 1000,
+      currency: 'USD',
+      movementType: 'RELEASE' as const,
+      sourceOrderId: 'order_123456',
+      createdAt: '2026-05-22T14:30:00.000Z',
+    };
+    const request = {
+      amount: 200,
+      sourceOrderId: 'order_123456',
+      releasedAt: '2026-05-22T14:30:00.000Z',
+    };
+    walletsService.releaseReservedBalance.mockResolvedValue(response);
+
+    await expect(service.releaseReservedBalance('7', request)).resolves.toEqual(
+      response,
+    );
+
+    expect(walletsService.releaseReservedBalance.mock.calls[0]).toEqual([
+      '7',
+      request,
+    ]);
   });
 
   it('returns the updated position after an executed buy is recorded', async () => {
