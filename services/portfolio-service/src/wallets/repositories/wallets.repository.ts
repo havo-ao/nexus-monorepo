@@ -78,7 +78,12 @@ export class WalletsRepository {
         where: { traderId: input.traderId },
       });
 
-      if (!wallet) {
+      if (wallet) {
+        const nextAvailableBalance =
+          Number(wallet.availableBalance) + input.amount;
+        wallet.availableBalance = nextAvailableBalance.toFixed(2);
+        wallet.updatedAt = createdAt;
+      } else {
         wallet = walletRepository.create({
           traderId: input.traderId,
           availableBalance: input.amount.toFixed(2),
@@ -87,11 +92,6 @@ export class WalletsRepository {
           createdAt,
           updatedAt: createdAt,
         });
-      } else {
-        const nextAvailableBalance =
-          Number(wallet.availableBalance) + input.amount;
-        wallet.availableBalance = nextAvailableBalance.toFixed(2);
-        wallet.updatedAt = createdAt;
       }
 
       const savedWallet = await walletRepository.save(wallet);
