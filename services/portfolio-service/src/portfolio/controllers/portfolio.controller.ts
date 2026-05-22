@@ -14,6 +14,7 @@ import {
 } from '@nestjs/swagger';
 import { RecordExecutedBuyDto } from '../../positions/dto/record-executed-buy.dto';
 import { RecordExecutedSellDto } from '../../positions/dto/record-executed-sell.dto';
+import { WalletBalanceResponseDto } from '../../wallets/dto/wallet-balance-response.dto';
 import { PortfolioPositionResponseDto } from '../dto/portfolio-position-response.dto';
 import { PortfolioSectorDistributionResponseDto } from '../dto/portfolio-sector-distribution-response.dto';
 import { PortfolioSummaryResponseDto } from '../dto/portfolio-summary-response.dto';
@@ -44,6 +45,17 @@ export class PortfolioController {
     @Param('traderId', ParseIntPipe) traderId: number,
   ): Promise<PortfolioSectorDistributionResponseDto> {
     return this.portfolioService.getSectorDistribution(String(traderId));
+  }
+
+  @Get(':traderId/balance')
+  @ApiOperation({
+    summary: 'NEX-66 Consultar saldo disponible',
+  })
+  @ApiOkResponse({ type: WalletBalanceResponseDto })
+  getAvailableBalance(
+    @Param('traderId', ParseIntPipe) traderId: number,
+  ): Promise<WalletBalanceResponseDto> {
+    return this.portfolioService.getAvailableBalance(String(traderId));
   }
 
   @Get(':traderId/positions/:positionId')
