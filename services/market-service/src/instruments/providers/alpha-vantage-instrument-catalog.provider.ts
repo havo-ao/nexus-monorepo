@@ -7,6 +7,7 @@ import type { InstrumentCatalogProvider } from './instrument-catalog.provider';
 
 const ALPHA_VANTAGE_BASE_URL = 'https://www.alphavantage.co/query';
 const DEFAULT_TIMEOUT_MS = 5000;
+const DEFAULT_INSTRUMENT_LIMIT = 500;
 const DEFAULT_LISTING_STATE = 'active';
 const UNCLASSIFIED_SECTOR = 'Unclassified';
 
@@ -51,7 +52,8 @@ export class AlphaVantageInstrumentCatalogProvider implements InstrumentCatalogP
       .map((row) => this.toInstrumentSnapshot(row))
       .filter((instrument): instrument is InstrumentSnapshot =>
         Boolean(instrument),
-      );
+      )
+      .slice(0, this.resolveInstrumentLimit());
 
     if (instruments.length === 0) {
       throw new TypeError('Alpha Vantage listing response has no instruments');
@@ -176,6 +178,19 @@ export class AlphaVantageInstrumentCatalogProvider implements InstrumentCatalogP
     }
 
     return timeoutMs;
+  }
+
+  private resolveInstrumentLimit(): number {
+    const configuredLimit = process.env.ALPHA_VANTAGE_INSTRUMENT_LIMIT?.trim();
+    const instrumentLimit = configuredLimit
+      ? Number(configuredLimit)
+      : DEFAULT_INSTRUMENT_LIMIT;
+
+    if (!Number.isInteger(instrumentLimit) || instrumentLimit <= 0) {
+      return DEFAULT_INSTRUMENT_LIMIT;
+    }
+
+    return instrumentLimit;
   }
 
   private isProviderMessage(responseText: string): boolean {

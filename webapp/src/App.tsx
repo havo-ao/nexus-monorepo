@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import SignUp from './pages/SignUp';
 import TraderPanel from './pages/TraderPanel';
 import Dashboard from './pages/Dashboard';
+import Market from './pages/Market';
 import PlanSelection from './pages/PlanSelection';
 import Profile from './pages/Profile';
 import Notifications from './pages/Notifications';
@@ -74,6 +75,15 @@ const App: React.FC = () => (
         </Route>
         <Route exact path="/dashboard">
           <Dashboard />
+        </Route>
+        <Route exact path="/markets">
+          <Market />
+        </Route>
+        <Route exact path="/markets/:marketCode/instruments">
+          <Market />
+        </Route>
+        <Route exact path="/markets/:marketCode/instruments/:symbol">
+          <Market />
         </Route>
         <Route exact path="/profile">
           <Profile />

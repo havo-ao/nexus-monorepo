@@ -44,11 +44,22 @@ describe('MysqlMarketsRepository', () => {
           { market_code: 'NYSE', symbol: 'JPM' },
           { market_code: 'NYSE', symbol: 'AAPL' },
           { market_code: 'NYSE', symbol: 'KO' },
+          { market_code: 'NYSE', symbol: 'MSFT' },
+          { market_code: 'NYSE', symbol: 'NVDA' },
+          { market_code: 'NYSE', symbol: 'TSLA' },
         ],
       ]);
 
     const markets = await repository.findAvailable();
 
+    expect(pool.query).toHaveBeenNthCalledWith(
+      1,
+      expect.stringContaining('EXISTS'),
+    );
+    expect(pool.query).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining('market_instruments'),
+    );
     expect(markets.map((market) => market.toSnapshot())).toEqual([
       {
         code: 'NYSE',
@@ -57,12 +68,12 @@ describe('MysqlMarketsRepository', () => {
         currency: 'USD',
         timezone: 'America/New_York',
         status: 'ACTIVE',
-        representativeSymbols: ['AAPL', 'JPM', 'KO'],
+        representativeSymbols: ['AAPL', 'JPM', 'KO', 'MSFT', 'NVDA'],
       },
     ]);
   });
 
-  it('returns an empty symbol list when a market has no configured symbols', async () => {
+  it('returns an empty symbol list when a market has no synchronized symbols', async () => {
     pool.query
       .mockResolvedValueOnce([
         [

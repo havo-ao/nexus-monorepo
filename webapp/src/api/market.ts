@@ -49,6 +49,63 @@ export type MarketDashboardResponse = {
   };
 };
 
+export type Market = DashboardMarket & {
+  representativeSymbols: string[];
+};
+
+export type Instrument = {
+  symbol: string;
+  name: string;
+  marketCode: string;
+  currency: string;
+  sector: string;
+  status: "ACTIVE" | "INACTIVE";
+};
+
+export type Quote = {
+  symbol: string;
+  price: number;
+  bid: number;
+  ask: number;
+  spread: number;
+  currency: string;
+  provider: string;
+  asOf: string;
+};
+
+export type InstrumentDetail = Instrument & {
+  assetType?: string | null;
+  industry?: string | null;
+  country?: string | null;
+  description?: string | null;
+  metadataProvider?: string | null;
+  metadataUpdatedAt?: string | null;
+  quote?: Quote | null;
+};
+
+export type MarketStatus = {
+  marketCode: string;
+  status: "OPEN" | "CLOSED" | "RESTRICTED";
+  canProcessOrder: boolean;
+  evaluatedAt: string;
+  timezone: string;
+  reason: string;
+};
+
+export type QuoteHistoryResponse = {
+  symbol: string;
+  prices: Quote[];
+};
+
+export type WatchlistResponse = {
+  traderId: string;
+  items: Array<{
+    symbol: string;
+    addedAt: string;
+    quote?: Quote;
+  }>;
+};
+
 async function readJsonSafe(response: Response): Promise<unknown> {
   const text = await response.text();
   if (!text) {
@@ -75,4 +132,143 @@ export async function getMarketDashboard(): Promise<MarketDashboardResponse> {
   }
 
   return body as MarketDashboardResponse;
+}
+
+function asArray<T>(value: unknown): T[] {
+  if (Array.isArray(value)) {
+    return value as T[];
+  }
+
+  if (
+    value &&
+    typeof value === "object" &&
+    "value" in value &&
+    Array.isArray((value as { value: unknown }).value)
+  ) {
+    return (value as { value: T[] }).value;
+  }
+
+  return [];
+}
+
+async function getJson<T>(path: string, errorMessage: string): Promise<T> {
+  const response = await fetch(marketApiUrl(path), {
+    headers: {
+      Accept: "application/json",
+    },
+  });
+  const body = await readJsonSafe(response);
+
+  if (!response.ok) {
+    throw new Error(errorMessage);
+  }
+
+  return body as T;
+}
+
+async function sendJson<T>(
+  path: string,
+  method: "POST" | "DELETE",
+  errorMessage: string,
+  body?: unknown,
+): Promise<T> {
+  const response = await fetch(marketApiUrl(path), {
+    method,
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const responseBody = await readJsonSafe(response);
+
+  if (!response.ok) {
+    throw new Error(errorMessage);
+  }
+
+  return responseBody as T;
+}
+
+export async function getMarkets(): Promise<Market[]> {
+  const result = await getJson<unknown>(
+    API_PATHS.marketMarkets,
+    "Unable to load available markets.",
+  );
+
+  return asArray<Market>(result);
+}
+
+export async function getInstruments(): Promise<Instrument[]> {
+  const result = await getJson<unknown>(
+    API_PATHS.marketInstruments,
+    "Unable to load available instruments.",
+  );
+
+  return asArray<Instrument>(result);
+}
+
+export async function getMarketStatus(
+  marketCode: string,
+): Promise<MarketStatus> {
+  return getJson<MarketStatus>(
+    `${API_PATHS.marketHours}/${encodeURIComponent(marketCode)}/status`,
+    "Unable to load market operating status.",
+  );
+}
+
+export async function getInstrumentDetail(
+  symbol: string,
+): Promise<InstrumentDetail> {
+  return getJson<InstrumentDetail>(
+    `${API_PATHS.marketInstruments}/${encodeURIComponent(symbol)}`,
+    "Unable to load instrument detail.",
+  );
+}
+
+export async function getQuote(symbol: string): Promise<Quote> {
+  return getJson<Quote>(
+    `${API_PATHS.marketQuotes}/${encodeURIComponent(symbol)}`,
+    "Unable to load current quote.",
+  );
+}
+
+export async function getQuoteHistory(
+  symbol: string,
+): Promise<QuoteHistoryResponse> {
+  return getJson<QuoteHistoryResponse>(
+    `${API_PATHS.marketQuotes}/${encodeURIComponent(symbol)}/history`,
+    "Unable to load quote history.",
+  );
+}
+
+export async function addWatchlistItem(
+  traderId: string,
+  symbol: string,
+): Promise<WatchlistResponse> {
+  return sendJson<WatchlistResponse>(
+    `${API_PATHS.marketWatchlists}/${encodeURIComponent(traderId)}/items`,
+    "POST",
+    "Unable to add this instrument to the watchlist.",
+    { symbol },
+  );
+}
+
+export async function getWatchlist(
+  traderId: string,
+): Promise<WatchlistResponse> {
+  return getJson<WatchlistResponse>(
+    `${API_PATHS.marketWatchlists}/${encodeURIComponent(traderId)}`,
+    "Unable to load your watchlist.",
+  );
+}
+
+export async function removeWatchlistItem(
+  traderId: string,
+  symbol: string,
+): Promise<WatchlistResponse | null> {
+  return sendJson<WatchlistResponse | null>(
+    `${API_PATHS.marketWatchlists}/${encodeURIComponent(traderId)}/items/${encodeURIComponent(symbol)}`,
+    "DELETE",
+    "Unable to remove this instrument from the watchlist.",
+  );
 }

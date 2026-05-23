@@ -19,6 +19,8 @@ interface MarketSymbolRow extends RowDataPacket {
   symbol: string;
 }
 
+const REPRESENTATIVE_SYMBOLS_LIMIT = 5;
+
 @Injectable()
 export class MysqlMarketsRepository implements MarketsRepository {
   constructor(@Inject(MYSQL_POOL) private readonly pool: Pool) {}
@@ -28,6 +30,12 @@ export class MysqlMarketsRepository implements MarketsRepository {
       `SELECT code, name, country, currency, timezone, status
        FROM market_catalog
        WHERE status = 'ACTIVE'
+         AND EXISTS (
+           SELECT 1
+           FROM market_instruments instruments
+           WHERE instruments.market_code = market_catalog.code
+             AND instruments.status = 'ACTIVE'
+         )
        ORDER BY code ASC`,
     );
 
@@ -38,17 +46,22 @@ export class MysqlMarketsRepository implements MarketsRepository {
 
   private async findRepresentativeSymbols(): Promise<Map<string, string[]>> {
     const [rows] = await this.pool.query<MarketSymbolRow[]>(
-      `SELECT symbols.market_code, symbols.symbol
-       FROM market_representative_symbols symbols
-       INNER JOIN market_catalog markets ON markets.code = symbols.market_code
+      `SELECT instruments.market_code, instruments.symbol
+       FROM market_instruments instruments
+       INNER JOIN market_catalog markets ON markets.code = instruments.market_code
        WHERE markets.status = 'ACTIVE'
-       ORDER BY symbols.market_code ASC, symbols.symbol ASC`,
+         AND instruments.status = 'ACTIVE'
+       ORDER BY instruments.market_code ASC, instruments.symbol ASC`,
     );
 
     const symbolsByMarket = new Map<string, string[]>();
 
     for (const row of rows) {
       const marketSymbols = symbolsByMarket.get(row.market_code) ?? [];
+      if (marketSymbols.length >= REPRESENTATIVE_SYMBOLS_LIMIT) {
+        continue;
+      }
+
       marketSymbols.push(row.symbol);
       symbolsByMarket.set(row.market_code, marketSymbols);
     }
