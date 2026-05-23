@@ -19,6 +19,7 @@ import { RecordDepositDto } from '../../wallets/dto/record-deposit.dto';
 import { ReleaseBalanceReservationDto } from '../../wallets/dto/release-balance-reservation.dto';
 import { WalletBalanceResponseDto } from '../../wallets/dto/wallet-balance-response.dto';
 import { WalletDepositResponseDto } from '../../wallets/dto/wallet-deposit-response.dto';
+import { WalletHistoryResponseDto } from '../../wallets/dto/wallet-history-response.dto';
 import { WalletReservationResponseDto } from '../../wallets/dto/wallet-reservation-response.dto';
 import { PortfolioPositionResponseDto } from '../dto/portfolio-position-response.dto';
 import { PortfolioSectorDistributionResponseDto } from '../dto/portfolio-sector-distribution-response.dto';
@@ -73,6 +74,17 @@ export class PortfolioController {
     @Body() dto: RecordDepositDto,
   ): Promise<WalletDepositResponseDto> {
     return this.portfolioService.recordDeposit(String(traderId), dto);
+  }
+
+  @Get(':traderId/history')
+  @ApiOperation({
+    summary: 'NEX-69 Consultar historial financiero',
+  })
+  @ApiOkResponse({ type: WalletHistoryResponseDto })
+  getFinancialHistory(
+    @Param('traderId', ParseIntPipe) traderId: number,
+  ): Promise<WalletHistoryResponseDto> {
+    return this.portfolioService.getFinancialHistory(String(traderId));
   }
 
   @Post(':traderId/reservations')

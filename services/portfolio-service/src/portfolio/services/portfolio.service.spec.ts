@@ -58,6 +58,7 @@ describe('PortfolioService', () => {
     });
     walletsService = {
       getAvailableBalance: jest.fn(),
+      getFinancialHistory: jest.fn(),
       recordDeposit: jest.fn(),
       reserveBalance: jest.fn(),
       releaseReservedBalance: jest.fn(),
@@ -329,6 +330,28 @@ describe('PortfolioService', () => {
     );
 
     expect(walletsService.recordDeposit.mock.calls[0]).toEqual(['7', request]);
+  });
+
+  it('returns financial history for a trader wallet', async () => {
+    const response = {
+      traderId: '7',
+      movements: [
+        {
+          movementId: '9001',
+          traderId: '7',
+          movementType: 'DEPOSIT',
+          amount: 250,
+          currency: 'USD',
+          sourceTransactionId: 'pay_123456',
+          createdAt: '2026-05-21T22:15:00.000Z',
+        },
+      ],
+    };
+    walletsService.getFinancialHistory.mockResolvedValue(response);
+
+    await expect(service.getFinancialHistory('7')).resolves.toEqual(response);
+
+    expect(walletsService.getFinancialHistory.mock.calls[0][0]).toBe('7');
   });
 
   it('reserves balance for a trader order', async () => {

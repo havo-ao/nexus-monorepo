@@ -41,6 +41,17 @@ export interface WalletReservation {
   createdAt: Date;
 }
 
+export interface WalletHistoryMovement {
+  movementId: string;
+  traderId: string;
+  movementType: string;
+  amount: number;
+  currency: string;
+  sourceTransactionId?: string;
+  sourceOrderId?: string;
+  createdAt: Date;
+}
+
 export interface RecordReservationInput {
   traderId: string;
   amount: number;
@@ -72,6 +83,30 @@ export class WalletsRepository {
       reservedBalance: Number(wallet.reservedBalance),
       currency: wallet.currency,
     };
+  }
+
+  async findMovementsByTraderId(
+    traderId: string,
+  ): Promise<WalletHistoryMovement[]> {
+    if (!this.dataSource) {
+      return [];
+    }
+
+    const movements = await this.dataSource.getRepository(WalletMovement).find({
+      where: { traderId },
+      order: { createdAt: 'DESC', id: 'DESC' },
+    });
+
+    return movements.map((movement) => ({
+      movementId: movement.id,
+      traderId: movement.traderId,
+      movementType: movement.movementType,
+      amount: Number(movement.amount),
+      currency: movement.currency,
+      sourceTransactionId: movement.sourceTransactionId ?? undefined,
+      sourceOrderId: movement.sourceOrderId ?? undefined,
+      createdAt: movement.createdAt,
+    }));
   }
 
   async recordDeposit(input: RecordDepositInput): Promise<WalletDeposit> {

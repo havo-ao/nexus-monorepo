@@ -14,6 +14,7 @@ describe('WalletsService', () => {
   beforeEach(async () => {
     walletsRepository = {
       findBalanceByTraderId: jest.fn(),
+      findMovementsByTraderId: jest.fn(),
       recordDeposit: jest.fn(),
       reserveBalance: jest.fn(),
       releaseReservedBalance: jest.fn(),
@@ -99,6 +100,61 @@ describe('WalletsService', () => {
       sourceTransactionId: 'pay_123456',
       depositedAt: createdAt,
     });
+  });
+
+  it('returns wallet movement history from newest to oldest', async () => {
+    const releasedAt = new Date('2026-05-22T14:30:00.000Z');
+    const depositedAt = new Date('2026-05-21T22:15:00.000Z');
+    walletsRepository.findMovementsByTraderId.mockResolvedValue([
+      {
+        movementId: '9102',
+        traderId: '101',
+        movementType: 'RELEASE',
+        amount: 200,
+        currency: 'USD',
+        sourceOrderId: 'order_123456',
+        createdAt: releasedAt,
+      },
+      {
+        movementId: '9001',
+        traderId: '101',
+        movementType: 'DEPOSIT',
+        amount: 250,
+        currency: 'USD',
+        sourceTransactionId: 'pay_123456',
+        createdAt: depositedAt,
+      },
+    ]);
+
+    await expect(service.getFinancialHistory(' 101 ')).resolves.toEqual({
+      traderId: '101',
+      movements: [
+        {
+          movementId: '9102',
+          traderId: '101',
+          movementType: 'RELEASE',
+          amount: 200,
+          currency: 'USD',
+          sourceTransactionId: undefined,
+          sourceOrderId: 'order_123456',
+          createdAt: releasedAt.toISOString(),
+        },
+        {
+          movementId: '9001',
+          traderId: '101',
+          movementType: 'DEPOSIT',
+          amount: 250,
+          currency: 'USD',
+          sourceTransactionId: 'pay_123456',
+          sourceOrderId: undefined,
+          createdAt: depositedAt.toISOString(),
+        },
+      ],
+    });
+
+    expect(walletsRepository.findMovementsByTraderId.mock.calls[0][0]).toBe(
+      '101',
+    );
   });
 
   it('rejects deposit amounts that are not positive', async () => {

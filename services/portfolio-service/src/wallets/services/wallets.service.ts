@@ -4,6 +4,7 @@ import { RecordDepositDto } from '../dto/record-deposit.dto';
 import { ReleaseBalanceReservationDto } from '../dto/release-balance-reservation.dto';
 import { WalletBalanceResponseDto } from '../dto/wallet-balance-response.dto';
 import { WalletDepositResponseDto } from '../dto/wallet-deposit-response.dto';
+import { WalletHistoryResponseDto } from '../dto/wallet-history-response.dto';
 import { WalletReservationResponseDto } from '../dto/wallet-reservation-response.dto';
 import {
   InsufficientReservedBalanceError,
@@ -67,6 +68,30 @@ export class WalletsService {
       movementType: 'DEPOSIT',
       sourceTransactionId: deposit.sourceTransactionId,
       createdAt: deposit.createdAt.toISOString(),
+    };
+  }
+
+  async getFinancialHistory(
+    traderId: string,
+  ): Promise<WalletHistoryResponseDto> {
+    this.assertValidTraderId(traderId);
+
+    const normalizedTraderId = traderId.trim();
+    const movements =
+      await this.walletsRepository.findMovementsByTraderId(normalizedTraderId);
+
+    return {
+      traderId: normalizedTraderId,
+      movements: movements.map((movement) => ({
+        movementId: movement.movementId,
+        traderId: movement.traderId,
+        movementType: movement.movementType,
+        amount: movement.amount,
+        currency: movement.currency,
+        sourceTransactionId: movement.sourceTransactionId,
+        sourceOrderId: movement.sourceOrderId,
+        createdAt: movement.createdAt.toISOString(),
+      })),
     };
   }
 

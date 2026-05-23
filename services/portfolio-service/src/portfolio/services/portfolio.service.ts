@@ -9,6 +9,7 @@ import { RecordDepositDto } from '../../wallets/dto/record-deposit.dto';
 import { ReleaseBalanceReservationDto } from '../../wallets/dto/release-balance-reservation.dto';
 import { WalletBalanceResponseDto } from '../../wallets/dto/wallet-balance-response.dto';
 import { WalletDepositResponseDto } from '../../wallets/dto/wallet-deposit-response.dto';
+import { WalletHistoryResponseDto } from '../../wallets/dto/wallet-history-response.dto';
 import { WalletReservationResponseDto } from '../../wallets/dto/wallet-reservation-response.dto';
 import { WalletsService } from '../../wallets/services/wallets.service';
 import { PortfolioPositionResponseDto } from '../dto/portfolio-position-response.dto';
@@ -101,6 +102,10 @@ export class PortfolioService {
     dto: RecordDepositDto,
   ): Promise<WalletDepositResponseDto> {
     return this.walletsService.recordDeposit(traderId, dto);
+  }
+
+  getFinancialHistory(traderId: string): Promise<WalletHistoryResponseDto> {
+    return this.walletsService.getFinancialHistory(traderId);
   }
 
   reserveBalance(
