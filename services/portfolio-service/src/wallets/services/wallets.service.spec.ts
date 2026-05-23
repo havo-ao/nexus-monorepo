@@ -16,6 +16,7 @@ describe('WalletsService', () => {
       findBalanceByTraderId: jest.fn(),
       findMovementsByTraderId: jest.fn(),
       recordDeposit: jest.fn(),
+      recordWithdrawal: jest.fn(),
       reserveBalance: jest.fn(),
       releaseReservedBalance: jest.fn(),
     } as unknown as jest.Mocked<WalletsRepository>;
@@ -155,6 +156,73 @@ describe('WalletsService', () => {
     expect(walletsRepository.findMovementsByTraderId.mock.calls[0][0]).toBe(
       '101',
     );
+  });
+
+  it('records a withdrawal and returns the updated balance', async () => {
+    const createdAt = new Date('2026-05-23T16:20:00.000Z');
+    walletsRepository.recordWithdrawal.mockResolvedValue({
+      movementId: '9201',
+      traderId: '101',
+      amount: 150,
+      availableBalance: 850,
+      reservedBalance: 0,
+      currency: 'USD',
+      sourceTransactionId: 'wd_123456',
+      createdAt,
+    });
+
+    await expect(
+      service.recordWithdrawal(' 101 ', {
+        amount: 150,
+        currency: 'usd',
+        sourceTransactionId: ' wd_123456 ',
+        withdrawnAt: createdAt.toISOString(),
+      }),
+    ).resolves.toEqual({
+      movementId: '9201',
+      traderId: '101',
+      amount: 150,
+      availableBalance: 850,
+      reservedBalance: 0,
+      totalBalance: 850,
+      currency: 'USD',
+      movementType: 'WITHDRAWAL',
+      sourceTransactionId: 'wd_123456',
+      createdAt: createdAt.toISOString(),
+    });
+
+    expect(walletsRepository.recordWithdrawal.mock.calls[0][0]).toEqual({
+      traderId: '101',
+      amount: 150,
+      currency: 'USD',
+      sourceTransactionId: 'wd_123456',
+      withdrawnAt: createdAt,
+    });
+  });
+
+  it('rejects withdrawals when available balance is insufficient', async () => {
+    walletsRepository.recordWithdrawal.mockRejectedValue(
+      new InsufficientWalletBalanceError(),
+    );
+
+    await expect(
+      service.recordWithdrawal('101', { amount: 150 }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('rejects withdrawal amounts that are not positive', async () => {
+    await expect(
+      service.recordWithdrawal('101', { amount: 0 }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('rejects withdrawal dates that cannot be parsed', async () => {
+    await expect(
+      service.recordWithdrawal('101', {
+        amount: 100,
+        withdrawnAt: 'not-a-date',
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it('rejects deposit amounts that are not positive', async () => {

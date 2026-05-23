@@ -21,12 +21,31 @@ export interface WalletDeposit {
   createdAt: Date;
 }
 
+export interface WalletWithdrawal {
+  movementId: string;
+  traderId: string;
+  amount: number;
+  availableBalance: number;
+  reservedBalance: number;
+  currency: string;
+  sourceTransactionId?: string;
+  createdAt: Date;
+}
+
 export interface RecordDepositInput {
   traderId: string;
   amount: number;
   currency: string;
   sourceTransactionId?: string;
   depositedAt?: Date;
+}
+
+export interface RecordWithdrawalInput {
+  traderId: string;
+  amount: number;
+  currency: string;
+  sourceTransactionId?: string;
+  withdrawnAt?: Date;
 }
 
 export interface WalletReservation {
@@ -162,6 +181,67 @@ export class WalletsRepository {
         movementRepository.create({
           traderId: input.traderId,
           movementType: 'DEPOSIT',
+          amount: input.amount.toFixed(2),
+          currency: savedWallet.currency,
+          sourceTransactionId: input.sourceTransactionId ?? null,
+          createdAt,
+        }),
+      );
+
+      return {
+        movementId: movement.id,
+        traderId: savedWallet.traderId,
+        amount: Number(movement.amount),
+        availableBalance: Number(savedWallet.availableBalance),
+        reservedBalance: Number(savedWallet.reservedBalance),
+        currency: savedWallet.currency,
+        sourceTransactionId: movement.sourceTransactionId ?? undefined,
+        createdAt: movement.createdAt,
+      };
+    });
+  }
+
+  async recordWithdrawal(
+    input: RecordWithdrawalInput,
+  ): Promise<WalletWithdrawal> {
+    if (!this.dataSource) {
+      const createdAt = input.withdrawnAt ?? new Date();
+      return {
+        movementId: '0',
+        traderId: input.traderId,
+        amount: input.amount,
+        availableBalance: 0,
+        reservedBalance: 0,
+        currency: input.currency,
+        sourceTransactionId: input.sourceTransactionId,
+        createdAt,
+      };
+    }
+
+    return this.dataSource.transaction(async (manager) => {
+      const walletRepository = manager.getRepository(Wallet);
+      const movementRepository = manager.getRepository(WalletMovement);
+      const createdAt = input.withdrawnAt ?? new Date();
+      const wallet = await walletRepository.findOne({
+        where: { traderId: input.traderId },
+      });
+
+      if (!wallet || Number(wallet.availableBalance) < input.amount) {
+        throw new InsufficientWalletBalanceError();
+      }
+
+      wallet.availableBalance = (
+        Number(wallet.availableBalance) - input.amount
+      ).toFixed(2);
+      wallet.updatedAt = createdAt;
+
+      const savedWallet = await walletRepository.save(wallet);
+      await this.syncTotalBalance(manager, savedWallet);
+
+      const movement = await movementRepository.save(
+        movementRepository.create({
+          traderId: input.traderId,
+          movementType: 'WITHDRAWAL',
           amount: input.amount.toFixed(2),
           currency: savedWallet.currency,
           sourceTransactionId: input.sourceTransactionId ?? null,

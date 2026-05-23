@@ -1,11 +1,13 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { RecordBalanceReservationDto } from '../dto/record-balance-reservation.dto';
 import { RecordDepositDto } from '../dto/record-deposit.dto';
+import { RecordWithdrawalDto } from '../dto/record-withdrawal.dto';
 import { ReleaseBalanceReservationDto } from '../dto/release-balance-reservation.dto';
 import { WalletBalanceResponseDto } from '../dto/wallet-balance-response.dto';
 import { WalletDepositResponseDto } from '../dto/wallet-deposit-response.dto';
 import { WalletHistoryResponseDto } from '../dto/wallet-history-response.dto';
 import { WalletReservationResponseDto } from '../dto/wallet-reservation-response.dto';
+import { WalletWithdrawalResponseDto } from '../dto/wallet-withdrawal-response.dto';
 import {
   InsufficientReservedBalanceError,
   InsufficientWalletBalanceError,
@@ -69,6 +71,45 @@ export class WalletsService {
       sourceTransactionId: deposit.sourceTransactionId,
       createdAt: deposit.createdAt.toISOString(),
     };
+  }
+
+  async recordWithdrawal(
+    traderId: string,
+    dto: RecordWithdrawalDto,
+  ): Promise<WalletWithdrawalResponseDto> {
+    this.assertValidTraderId(traderId);
+    this.assertValidWithdrawal(dto);
+
+    try {
+      const withdrawal = await this.walletsRepository.recordWithdrawal({
+        traderId: traderId.trim(),
+        amount: Number(dto.amount),
+        currency: this.normalizeCurrency(dto.currency),
+        sourceTransactionId: dto.sourceTransactionId?.trim() || undefined,
+        withdrawnAt: dto.withdrawnAt ? new Date(dto.withdrawnAt) : undefined,
+      });
+
+      return {
+        movementId: withdrawal.movementId,
+        traderId: withdrawal.traderId,
+        amount: withdrawal.amount,
+        availableBalance: withdrawal.availableBalance,
+        reservedBalance: withdrawal.reservedBalance,
+        totalBalance: Number(
+          (withdrawal.availableBalance + withdrawal.reservedBalance).toFixed(2),
+        ),
+        currency: withdrawal.currency,
+        movementType: 'WITHDRAWAL',
+        sourceTransactionId: withdrawal.sourceTransactionId,
+        createdAt: withdrawal.createdAt.toISOString(),
+      };
+    } catch (error) {
+      if (error instanceof InsufficientWalletBalanceError) {
+        throw new BadRequestException('available balance is insufficient');
+      }
+
+      throw error;
+    }
   }
 
   async getFinancialHistory(
@@ -162,6 +203,18 @@ export class WalletsService {
 
     if (dto.depositedAt && Number.isNaN(new Date(dto.depositedAt).getTime())) {
       throw new BadRequestException('depositedAt must be a valid date');
+    }
+  }
+
+  private assertValidWithdrawal(dto: RecordWithdrawalDto): void {
+    if (!Number.isFinite(Number(dto.amount)) || Number(dto.amount) <= 0) {
+      throw new BadRequestException('amount must be greater than zero');
+    }
+
+    this.assertValidCurrency(dto.currency);
+
+    if (dto.withdrawnAt && Number.isNaN(new Date(dto.withdrawnAt).getTime())) {
+      throw new BadRequestException('withdrawnAt must be a valid date');
     }
   }
 
