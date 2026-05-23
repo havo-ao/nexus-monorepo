@@ -16,11 +16,13 @@ import { RecordExecutedBuyDto } from '../../positions/dto/record-executed-buy.dt
 import { RecordExecutedSellDto } from '../../positions/dto/record-executed-sell.dto';
 import { RecordBalanceReservationDto } from '../../wallets/dto/record-balance-reservation.dto';
 import { RecordDepositDto } from '../../wallets/dto/record-deposit.dto';
+import { RecordWithdrawalDto } from '../../wallets/dto/record-withdrawal.dto';
 import { ReleaseBalanceReservationDto } from '../../wallets/dto/release-balance-reservation.dto';
 import { WalletBalanceResponseDto } from '../../wallets/dto/wallet-balance-response.dto';
 import { WalletDepositResponseDto } from '../../wallets/dto/wallet-deposit-response.dto';
 import { WalletHistoryResponseDto } from '../../wallets/dto/wallet-history-response.dto';
 import { WalletReservationResponseDto } from '../../wallets/dto/wallet-reservation-response.dto';
+import { WalletWithdrawalResponseDto } from '../../wallets/dto/wallet-withdrawal-response.dto';
 import { PortfolioPositionResponseDto } from '../dto/portfolio-position-response.dto';
 import { PortfolioSectorDistributionResponseDto } from '../dto/portfolio-sector-distribution-response.dto';
 import { PortfolioSummaryResponseDto } from '../dto/portfolio-summary-response.dto';
@@ -74,6 +76,18 @@ export class PortfolioController {
     @Body() dto: RecordDepositDto,
   ): Promise<WalletDepositResponseDto> {
     return this.portfolioService.recordDeposit(String(traderId), dto);
+  }
+
+  @Post(':traderId/withdrawals')
+  @ApiOperation({
+    summary: 'NEX-70 Retirar fondos disponibles',
+  })
+  @ApiCreatedResponse({ type: WalletWithdrawalResponseDto })
+  recordWithdrawal(
+    @Param('traderId', ParseIntPipe) traderId: number,
+    @Body() dto: RecordWithdrawalDto,
+  ): Promise<WalletWithdrawalResponseDto> {
+    return this.portfolioService.recordWithdrawal(String(traderId), dto);
   }
 
   @Get(':traderId/history')
