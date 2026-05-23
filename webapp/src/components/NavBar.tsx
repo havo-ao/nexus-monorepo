@@ -83,6 +83,7 @@ const NavBar: React.FC = () => {
       { label: 'Subscription', icon: sparklesOutline, path: '/plan-selection', action: () => goToRoute('/plan-selection') },
       { label: 'Notifications', icon: notificationsOutline, path: '/notifications', action: () => goToRoute('/notifications') },
       { label: 'Dashboard', icon: gridOutline, path: '/dashboard', action: () => goToRoute('/dashboard') },
+      { label: 'Market', icon: analyticsOutline, path: '/markets', action: () => goToRoute('/markets') },
       { label: 'Portfolio', icon: albumsOutline, path: '/portfolio', action: () => goToRoute('/portfolio') }
     ],
     [history]
@@ -91,6 +92,7 @@ const NavBar: React.FC = () => {
   const adminLinks = useMemo<NavItem[]>(
     () => [
       { label: 'Profile', icon: personCircleOutline, path: '/profile', action: () => goToRoute('/profile') },
+      { label: 'Market', icon: analyticsOutline, path: '/markets', action: () => goToRoute('/markets') },
       { label: 'Manage Admins', icon: ribbonOutline, path: '/manage-admins', action: () => goToRoute('/manage-admins') },
       { label: 'Manage Plans', icon: cardOutline, path: '/manage-plans', action: () => goToRoute('/manage-plans') }
     ],
@@ -100,6 +102,10 @@ const NavBar: React.FC = () => {
   const navItems = sessionUser ? (isAdmin ? adminLinks : memberLinks) : guestLinks;
 
   const isItemActive = (item: NavItem) => {
+    if (item.path === '/markets') {
+      return location.pathname.startsWith('/markets');
+    }
+
     if (item.path && location.pathname !== item.path) {
       return false;
     }
