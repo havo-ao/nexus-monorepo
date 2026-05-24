@@ -51,7 +51,7 @@ services:
       SPRING_DATASOURCE_USERNAME: nexus_user
       SPRING_DATASOURCE_PASSWORD: ${NEXUS_MYSQL_PASSWORD:?Set NEXUS_MYSQL_PASSWORD}
       JWT_SECRET: ${NEXUS_JWT_SECRET:?Set NEXUS_JWT_SECRET}
-      ADMIN_EMAIL: admin@nexus.local
+      ADMIN_EMAIL: ${NEXUS_ADMIN_EMAIL:?Set NEXUS_ADMIN_EMAIL}
       ADMIN_PASSWORD: ${NEXUS_ADMIN_PASSWORD:?Set NEXUS_ADMIN_PASSWORD}
     volumes:
       - ../../services/identity-service:/app
@@ -154,9 +154,21 @@ services:
     restart: unless-stopped
     ports:
       - "8885:8885"
+    environment:
+      MAIL_HOST: ${MAIL_HOST:?Set MAIL_HOST}
+      MAIL_PORT: ${MAIL_PORT:?Set MAIL_PORT}
+      MAIL_SECURE: ${MAIL_SECURE:-false}
+      MAIL_USER: ${MAIL_USER:?Set MAIL_USER}
+      MAIL_PASS: ${MAIL_PASS:?Set MAIL_PASS}
+      MAIL_FROM: ${MAIL_FROM:?Set MAIL_FROM}
     volumes:
       - ../../services/compliance-service:/app
       - /app/node_modules
+    depends_on:
+      - mysql
+    command: >
+      sh -c "npm run db:migrate &&
+      npm run start:dev"
 
 volumes:
   nexus_mysql_data:
