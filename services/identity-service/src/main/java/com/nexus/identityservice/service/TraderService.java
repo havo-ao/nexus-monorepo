@@ -31,6 +31,7 @@ public class TraderService {
     private final TraderMapper traderMapper;
     private final PasswordEncoder passwordEncoder;
     private final UserLookupService userLookupService;
+    private final NotificationServiceClient notificationServiceClient;
 
     // ==================== CREATE ====================
 
@@ -55,6 +56,7 @@ public class TraderService {
 
 
         Trader saved = traderRepository.save(trader);
+        notificationServiceClient.sendUserRegistered(saved);
         return traderMapper.toResponse(saved);
     }
 

@@ -24,6 +24,7 @@ public class AdminService {
     private final AdminMapper adminMapper;
     private final PasswordEncoder passwordEncoder;
     private final UserLookupService userLookupService;
+    private final NotificationServiceClient notificationServiceClient;
 
     @Transactional
     public AdminResponse create(AdminCreateRequest request) {
@@ -40,6 +41,7 @@ public class AdminService {
         admin.setCreatedAt(Instant.now());
 
         Admin saved = adminRepository.save(admin);
+        notificationServiceClient.sendUserRegistered(saved);
         return adminMapper.toResponse(saved);
     }
 

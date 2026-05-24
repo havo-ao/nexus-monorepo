@@ -39,6 +39,8 @@ class AdminServiceTest {
     private PasswordEncoder passwordEncoder;
     @Mock
     private UserLookupService userLookupService;
+    @Mock
+    private NotificationServiceClient notificationServiceClient;
 
     private AdminService adminService;
 
@@ -48,7 +50,8 @@ class AdminServiceTest {
                 adminRepository,
                 adminMapper,
                 passwordEncoder,
-                userLookupService
+                userLookupService,
+                notificationServiceClient
         );
     }
 

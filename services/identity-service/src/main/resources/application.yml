@@ -2,9 +2,9 @@ spring:
   application:
     name: identity-service
   datasource:
-    url: jdbc:mysql://mysql:3306/nexus
-    username: nexus_user
-    password: ${NEXUS_MYSQL_PASSWORD}
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://mysql:3306/nexus}
+    username: ${SPRING_DATASOURCE_USERNAME:nexus_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:${NEXUS_MYSQL_PASSWORD}}
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
@@ -37,9 +37,14 @@ stripe:
   yearly-price-id: ${STRIPE_YEARLY_PRICE}
 
 frontend-domain: ${FRONTEND_DOMAIN}
+notification-service-url: ${NOTIFICATION_SERVICE_URL}
 
 logging:
   level:
     com.nexus.identityservice: INFO
     org.springframework.web: INFO
     org.springframework.web.servlet.mvc.method.annotation: INFO
+
+kind: Application
+
+

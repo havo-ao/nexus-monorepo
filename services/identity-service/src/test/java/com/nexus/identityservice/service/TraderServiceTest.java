@@ -39,6 +39,8 @@ class TraderServiceTest {
     private PasswordEncoder passwordEncoder;
     @Mock
     private UserLookupService userLookupService;
+    @Mock
+    private NotificationServiceClient notificationServiceClient;
 
     private TraderService traderService;
 
@@ -49,7 +51,8 @@ class TraderServiceTest {
                 traderSubscriptionRepository,
                 traderMapper,
                 passwordEncoder,
-                userLookupService
+                userLookupService,
+                notificationServiceClient
         );
     }
 

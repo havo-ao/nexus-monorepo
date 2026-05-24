@@ -47,9 +47,9 @@ services:
     ports:
       - "8881:8881"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/nexus
-      SPRING_DATASOURCE_USERNAME: nexus_user
-      SPRING_DATASOURCE_PASSWORD: ${NEXUS_MYSQL_PASSWORD:?Set NEXUS_MYSQL_PASSWORD}
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL:-jdbc:mysql://mysql:3306/nexus}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-nexus_user}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-${NEXUS_MYSQL_PASSWORD:?Set NEXUS_MYSQL_PASSWORD}}
       NEXUS_JWT_SECRET: ${NEXUS_JWT_SECRET:?Set NEXUS_JWT_SECRET}
       ADMIN_EMAIL: ${ADMIN_EMAIL}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
@@ -58,11 +58,13 @@ services:
       STRIPE_YEARLY_PRICE: ${STRIPE_YEARLY_PRICE}
       STRIPE_MONTHLY_PRICE: ${STRIPE_MONTHLY_PRICE}
       FRONTEND_DOMAIN: ${FRONTEND_DOMAIN}
+      NOTIFICATION_SERVICE_URL: ${NOTIFICATION_SERVICE_URL}
     volumes:
       - ../../services/identity-service:/app
       - /root/.m2
     depends_on:
       - mysql
+      - compliance-service
     command: >
       sh -c "chmod +x mvnw &&
       ./mvnw spring-boot:run"
@@ -160,7 +162,7 @@ services:
     build:
       context: ../../services/compliance-service
       dockerfile: Dockerfile.dev
-    container_name: nexus-compliance-service
+    container_name: compliance-service
     restart: unless-stopped
     ports:
       - "8885:8885"
@@ -177,8 +179,7 @@ services:
     depends_on:
       - mysql
     command: >
-      sh -c "npm run db:migrate &&
-      npm run start:dev"
+      npm run start:dev
 
 volumes:
   nexus_mysql_data:
