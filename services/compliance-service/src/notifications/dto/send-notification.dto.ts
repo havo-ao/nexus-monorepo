@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsEmail, IsEnum, IsISO8601, IsNotEmpty, IsString } from 'class-validator';
 
 export const notificationTemplateNames = [
   'LOGIN_SUCCESS',
@@ -32,30 +33,38 @@ export class SendNotificationDto {
     enumName: 'NotificationTemplateName',
     example: 'LOGIN_SUCCESS',
   })
+  @IsEnum(notificationTemplateNames)
   templateName!: NotificationTemplateName;
 
   @ApiProperty({
     description: 'Recipient email address.',
     example: 'user@nexus.local',
   })
+  @IsEmail()
   email!: string;
 
   @ApiProperty({
     description: 'Recipient first name.',
     example: 'Jane',
   })
+  @IsString()
+  @IsNotEmpty()
   name!: string;
 
   @ApiProperty({
     description: 'Recipient surname.',
     example: 'Doe',
   })
+  @IsString()
+  @IsNotEmpty()
   surname!: string;
 
   @ApiProperty({
     description: 'Recipient username.',
     example: 'jdoe',
   })
+  @IsString()
+  @IsNotEmpty()
   username!: string;
 
   @ApiProperty({
@@ -63,5 +72,6 @@ export class SendNotificationDto {
       'ISO 8601 timestamp indicating when the business event happened.',
     example: '2026-05-23T20:15:00.000Z',
   })
+  @IsISO8601()
   occurredAt!: string;
 }
