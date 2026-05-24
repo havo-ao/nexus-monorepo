@@ -157,6 +157,7 @@ jobs:
       - name: Build identity service
         working-directory: services/identity-service
         env:
+          SPRING_PROFILES_ACTIVE: test
           SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/nexus
           SPRING_DATASOURCE_USERNAME: nexus_user
           SPRING_DATASOURCE_PASSWORD: nexus_password
@@ -240,7 +241,8 @@ jobs:
             -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
             -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
             -Dsonar.javascript.lcov.reportPaths=services/trading-service/coverage/lcov.info,services/market-service/coverage/lcov.info,services/portfolio-service/coverage/lcov.info            
+            -Dsonar.coverage.jacoco.xmlReportPaths=services/identity-service/target/site/jacoco/jacoco.xml
             -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/build/**,**/coverage/**,**/.next/**,**/.ionic/**,**/target/**,**/mvnw,**/mvnw.cmd,**/database/migrations/**,**/postman/**
-            -Dsonar.coverage.exclusions=webapp/**,services/identity-service/**,services/compliance-service/**,services/trading-service/database/**,services/market-service/database/**,services/portfolio-service/database/**,services/market-service/scripts/**,services/portfolio-service/scripts/**,services/portfolio-service/src/valuations/clients/**,**/repositories/**,services/portfolio-service/src/common/tracing/**,**/main.ts,**/*.module.ts,**/dto/**,**/entities/**,**/controllers/**
+            -Dsonar.coverage.exclusions=webapp/**,services/compliance-service/**,services/trading-service/database/**,services/market-service/database/**,services/portfolio-service/database/**,services/market-service/scripts/**,services/portfolio-service/scripts/**,services/portfolio-service/src/valuations/clients/**,**/repositories/**,services/portfolio-service/src/common/tracing/**,**/main.ts,**/*.module.ts,**/dto/**,**/entities/**,**/controllers/**
             -Dsonar.cpd.exclusions=**/*.spec.ts,**/*.e2e-spec.ts,**/*.test.ts,**/database/migrations/**,**/postman/**,**/controllers/**,**/dto/**,**/entities/**,services/portfolio-service/database/**,services/portfolio-service/src/common/tracing/**,**/repositories/**
             -Dsonar.qualitygate.wait=true
