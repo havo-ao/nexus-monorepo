@@ -157,7 +157,7 @@ jobs:
       - name: Build identity service
         working-directory: services/identity-service
         env:
-          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3307/nexus
+          SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/nexus
           SPRING_DATASOURCE_USERNAME: nexus_user
           SPRING_DATASOURCE_PASSWORD: nexus_password
           NEXUS_JWT_SECRET: local-ci-jwt-secret-change-before-production-123456
@@ -167,6 +167,7 @@ jobs:
           STRIPE_MONTHLY_PRICE: price_local_ci_monthly
           STRIPE_YEARLY_PRICE: price_local_ci_yearly
           FRONTEND_DOMAIN: http://localhost:8100
+          NOTIFICATION_SERVICE_URL: http://compliance-service:8885/api/v1/
         run: bash ./mvnw -B verify
 
       - name: Upload identity bytecode
