@@ -158,9 +158,6 @@ jobs:
         working-directory: services/identity-service
         env:
           SPRING_PROFILES_ACTIVE: test
-          SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/nexus
-          SPRING_DATASOURCE_USERNAME: nexus_user
-          SPRING_DATASOURCE_PASSWORD: nexus_password
           NEXUS_JWT_SECRET: local-ci-jwt-secret-change-before-production-123456
           ADMIN_EMAIL: admin@nexus.local
           ADMIN_PASSWORD: Admin123@
