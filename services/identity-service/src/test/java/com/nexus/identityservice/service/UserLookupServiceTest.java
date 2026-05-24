@@ -33,6 +33,8 @@ class UserLookupServiceTest {
     private AdminRepository adminRepository;
     @Mock
     private LegalUserRepository legalUserRepository;
+    @Mock
+    private NotificationServiceClient notificationServiceClient;
 
     private UserLookupService userLookupService;
 
@@ -42,7 +44,8 @@ class UserLookupServiceTest {
                 traderRepository,
                 brokerRepository,
                 adminRepository,
-                legalUserRepository
+                legalUserRepository,
+                notificationServiceClient
         );
     }
 

@@ -31,6 +31,7 @@ public class AuthService {
     private final UserMapper userMap;
     private final TraderService traderService;
     private final AdminService adminService;
+    private final NotificationServiceClient notificationServiceClient;
 
     @Transactional
     public TraderResponse registerTrader(TraderCreateRequest request) {
@@ -67,6 +68,7 @@ public class AuthService {
 
             // 5. Audit log: Login successful
             // TODO: AuditLogService.log("Login successful for email: " + request.getEmail());
+            notificationServiceClient.sendLoginSuccess(user);
 
             // 6. Update lastLogin and reset failed attempts
             userLookupService.updateLastLoginById(user.getId(), user.getUserRol().name());

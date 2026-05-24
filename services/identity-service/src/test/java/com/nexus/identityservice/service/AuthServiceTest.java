@@ -48,6 +48,8 @@ class AuthServiceTest {
     private TraderService traderService;
     @Mock
     private AdminService adminService;
+    @Mock
+    private NotificationServiceClient notificationServiceClient;
 
     private AuthService authService;
 
@@ -59,7 +61,8 @@ class AuthServiceTest {
                 userLookupService,
                 userMapper,
                 traderService,
-                adminService
+                adminService,
+                notificationServiceClient
         );
     }
 
