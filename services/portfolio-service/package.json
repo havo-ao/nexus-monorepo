@@ -71,6 +71,7 @@
     },
     "collectCoverageFrom": [
       "app.controller.ts",
+      "auth/**/*.ts",
       "portfolio/services/**/*.ts",
       "positions/services/**/*.ts",
       "wallets/services/**/*.ts",
