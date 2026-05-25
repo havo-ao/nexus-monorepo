@@ -159,9 +159,9 @@ export class PortfolioPositionsRepository {
       symbol: string | null;
     }[]
   > {
+    const hasStockTable = await this.hasStockTable();
     const query = this.dataSource!.getRepository(PortfolioPosition)
       .createQueryBuilder('position')
-      .leftJoin('stock', 'stock', 'stock.id = position.stock_id')
       .select([
         'position.id AS id',
         'position.trader_id AS traderId',
@@ -170,16 +170,37 @@ export class PortfolioPositionsRepository {
         'position.avg_buy_price AS avgBuyPrice',
         'position.total_invested AS totalInvested',
         'position.last_updated AS lastUpdated',
-        'stock.symbol AS symbol',
       ])
-      .where('position.trader_id = :traderId', { traderId })
-      .orderBy('stock.symbol', 'ASC');
+      .where('position.trader_id = :traderId', { traderId });
+
+    if (hasStockTable) {
+      query
+        .leftJoin('stock', 'stock', 'stock.id = position.stock_id')
+        .addSelect('stock.symbol AS symbol')
+        .orderBy('stock.symbol', 'ASC');
+    } else {
+      query.addSelect('NULL AS symbol').orderBy('position.id', 'ASC');
+    }
 
     if (positionId) {
       query.andWhere('position.id = :positionId', { positionId });
     }
 
     return query.getRawMany();
+  }
+
+  private async hasStockTable(): Promise<boolean> {
+    const rows: unknown = await this.dataSource!.query(
+      `
+        SELECT TABLE_NAME
+        FROM INFORMATION_SCHEMA.TABLES
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'stock'
+        LIMIT 1
+      `,
+    );
+
+    return Array.isArray(rows) && rows.length > 0;
   }
 
   private mapRows(

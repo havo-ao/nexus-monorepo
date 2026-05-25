@@ -4,7 +4,6 @@ import { IonReactRouter } from '@ionic/react-router';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import SignUp from './pages/SignUp';
-import TraderPanel from './pages/TraderPanel';
 import Dashboard from './pages/Dashboard';
 import Market from './pages/Market';
 import PlanSelection from './pages/PlanSelection';

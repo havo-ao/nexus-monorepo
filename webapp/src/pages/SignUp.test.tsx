@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import SignUp from './SignUp';
 import * as countriesModule from '../utils/countries';
+import type { CountryOption } from '../utils/countries';
 
 vi.mock('../api/auth', () => ({
   login: vi.fn(),
@@ -18,14 +19,16 @@ vi.mock('../auth/storage', () => ({
 const fetchCountryOptionsMock = vi.spyOn(countriesModule, 'fetchCountryOptions');
 
 describe('SignUp page', () => {
+  const countryOptions: CountryOption[] = [
+    { code: 'US', name: 'United States', dialCode: '+1' }
+  ];
+
   beforeEach(() => {
     vi.resetAllMocks();
   });
 
   it('renders the signup form and loads country options', async () => {
-    fetchCountryOptionsMock.mockResolvedValue([
-      { code: 'US', name: 'United States', dialCode: '+1' }
-    ] as any);
+    fetchCountryOptionsMock.mockResolvedValue(countryOptions);
 
     render(
       <MemoryRouter initialEntries={['/signup']}>
@@ -43,7 +46,7 @@ describe('SignUp page', () => {
   });
 
   it('renders the submit button once the form is loaded', async () => {
-    fetchCountryOptionsMock.mockResolvedValue([] as any);
+    fetchCountryOptionsMock.mockResolvedValue([]);
 
     render(
       <MemoryRouter initialEntries={['/signup']}>

@@ -26,6 +26,12 @@ export function getMarketApiBaseUrl(): string {
   );
 }
 
+export function getPortfolioApiBaseUrl(): string {
+  return cleanBaseUrl(
+    import.meta.env.VITE_PORTFOLIO_API_BASE_URL ?? "/portfolio-api",
+  );
+}
+
 export function apiUrl(path: string): string {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   const base = getApiBaseUrl();
@@ -40,6 +46,11 @@ export function tradingApiUrl(path: string): string {
 export function marketApiUrl(path: string): string {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   return `${getMarketApiBaseUrl()}${normalizedPath}`;
+}
+
+export function portfolioApiUrl(path: string): string {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${getPortfolioApiBaseUrl()}${normalizedPath}`;
 }
 
 export const API_PATHS = {
@@ -65,5 +76,6 @@ export const API_PATHS = {
   adminTraderAudit: "/api/admin/audit/traders",
   adminTraderCount: "/api/admin/traders/count",
   adminSubscriptionPlans: "/api/admin/subscription-plans",
-  subscriptionVerify: "/api/subscriptions/verify"
+  subscriptionVerify: "/api/subscriptions/verify",
+  portfolioBase: "/api/v1/portfolio",
 } as const;

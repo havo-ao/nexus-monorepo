@@ -26,8 +26,10 @@ services:
       VITE_API_BASE_URL: http://localhost:8881
       VITE_TRADING_API_BASE_URL: http://localhost:8882
       VITE_MARKET_API_BASE_URL: /market-api
+      VITE_PORTFOLIO_API_BASE_URL: /portfolio-api
       VITE_PROXY_API_TARGET: http://identity-service:8881
       VITE_PROXY_MARKET_API_TARGET: http://market-service:8884
+      VITE_PROXY_PORTFOLIO_API_TARGET: http://portfolio-service:8883
     volumes:
       - ../../webapp:/app
       - /app/node_modules
@@ -104,6 +106,7 @@ services:
       DB_USERNAME: nexus_user
       DB_PASSWORD: ${NEXUS_MYSQL_PASSWORD:?Set NEXUS_MYSQL_PASSWORD}
       DB_DATABASE: nexus
+      NEXUS_JWT_SECRET: ${NEXUS_JWT_SECRET:?Set NEXUS_JWT_SECRET}
       MARKET_SERVICE_BASE_URL: http://market-service:8884
     depends_on:
       - mysql

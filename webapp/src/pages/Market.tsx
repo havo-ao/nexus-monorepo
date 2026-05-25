@@ -6,7 +6,7 @@ import {
   IonPage,
   IonSpinner,
 } from "@ionic/react";
-import { useHistory, useParams } from "react-router-dom";
+import { useHistory, useLocation, useParams } from "react-router-dom";
 import {
   alertCircleOutline,
   arrowBackOutline,
@@ -47,6 +47,15 @@ type MarketRouteParams = {
 type AsyncState = {
   isLoading: boolean;
   error: string;
+};
+
+type MarketLocationState = {
+  sellIntent?: {
+    positionId: string;
+    stockId: string;
+    symbol?: string;
+    quantity: number;
+  };
 };
 
 const traderId = "trader-123";
@@ -112,9 +121,13 @@ function toPolyline(points: ChartPoint[]): string {
 
 const Market: React.FC = () => {
   const history = useHistory();
+  const location = useLocation<MarketLocationState | undefined>();
   const { marketCode, symbol } = useParams<MarketRouteParams>();
   const selectedMarketCode = marketCode?.toUpperCase();
   const selectedSymbol = symbol?.toUpperCase();
+  const queryParams = new URLSearchParams(location.search);
+  const sellIntent =
+    queryParams.get("action") === "sell" ? location.state?.sellIntent : null;
 
   const [markets, setMarkets] = useState<MarketModel[]>([]);
   const [instruments, setInstruments] = useState<Instrument[]>([]);
@@ -350,6 +363,7 @@ const Market: React.FC = () => {
                 quote={quote}
                 historyPrices={historyPrices}
                 marketStatus={marketStatus}
+                sellIntent={sellIntent ?? null}
                 watchlistMessage={watchlistMessage}
                 isAddingWatchlist={isAddingWatchlist}
                 onBack={() =>
@@ -577,6 +591,7 @@ type InstrumentDetailViewProps = {
   quote: Quote | null;
   historyPrices: Quote[];
   marketStatus: MarketStatus | null;
+  sellIntent: MarketLocationState["sellIntent"] | null;
   watchlistMessage: string;
   isAddingWatchlist: boolean;
   onBack: () => void;
@@ -588,6 +603,7 @@ const InstrumentDetailView: React.FC<InstrumentDetailViewProps> = ({
   quote,
   historyPrices,
   marketStatus,
+  sellIntent,
   watchlistMessage,
   isAddingWatchlist,
   onBack,
@@ -700,6 +716,21 @@ const InstrumentDetailView: React.FC<InstrumentDetailViewProps> = ({
           icon={timeOutline}
         />
       </section>
+
+      {sellIntent && (
+        <section className="market-sell-intent" role="status">
+          <div>
+            <span>Sell intent from portfolio</span>
+            <strong>
+              {sellIntent.quantity} shares of {sellIntent.symbol ?? detail.symbol}
+            </strong>
+          </div>
+          <p>
+            The order ticket is not implemented in Market yet, so no sale is
+            recorded from this screen.
+          </p>
+        </section>
+      )}
 
       <section className="instrument-detail-grid">
         <article className="market-panel instrument-profile">

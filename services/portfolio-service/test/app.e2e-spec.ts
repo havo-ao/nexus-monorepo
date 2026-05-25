@@ -1,13 +1,16 @@
 process.env.NEXUS_DISABLE_DB = 'true';
+process.env.NEXUS_JWT_SECRET = 'local-test-jwt-secret-with-at-least-32-bytes';
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, VersioningType } from '@nestjs/common';
+import { createHmac } from 'crypto';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
+  const authHeader = `Bearer ${createTestToken('1')}`;
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -40,6 +43,7 @@ describe('AppController (e2e)', () => {
   it('/api/v1/portfolio/:traderId (GET)', () => {
     return request(app.getHttpServer())
       .get('/api/v1/portfolio/1')
+      .set('Authorization', authHeader)
       .expect(200)
       .expect({
         traderId: '1',
@@ -54,6 +58,7 @@ describe('AppController (e2e)', () => {
   it('/api/v1/portfolio/:traderId/distribution/sectors (GET)', () => {
     return request(app.getHttpServer())
       .get('/api/v1/portfolio/1/distribution/sectors')
+      .set('Authorization', authHeader)
       .expect(200)
       .expect({
         traderId: '1',
@@ -65,6 +70,7 @@ describe('AppController (e2e)', () => {
   it('/api/v1/portfolio/:traderId/balance (GET)', async () => {
     const response = await request(app.getHttpServer())
       .get('/api/v1/portfolio/1/balance')
+      .set('Authorization', authHeader)
       .expect(200);
 
     expect(response.body).toEqual({
@@ -79,6 +85,7 @@ describe('AppController (e2e)', () => {
   it('/api/v1/portfolio/:traderId/deposits (POST)', async () => {
     const response = await request(app.getHttpServer())
       .post('/api/v1/portfolio/1/deposits')
+      .set('Authorization', authHeader)
       .send({
         amount: 250,
         currency: 'USD',
@@ -104,6 +111,7 @@ describe('AppController (e2e)', () => {
   it('/api/v1/portfolio/:traderId/reservations (POST)', async () => {
     const response = await request(app.getHttpServer())
       .post('/api/v1/portfolio/1/reservations')
+      .set('Authorization', authHeader)
       .send({
         amount: 125,
         currency: 'USD',
@@ -129,6 +137,7 @@ describe('AppController (e2e)', () => {
   it('/api/v1/portfolio/:traderId/reservations/releases (POST)', async () => {
     const response = await request(app.getHttpServer())
       .post('/api/v1/portfolio/1/reservations/releases')
+      .set('Authorization', authHeader)
       .send({
         amount: 125,
         currency: 'USD',
@@ -154,12 +163,25 @@ describe('AppController (e2e)', () => {
   it('/api/v1/portfolio/:traderId/positions/:positionId (GET)', () => {
     return request(app.getHttpServer())
       .get('/api/v1/portfolio/1/positions/99')
+      .set('Authorization', authHeader)
       .expect(404);
+  });
+
+  it('/api/v1/portfolio/:traderId (GET) rejects missing token', () => {
+    return request(app.getHttpServer()).get('/api/v1/portfolio/1').expect(401);
+  });
+
+  it('/api/v1/portfolio/:traderId (GET) rejects another trader id', () => {
+    return request(app.getHttpServer())
+      .get('/api/v1/portfolio/2')
+      .set('Authorization', authHeader)
+      .expect(403);
   });
 
   it('/api/v1/portfolio/positions/purchases (POST)', async () => {
     const response = await request(app.getHttpServer())
       .post('/api/v1/portfolio/positions/purchases')
+      .set('Authorization', authHeader)
       .send({
         traderId: '1',
         stockId: '25',
@@ -187,6 +209,7 @@ describe('AppController (e2e)', () => {
   it('/api/v1/portfolio/positions/sales (POST)', async () => {
     const response = await request(app.getHttpServer())
       .post('/api/v1/portfolio/positions/sales')
+      .set('Authorization', authHeader)
       .send({
         traderId: '1',
         stockId: '25',
@@ -211,3 +234,23 @@ describe('AppController (e2e)', () => {
     });
   });
 });
+
+function createTestToken(userId: string): string {
+  const header = Buffer.from(
+    JSON.stringify({ alg: 'HS256', typ: 'JWT' }),
+  ).toString('base64url');
+  const payload = Buffer.from(
+    JSON.stringify({
+      sub: 'trader@nexus.test',
+      userId,
+      role: 'TRADER',
+      type: 'access',
+      exp: Math.floor(Date.now() / 1000) + 3600,
+    }),
+  ).toString('base64url');
+  const signature = createHmac('sha256', process.env.NEXUS_JWT_SECRET!)
+    .update(`${header}.${payload}`)
+    .digest('base64url');
+
+  return `${header}.${payload}.${signature}`;
+}

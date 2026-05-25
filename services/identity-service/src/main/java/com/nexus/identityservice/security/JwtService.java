@@ -99,6 +99,7 @@ public class JwtService {
 
         // Extract user role
         if (userDetails instanceof User user) {
+            claims.put("userId", user.getId());
             claims.put("role", user.getUserRol().name());
             claims.put("email", user.getEmail());
             claims.put("name", user.getName() + " " + user.getSurname());

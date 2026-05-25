@@ -3,6 +3,10 @@ import { getAccessToken, getStoredUser } from "../auth/storage";
 
 export type ProfileResponse = Record<string, unknown>;
 
+type ErrorResponse = {
+  message?: unknown;
+};
+
 function getProfilePath(): string {
   return getStoredUser()?.userRol === "ADMIN" ? API_PATHS.adminMe : API_PATHS.tradersMe;
 }
@@ -19,9 +23,12 @@ export async function getTraderMe(): Promise<ProfileResponse> {
     }
   });
 
-  const body = await response.json().catch(() => ({}));
+  const body = (await response.json().catch(() => ({}))) as ErrorResponse;
   if (!response.ok) {
-    const message = typeof (body as any).message === "string" ? (body as any).message : "Could not fetch profile.";
+    const message =
+      typeof body.message === "string"
+        ? body.message
+        : "Could not fetch profile.";
     throw new Error(message);
   }
 
@@ -42,9 +49,12 @@ export async function updateTrader(payload: Record<string, unknown>): Promise<Pr
     body: JSON.stringify(payload)
   });
 
-  const body = await response.json().catch(() => ({}));
+  const body = (await response.json().catch(() => ({}))) as ErrorResponse;
   if (!response.ok) {
-    const message = typeof (body as any).message === "string" ? (body as any).message : "Could not update profile.";
+    const message =
+      typeof body.message === "string"
+        ? body.message
+        : "Could not update profile.";
     throw new Error(message);
   }
 

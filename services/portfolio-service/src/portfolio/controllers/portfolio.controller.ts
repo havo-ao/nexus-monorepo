@@ -5,6 +5,7 @@ import {
   Param,
   ParseIntPipe,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiCreatedResponse,
@@ -14,6 +15,7 @@ import {
 } from '@nestjs/swagger';
 import { RecordExecutedBuyDto } from '../../positions/dto/record-executed-buy.dto';
 import { RecordExecutedSellDto } from '../../positions/dto/record-executed-sell.dto';
+import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
 import { RecordBalanceReservationDto } from '../../wallets/dto/record-balance-reservation.dto';
 import { RecordDepositDto } from '../../wallets/dto/record-deposit.dto';
 import { RecordWithdrawalDto } from '../../wallets/dto/record-withdrawal.dto';
@@ -30,6 +32,7 @@ import { PortfolioService } from '../services/portfolio.service';
 
 @ApiTags('portfolio')
 @Controller({ path: 'portfolio', version: '1' })
+@UseGuards(JwtAuthGuard)
 export class PortfolioController {
   constructor(private readonly portfolioService: PortfolioService) {}
 

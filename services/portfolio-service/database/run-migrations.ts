@@ -20,7 +20,7 @@ async function runMigrations() {
 
     const migrationFiles = (await readdir(migrationsDirectory))
       .filter((file) => file.endsWith('.sql'))
-      .sort();
+      .sort((left, right) => left.localeCompare(right));
 
     for (const migrationFile of migrationFiles) {
       const migrationId = basename(migrationFile);
@@ -42,7 +42,7 @@ async function runMigrations() {
       await connection.beginTransaction();
       try {
         for (const statement of splitSqlStatements(sql)) {
-          await connection.query(statement);
+          await executeMigrationStatement(connection, statement);
         }
         await connection.query(
           'INSERT INTO schema_migrations (id) VALUES (?)',
@@ -81,6 +81,42 @@ async function connectWithRetry(): Promise<mysql.Connection> {
   }
 
   throw lastError;
+}
+
+async function executeMigrationStatement(
+  connection: mysql.Connection,
+  statement: string,
+): Promise<void> {
+  const addColumnIfMissing =
+    /^ALTER\s+TABLE\s+`?(\w+)`?\s+ADD\s+COLUMN\s+IF\s+NOT\s+EXISTS\s+`?(\w+)`?\s+([\s\S]+)$/i.exec(
+      statement,
+    );
+
+  if (!addColumnIfMissing) {
+    await connection.query(statement);
+    return;
+  }
+
+  const [, tableName, columnName, columnDefinition] = addColumnIfMissing;
+  const [rows] = await connection.query<mysql.RowDataPacket[]>(
+    `
+      SELECT COLUMN_NAME
+      FROM INFORMATION_SCHEMA.COLUMNS
+      WHERE TABLE_SCHEMA = ?
+        AND TABLE_NAME = ?
+        AND COLUMN_NAME = ?
+      LIMIT 1
+    `,
+    [process.env.DB_DATABASE ?? 'nexus', tableName, columnName],
+  );
+
+  if (rows.length > 0) {
+    return;
+  }
+
+  await connection.query(
+    `ALTER TABLE \`${tableName}\` ADD COLUMN \`${columnName}\` ${columnDefinition}`,
+  );
 }
 
 function splitSqlStatements(sql: string): string[] {
