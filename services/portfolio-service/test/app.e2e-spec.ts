@@ -3,7 +3,7 @@ process.env.NEXUS_JWT_SECRET = 'local-test-jwt-secret-with-at-least-32-bytes';
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, VersioningType } from '@nestjs/common';
-import { createHmac } from 'crypto';
+import { createHmac } from 'node:crypto';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
@@ -30,18 +30,23 @@ describe('AppController (e2e)', () => {
     await app.close();
   });
 
-  it('/api/v1/health (GET)', () => {
-    return request(app.getHttpServer())
+  it('/api/v1/health (GET)', async () => {
+    const response = await request(app.getHttpServer())
       .get('/api/v1/health')
       .expect(200)
       .expect({
         status: 'ok',
         service: 'portfolio-service',
       });
+
+    expect(response.body).toEqual({
+      status: 'ok',
+      service: 'portfolio-service',
+    });
   });
 
-  it('/api/v1/portfolio/:traderId (GET)', () => {
-    return request(app.getHttpServer())
+  it('/api/v1/portfolio/:traderId (GET)', async () => {
+    const response = await request(app.getHttpServer())
       .get('/api/v1/portfolio/1')
       .set('Authorization', authHeader)
       .expect(200)
@@ -53,10 +58,19 @@ describe('AppController (e2e)', () => {
         profitLoss: 0,
         returnPercentage: null,
       });
+
+    expect(response.body).toEqual({
+      traderId: '1',
+      positions: [],
+      totalInvested: 0,
+      currentValue: 0,
+      profitLoss: 0,
+      returnPercentage: null,
+    });
   });
 
-  it('/api/v1/portfolio/:traderId/distribution/sectors (GET)', () => {
-    return request(app.getHttpServer())
+  it('/api/v1/portfolio/:traderId/distribution/sectors (GET)', async () => {
+    const response = await request(app.getHttpServer())
       .get('/api/v1/portfolio/1/distribution/sectors')
       .set('Authorization', authHeader)
       .expect(200)
@@ -65,6 +79,12 @@ describe('AppController (e2e)', () => {
         totalValue: 0,
         sectors: [],
       });
+
+    expect(response.body).toEqual({
+      traderId: '1',
+      totalValue: 0,
+      sectors: [],
+    });
   });
 
   it('/api/v1/portfolio/:traderId/balance (GET)', async () => {
@@ -160,22 +180,30 @@ describe('AppController (e2e)', () => {
     });
   });
 
-  it('/api/v1/portfolio/:traderId/positions/:positionId (GET)', () => {
-    return request(app.getHttpServer())
+  it('/api/v1/portfolio/:traderId/positions/:positionId (GET)', async () => {
+    const response = await request(app.getHttpServer())
       .get('/api/v1/portfolio/1/positions/99')
       .set('Authorization', authHeader)
       .expect(404);
+
+    expect(response.status).toBe(404);
   });
 
-  it('/api/v1/portfolio/:traderId (GET) rejects missing token', () => {
-    return request(app.getHttpServer()).get('/api/v1/portfolio/1').expect(401);
+  it('/api/v1/portfolio/:traderId (GET) rejects missing token', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/api/v1/portfolio/1')
+      .expect(401);
+
+    expect(response.status).toBe(401);
   });
 
-  it('/api/v1/portfolio/:traderId (GET) rejects another trader id', () => {
-    return request(app.getHttpServer())
+  it('/api/v1/portfolio/:traderId (GET) rejects another trader id', async () => {
+    const response = await request(app.getHttpServer())
       .get('/api/v1/portfolio/2')
       .set('Authorization', authHeader)
       .expect(403);
+
+    expect(response.status).toBe(403);
   });
 
   it('/api/v1/portfolio/positions/purchases (POST)', async () => {

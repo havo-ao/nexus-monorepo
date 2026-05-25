@@ -5,7 +5,7 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { createHmac, timingSafeEqual } from 'crypto';
+import { createHmac, timingSafeEqual } from 'node:crypto';
 import { Request } from 'express';
 
 type JwtPayload = {
@@ -114,7 +114,11 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     const body = request.body as { traderId?: unknown } | undefined;
-    return body?.traderId !== undefined ? this.toIdString(body.traderId) : null;
+    if (body?.traderId === undefined) {
+      return null;
+    }
+
+    return this.toIdString(body.traderId);
   }
 
   private toIdString(value: unknown): string {

@@ -47,6 +47,14 @@ describe('JwtAuthGuard', () => {
     expect(guard.canActivate(context)).toBe(true);
   });
 
+  it('allows a trader when the route is not trader-scoped', () => {
+    const context = createContext({
+      token: createToken({ role: 'TRADER', userId: '101' }),
+    });
+
+    expect(guard.canActivate(context)).toBe(true);
+  });
+
   it('allows an admin to access any trader route', () => {
     const context = createContext({
       token: createToken({ role: 'ADMIN' }),
