@@ -55,6 +55,17 @@ export type CreateStopLossOrderCommand = {
   currency: string;
 };
 
+export type CreateTakeProfitOrderCommand = {
+  traderId: string;
+  stockId: string;
+  symbol: string;
+  exchangeId: string;
+  quantity: number;
+  targetPrice: number;
+  grossAmount: number;
+  currency: string;
+};
+
 export type OrderCreationResult = {
   approved: boolean;
   order?: TradingOrder;
@@ -84,5 +95,9 @@ export interface OrderRepository {
 
   createStopLossOrder(
     command: CreateStopLossOrderCommand,
+  ): Promise<OrderCreationResult>;
+
+  createTakeProfitOrder(
+    command: CreateTakeProfitOrderCommand,
   ): Promise<OrderCreationResult>;
 }

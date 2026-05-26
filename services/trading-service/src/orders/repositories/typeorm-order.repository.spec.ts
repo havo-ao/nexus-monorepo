@@ -332,6 +332,59 @@ describe('TypeOrmOrderRepository', () => {
     });
   });
 
+  it('persists a take profit order with pending target status event', async () => {
+    const repository = new TypeOrmOrderRepository(dataSource);
+    orderRepository.save.mockImplementation((entity) => {
+      entity.id = '82';
+      entity.createdAt = new Date('2026-05-26T14:30:00.000Z');
+      entity.updatedAt = new Date('2026-05-26T14:30:00.000Z');
+      return Promise.resolve(entity);
+    });
+
+    const result = await repository.createTakeProfitOrder({
+      traderId: '101',
+      stockId: '1',
+      symbol: 'AAPL',
+      exchangeId: '1',
+      quantity: 3,
+      targetPrice: 290,
+      grossAmount: 870,
+      currency: 'USD',
+    });
+
+    expect(result.approved).toBe(true);
+    expect(result.order).toMatchObject({
+      id: '82',
+      traderId: '101',
+      stockId: '1',
+      side: 'SELL',
+      orderType: 'TAKE_PROFIT',
+      status: 'PENDING_CONDITION',
+      symbol: 'AAPL',
+      estimatedUnitPrice: 290,
+      limitPrice: 290,
+      grossAmount: 870,
+      reservedAmount: 0,
+    });
+    expect(orderRepository.save.mock.calls[0][0]).toMatchObject({
+      traderId: '101',
+      stockId: '1',
+      side: 'SELL',
+      orderType: 'TAKE_PROFIT',
+      status: 'PENDING_CONDITION',
+      estimatedUnitPrice: '290.00',
+      limitPrice: '290.00',
+      grossAmount: '870.00',
+      reservedAmount: '0.00',
+    });
+    expect(statusEventRepository.save.mock.calls[0][0]).toMatchObject({
+      toStatus: 'PENDING_CONDITION',
+      actorType: 'TRADER',
+      actorId: '101',
+      reason: 'Take profit order created with pending target condition',
+    });
+  });
+
   it('records a rejected funds event when the trader has no wallet', async () => {
     const repository = new TypeOrmOrderRepository(dataSource);
     walletRepository.findOne.mockResolvedValue(null);
