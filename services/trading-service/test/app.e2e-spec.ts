@@ -105,6 +105,29 @@ describe('AppController (e2e)', () => {
       });
   });
 
+  it('/api/v1/orders/:orderReference/status (GET)', () => {
+    return request(app.getHttpServer())
+      .get('/api/v1/orders/order-reference/status')
+      .expect(200)
+      .expect({
+        orderId: '1',
+        orderReference: 'order-reference',
+        traderId: '101',
+        side: 'BUY',
+        orderType: 'MARKET',
+        status: 'PENDING_EXECUTION',
+        symbol: 'AAPL',
+        exchangeId: '1',
+        quantity: 1,
+        estimatedUnitPrice: 250,
+        grossAmount: 250,
+        reservedAmount: 250,
+        currency: 'USD',
+        createdAt: '2026-05-26T14:30:00.000Z',
+        updatedAt: '2026-05-26T14:30:00.000Z',
+      });
+  });
+
   it('/api/v1/orders/buy/limit (POST)', () => {
     return request(app.getHttpServer())
       .post('/api/v1/orders/buy/limit')
