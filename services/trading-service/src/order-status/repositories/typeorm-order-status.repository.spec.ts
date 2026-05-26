@@ -1,18 +1,25 @@
 import { DataSource, Repository } from 'typeorm';
+import { OrderStatusEventEntity } from '../../orders/entities/order-status-event.entity';
 import { TradingOrderEntity } from '../../orders/entities/trading-order.entity';
 import { TypeOrmOrderStatusRepository } from './typeorm-order-status.repository';
 
 describe('TypeOrmOrderStatusRepository', () => {
   let dataSource: jest.Mocked<DataSource>;
   let orderRepository: jest.Mocked<Repository<TradingOrderEntity>>;
+  let eventRepository: jest.Mocked<Repository<OrderStatusEventEntity>>;
 
   beforeEach(() => {
     orderRepository = {
       findOne: jest.fn(),
     } as unknown as jest.Mocked<Repository<TradingOrderEntity>>;
+    eventRepository = {
+      find: jest.fn(),
+    } as unknown as jest.Mocked<Repository<OrderStatusEventEntity>>;
 
     dataSource = {
-      getRepository: jest.fn().mockReturnValue(orderRepository),
+      getRepository: jest.fn((entity) =>
+        entity === TradingOrderEntity ? orderRepository : eventRepository,
+      ),
     } as unknown as jest.Mocked<DataSource>;
   });
 
@@ -65,5 +72,36 @@ describe('TypeOrmOrderStatusRepository', () => {
     await expect(
       repository.findCurrentStatusByReference('missing-order'),
     ).resolves.toBeNull();
+  });
+
+  it('maps status events into chronological history entries', async () => {
+    const repository = new TypeOrmOrderStatusRepository(dataSource);
+    const event = new OrderStatusEventEntity();
+    event.id = '1';
+    event.orderId = '1';
+    event.orderReference = 'order-reference';
+    event.toStatus = 'PENDING_EXECUTION';
+    event.actorType = 'TRADER';
+    event.actorId = '101';
+    event.reason = 'Market buy order created after funds reservation';
+    event.createdAt = new Date('2026-05-26T14:30:00.000Z');
+    eventRepository.find.mockResolvedValue([event]);
+
+    await expect(
+      repository.findStatusHistoryByReference('order-reference'),
+    ).resolves.toEqual([
+      expect.objectContaining({
+        id: '1',
+        orderReference: 'order-reference',
+        toStatus: 'PENDING_EXECUTION',
+        actorType: 'TRADER',
+        actorId: '101',
+        createdAt: '2026-05-26T14:30:00.000Z',
+      }),
+    ]);
+    expect(eventRepository.find.mock.calls[0][0]).toEqual({
+      where: { orderReference: 'order-reference' },
+      order: { createdAt: 'ASC', id: 'ASC' },
+    });
   });
 });
