@@ -95,6 +95,16 @@ export type CreateStopLossOrderRequest = {
   currency?: string;
 };
 
+export type CreateTakeProfitOrderRequest = {
+  traderId: string;
+  stockId: string;
+  symbol: string;
+  exchangeId: string;
+  quantity: number;
+  targetPrice: number;
+  currency?: string;
+};
+
 export type TradingOrderResponse = {
   id: string;
   orderReference: string;
@@ -340,6 +350,34 @@ export async function createStopLossOrder(
       body && typeof body === "object" && "message" in body
         ? String((body as { message?: unknown }).message)
         : "Unable to create stop loss order.";
+    throw new Error(maybeMessage);
+  }
+
+  return body as TradingOrderResponse;
+}
+
+export async function createTakeProfitOrder(
+  request: CreateTakeProfitOrderRequest,
+): Promise<TradingOrderResponse> {
+  const response = await fetch(
+    tradingApiUrl(API_PATHS.tradingCreateTakeProfitOrder),
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(request),
+    },
+  );
+
+  const body = await readJsonSafe(response);
+
+  if (!response.ok) {
+    const maybeMessage =
+      body && typeof body === "object" && "message" in body
+        ? String((body as { message?: unknown }).message)
+        : "Unable to create take profit order.";
     throw new Error(maybeMessage);
   }
 
