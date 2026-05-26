@@ -13,6 +13,7 @@ describe('OrdersController', () => {
       createLimitBuyOrder: jest.fn(),
       createMarketSellOrder: jest.fn(),
       createLimitSellOrder: jest.fn(),
+      createStopLossOrder: jest.fn(),
     } as unknown as jest.Mocked<OrdersService>;
 
     const module: TestingModule = await Test.createTestingModule({
@@ -188,6 +189,49 @@ describe('OrdersController', () => {
       exchangeId: '1',
       quantity: 3,
       limitPrice: 260,
+    });
+  });
+
+  it('delegates stop loss order creation to the service', async () => {
+    const order = new TradingOrder(
+      '5',
+      'stop-loss-order-reference',
+      '101',
+      'SELL',
+      'STOP_LOSS',
+      'PENDING_CONDITION',
+      'AAPL',
+      '1',
+      3,
+      220,
+      660,
+      0,
+      'USD',
+      '2026-05-26T14:30:00.000Z',
+      220,
+      undefined,
+      '1',
+    );
+    ordersService.createStopLossOrder.mockResolvedValue(order);
+
+    await expect(
+      controller.createStopLossOrder({
+        traderId: '101',
+        stockId: '1',
+        symbol: 'AAPL',
+        exchangeId: '1',
+        quantity: 3,
+        stopPrice: 220,
+      }),
+    ).resolves.toBe(order);
+
+    expect(ordersService.createStopLossOrder.mock.calls[0][0]).toEqual({
+      traderId: '101',
+      stockId: '1',
+      symbol: 'AAPL',
+      exchangeId: '1',
+      quantity: 3,
+      stopPrice: 220,
     });
   });
 });

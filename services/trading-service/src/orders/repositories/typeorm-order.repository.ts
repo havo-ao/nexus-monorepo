@@ -12,6 +12,7 @@ import type {
   CreateLimitSellOrderCommand,
   CreateMarketBuyOrderCommand,
   CreateMarketSellOrderCommand,
+  CreateStopLossOrderCommand,
   OrderCreationResult,
   OrderRepository,
 } from './order.repository';
@@ -72,6 +73,20 @@ export class TypeOrmOrderRepository implements OrderRepository {
         'LIMIT',
         'PENDING_CONDITION',
         'Limit sell order created with pending price condition',
+      ),
+    );
+  }
+
+  createStopLossOrder(
+    command: CreateStopLossOrderCommand,
+  ): Promise<OrderCreationResult> {
+    return this.dataSource.transaction((manager) =>
+      this.createSellOrderInTransaction(
+        manager,
+        command,
+        'STOP_LOSS',
+        'PENDING_CONDITION',
+        'Stop loss order created with pending trigger condition',
       ),
     );
   }
@@ -180,8 +195,11 @@ export class TypeOrmOrderRepository implements OrderRepository {
 
   private async createSellOrderInTransaction(
     manager: EntityManager,
-    command: CreateMarketSellOrderCommand | CreateLimitSellOrderCommand,
-    orderType: 'MARKET' | 'LIMIT',
+    command:
+      | CreateMarketSellOrderCommand
+      | CreateLimitSellOrderCommand
+      | CreateStopLossOrderCommand,
+    orderType: 'MARKET' | 'LIMIT' | 'STOP_LOSS',
     status: 'PENDING_EXECUTION' | 'PENDING_CONDITION',
     statusReason: string,
   ): Promise<OrderCreationResult> {
@@ -198,13 +216,12 @@ export class TypeOrmOrderRepository implements OrderRepository {
     orderEntity.exchangeId = command.exchangeId;
     orderEntity.stockId = command.stockId;
     orderEntity.quantity = command.quantity.toFixed(6);
-    orderEntity.estimatedUnitPrice = this.toDecimal(
-      'estimatedUnitPrice' in command
-        ? command.estimatedUnitPrice
-        : command.limitPrice,
-    );
+    orderEntity.estimatedUnitPrice = this.toDecimal(this.getUnitPrice(command));
+    const conditionalPrice = this.getConditionalPrice(command);
     orderEntity.limitPrice =
-      'limitPrice' in command ? this.toDecimal(command.limitPrice) : undefined;
+      conditionalPrice === undefined
+        ? undefined
+        : this.toDecimal(conditionalPrice);
     orderEntity.grossAmount = this.toDecimal(command.grossAmount);
     orderEntity.reservedAmount = this.toDecimal(0);
     orderEntity.currency = command.currency;
@@ -270,5 +287,35 @@ export class TypeOrmOrderRepository implements OrderRepository {
 
   private toDecimal(value: number): string {
     return roundMoney(value).toFixed(2);
+  }
+
+  private getUnitPrice(
+    command:
+      | CreateMarketSellOrderCommand
+      | CreateLimitSellOrderCommand
+      | CreateStopLossOrderCommand,
+  ): number {
+    if ('estimatedUnitPrice' in command) {
+      return command.estimatedUnitPrice;
+    }
+    if ('limitPrice' in command) {
+      return command.limitPrice;
+    }
+    return command.stopPrice;
+  }
+
+  private getConditionalPrice(
+    command:
+      | CreateMarketSellOrderCommand
+      | CreateLimitSellOrderCommand
+      | CreateStopLossOrderCommand,
+  ): number | undefined {
+    if ('limitPrice' in command) {
+      return command.limitPrice;
+    }
+    if ('stopPrice' in command) {
+      return command.stopPrice;
+    }
+    return undefined;
   }
 }

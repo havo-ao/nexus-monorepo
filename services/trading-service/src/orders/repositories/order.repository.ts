@@ -44,6 +44,17 @@ export type CreateLimitSellOrderCommand = {
   currency: string;
 };
 
+export type CreateStopLossOrderCommand = {
+  traderId: string;
+  stockId: string;
+  symbol: string;
+  exchangeId: string;
+  quantity: number;
+  stopPrice: number;
+  grossAmount: number;
+  currency: string;
+};
+
 export type OrderCreationResult = {
   approved: boolean;
   order?: TradingOrder;
@@ -69,5 +80,9 @@ export interface OrderRepository {
 
   createLimitSellOrder(
     command: CreateLimitSellOrderCommand,
+  ): Promise<OrderCreationResult>;
+
+  createStopLossOrder(
+    command: CreateStopLossOrderCommand,
   ): Promise<OrderCreationResult>;
 }

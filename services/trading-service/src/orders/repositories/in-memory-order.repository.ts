@@ -7,6 +7,7 @@ import type {
   CreateLimitSellOrderCommand,
   CreateMarketBuyOrderCommand,
   CreateMarketSellOrderCommand,
+  CreateStopLossOrderCommand,
   OrderCreationResult,
   OrderRepository,
 } from './order.repository';
@@ -41,9 +42,18 @@ export class InMemoryOrderRepository implements OrderRepository {
     return this.createSellOrder(command, 'LIMIT', 'PENDING_CONDITION');
   }
 
+  createStopLossOrder(
+    command: CreateStopLossOrderCommand,
+  ): Promise<OrderCreationResult> {
+    return this.createSellOrder(command, 'STOP_LOSS', 'PENDING_CONDITION');
+  }
+
   private createSellOrder(
-    command: CreateMarketSellOrderCommand | CreateLimitSellOrderCommand,
-    orderType: 'MARKET' | 'LIMIT',
+    command:
+      | CreateMarketSellOrderCommand
+      | CreateLimitSellOrderCommand
+      | CreateStopLossOrderCommand,
+    orderType: 'MARKET' | 'LIMIT' | 'STOP_LOSS',
     status: 'PENDING_EXECUTION' | 'PENDING_CONDITION',
   ): Promise<OrderCreationResult> {
     const order = this.createOrder(
@@ -52,7 +62,7 @@ export class InMemoryOrderRepository implements OrderRepository {
       orderType,
       status,
       0,
-      'limitPrice' in command ? command.limitPrice : undefined,
+      this.getConditionalPrice(command),
       command.stockId,
     );
     this.orders.push(order);
@@ -107,16 +117,16 @@ export class InMemoryOrderRepository implements OrderRepository {
       | CreateMarketBuyOrderCommand
       | CreateLimitBuyOrderCommand
       | CreateMarketSellOrderCommand
-      | CreateLimitSellOrderCommand,
+      | CreateLimitSellOrderCommand
+      | CreateStopLossOrderCommand,
     side: 'BUY' | 'SELL',
-    orderType: 'MARKET' | 'LIMIT',
+    orderType: 'MARKET' | 'LIMIT' | 'STOP_LOSS',
     status: 'PENDING_EXECUTION' | 'PENDING_CONDITION',
     reservedAmount: number,
     limitPrice?: number,
     stockId?: string,
   ): TradingOrder {
-    const unitPrice =
-      'limitPrice' in command ? command.limitPrice : command.estimatedUnitPrice;
+    const unitPrice = this.getUnitPrice(command);
 
     return new TradingOrder(
       String(this.orders.length + 1),
@@ -137,5 +147,37 @@ export class InMemoryOrderRepository implements OrderRepository {
       undefined,
       stockId,
     );
+  }
+
+  private getUnitPrice(
+    command:
+      | CreateMarketBuyOrderCommand
+      | CreateLimitBuyOrderCommand
+      | CreateMarketSellOrderCommand
+      | CreateLimitSellOrderCommand
+      | CreateStopLossOrderCommand,
+  ): number {
+    if ('estimatedUnitPrice' in command) {
+      return command.estimatedUnitPrice;
+    }
+    if ('limitPrice' in command) {
+      return command.limitPrice;
+    }
+    return command.stopPrice;
+  }
+
+  private getConditionalPrice(
+    command:
+      | CreateMarketSellOrderCommand
+      | CreateLimitSellOrderCommand
+      | CreateStopLossOrderCommand,
+  ): number | undefined {
+    if ('limitPrice' in command) {
+      return command.limitPrice;
+    }
+    if ('stopPrice' in command) {
+      return command.stopPrice;
+    }
+    return undefined;
   }
 }
