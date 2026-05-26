@@ -42,4 +42,35 @@ export class OrderStatusController {
   getCurrentStatus(@Param('orderReference') orderReference: string) {
     return this.orderStatusService.getCurrentStatus(orderReference);
   }
+
+  @Get(':orderReference/status-history')
+  @ApiOperation({
+    summary: 'Query the status history of a trading order',
+  })
+  @ApiParam({
+    name: 'orderReference',
+    example: 'order-reference',
+    description: 'Public reference generated when the order was created.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Chronological trading order status history.',
+    schema: {
+      example: [
+        {
+          id: '1',
+          orderId: '1',
+          orderReference: 'order-reference',
+          toStatus: 'PENDING_EXECUTION',
+          actorType: 'TRADER',
+          actorId: '101',
+          reason: 'Market buy order created after funds reservation',
+          createdAt: '2026-05-26T14:30:00.000Z',
+        },
+      ],
+    },
+  })
+  getStatusHistory(@Param('orderReference') orderReference: string) {
+    return this.orderStatusService.getStatusHistory(orderReference);
+  }
 }

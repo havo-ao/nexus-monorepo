@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { OrderStatusHistoryEntry } from '../entities/order-status-history-entry.entity';
 import { OrderStatusSnapshot } from '../entities/order-status-snapshot.entity';
 import { OrderStatusService } from '../services/order-status.service';
 import { OrderStatusController } from './order-status.controller';
@@ -10,6 +11,7 @@ describe('OrderStatusController', () => {
   beforeEach(async () => {
     service = {
       getCurrentStatus: jest.fn(),
+      getStatusHistory: jest.fn(),
     } as unknown as jest.Mocked<OrderStatusService>;
 
     const module: TestingModule = await Test.createTestingModule({
@@ -50,5 +52,27 @@ describe('OrderStatusController', () => {
     );
 
     expect(service.getCurrentStatus.mock.calls[0][0]).toBe('order-reference');
+  });
+
+  it('delegates status history lookup to the service', async () => {
+    const history = [
+      new OrderStatusHistoryEntry(
+        '1',
+        '1',
+        'order-reference',
+        'PENDING_EXECUTION',
+        'TRADER',
+        '101',
+        'Market buy order created after funds reservation',
+        '2026-05-26T14:30:00.000Z',
+      ),
+    ];
+    service.getStatusHistory.mockResolvedValue(history);
+
+    await expect(controller.getStatusHistory('order-reference')).resolves.toBe(
+      history,
+    );
+
+    expect(service.getStatusHistory.mock.calls[0][0]).toBe('order-reference');
   });
 });
