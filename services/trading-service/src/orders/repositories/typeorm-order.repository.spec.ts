@@ -175,6 +175,57 @@ describe('TypeOrmOrderRepository', () => {
     });
   });
 
+  it('persists a market sell order with initial status event', async () => {
+    const repository = new TypeOrmOrderRepository(dataSource);
+    orderRepository.save.mockImplementation((entity) => {
+      entity.id = '79';
+      entity.createdAt = new Date('2026-05-26T14:30:00.000Z');
+      entity.updatedAt = new Date('2026-05-26T14:30:00.000Z');
+      return Promise.resolve(entity);
+    });
+
+    const result = await repository.createMarketSellOrder({
+      traderId: '101',
+      stockId: '1',
+      symbol: 'AAPL',
+      exchangeId: '1',
+      quantity: 3,
+      estimatedUnitPrice: 250,
+      grossAmount: 750,
+      currency: 'USD',
+    });
+
+    expect(result.approved).toBe(true);
+    expect(result.order).toMatchObject({
+      id: '79',
+      traderId: '101',
+      stockId: '1',
+      side: 'SELL',
+      orderType: 'MARKET',
+      status: 'PENDING_EXECUTION',
+      symbol: 'AAPL',
+      estimatedUnitPrice: 250,
+      grossAmount: 750,
+      reservedAmount: 0,
+    });
+    expect(orderRepository.save.mock.calls[0][0]).toMatchObject({
+      traderId: '101',
+      stockId: '1',
+      side: 'SELL',
+      orderType: 'MARKET',
+      status: 'PENDING_EXECUTION',
+      estimatedUnitPrice: '250.00',
+      grossAmount: '750.00',
+      reservedAmount: '0.00',
+    });
+    expect(statusEventRepository.save.mock.calls[0][0]).toMatchObject({
+      toStatus: 'PENDING_EXECUTION',
+      actorType: 'TRADER',
+      actorId: '101',
+      reason: 'Market sell order created after holdings validation',
+    });
+  });
+
   it('records a rejected funds event when the trader has no wallet', async () => {
     const repository = new TypeOrmOrderRepository(dataSource);
     walletRepository.findOne.mockResolvedValue(null);

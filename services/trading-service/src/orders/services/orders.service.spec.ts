@@ -1,5 +1,7 @@
 import { BadRequestException, ConflictException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { HoldingsValidation } from '../../holdings-validation/entities/holdings-validation.entity';
+import { HoldingsValidationService } from '../../holdings-validation/services/holdings-validation.service';
 import { MarketValidation } from '../../market-validation/entities/market-validation.entity';
 import { MarketValidationService } from '../../market-validation/services/market-validation.service';
 import { TradingOrder } from '../entities/trading-order';
@@ -10,16 +12,21 @@ import { OrdersService } from './orders.service';
 describe('OrdersService', () => {
   let service: OrdersService;
   let marketValidationService: jest.Mocked<MarketValidationService>;
+  let holdingsValidationService: jest.Mocked<HoldingsValidationService>;
   let orderRepository: jest.Mocked<OrderRepository>;
 
   beforeEach(async () => {
     marketValidationService = {
       validateMarketStatus: jest.fn(),
     } as unknown as jest.Mocked<MarketValidationService>;
+    holdingsValidationService = {
+      validateSellHoldings: jest.fn(),
+    } as unknown as jest.Mocked<HoldingsValidationService>;
 
     orderRepository = {
       createMarketBuyOrder: jest.fn(),
       createLimitBuyOrder: jest.fn(),
+      createMarketSellOrder: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -28,6 +35,10 @@ describe('OrdersService', () => {
         {
           provide: MarketValidationService,
           useValue: marketValidationService,
+        },
+        {
+          provide: HoldingsValidationService,
+          useValue: holdingsValidationService,
         },
         {
           provide: ORDER_REPOSITORY,
@@ -217,6 +228,160 @@ describe('OrdersService', () => {
     ).rejects.toThrow(ConflictException);
   });
 
+  it('creates a market sell order after market and holdings validation', async () => {
+    const order = new TradingOrder(
+      '3',
+      'sell-order-reference',
+      '101',
+      'SELL',
+      'MARKET',
+      'PENDING_EXECUTION',
+      'AAPL',
+      '1',
+      3,
+      250,
+      750,
+      0,
+      'USD',
+      '2026-05-26T14:30:00.000Z',
+      undefined,
+      undefined,
+      '1',
+    );
+    marketValidationService.validateMarketStatus.mockResolvedValue(
+      new MarketValidation(true, '1', 'OPEN', '2026-05-26T14:30:00.000Z'),
+    );
+    holdingsValidationService.validateSellHoldings.mockResolvedValue(
+      new HoldingsValidation(true, '101', '1', 3, 10, 'AAPL'),
+    );
+    orderRepository.createMarketSellOrder.mockResolvedValue({
+      approved: true,
+      order,
+      requiredQuantity: 3,
+    });
+
+    await expect(
+      service.createMarketSellOrder({
+        traderId: ' 101 ',
+        stockId: ' 1 ',
+        symbol: ' aapl ',
+        exchangeId: '1',
+        quantity: 3,
+        estimatedUnitPrice: 250,
+        marketEvaluatedAt: '2026-05-26T14:30:00.000Z',
+      }),
+    ).resolves.toBe(order);
+
+    expect(marketValidationService.validateMarketStatus.mock.calls[0]).toEqual([
+      '1',
+      '2026-05-26T14:30:00.000Z',
+    ]);
+    expect(
+      holdingsValidationService.validateSellHoldings.mock.calls[0][0],
+    ).toEqual({
+      traderId: ' 101 ',
+      stockId: ' 1 ',
+      symbol: ' aapl ',
+      quantity: 3,
+    });
+    expect(orderRepository.createMarketSellOrder.mock.calls[0][0]).toEqual({
+      traderId: '101',
+      stockId: '1',
+      symbol: 'AAPL',
+      exchangeId: '1',
+      quantity: 3,
+      estimatedUnitPrice: 250,
+      grossAmount: 750,
+      currency: 'USD',
+    });
+  });
+
+  it('rejects market sell order creation when holdings are insufficient', async () => {
+    marketValidationService.validateMarketStatus.mockResolvedValue(
+      new MarketValidation(true, '1', 'OPEN', '2026-05-26T14:30:00.000Z'),
+    );
+    holdingsValidationService.validateSellHoldings.mockResolvedValue(
+      new HoldingsValidation(
+        false,
+        '101',
+        '1',
+        12,
+        10,
+        'AAPL',
+        'Insufficient available holdings',
+      ),
+    );
+
+    await expect(
+      service.createMarketSellOrder({
+        traderId: '101',
+        stockId: '1',
+        symbol: 'AAPL',
+        exchangeId: '1',
+        quantity: 12,
+        estimatedUnitPrice: 250,
+      }),
+    ).rejects.toThrow(ConflictException);
+
+    expect(orderRepository.createMarketSellOrder.mock.calls).toHaveLength(0);
+  });
+
+  it('rejects market sell order creation when market is closed', async () => {
+    marketValidationService.validateMarketStatus.mockResolvedValue(
+      new MarketValidation(
+        false,
+        '1',
+        'CLOSED',
+        '2026-05-26T22:00:00.000Z',
+        'America/New_York',
+        '09:30:00',
+        '16:00:00',
+        'Market is closed at this time',
+      ),
+    );
+
+    await expect(
+      service.createMarketSellOrder({
+        traderId: '101',
+        stockId: '1',
+        symbol: 'AAPL',
+        exchangeId: '1',
+        quantity: 3,
+        estimatedUnitPrice: 250,
+      }),
+    ).rejects.toThrow(ConflictException);
+
+    expect(
+      holdingsValidationService.validateSellHoldings.mock.calls,
+    ).toHaveLength(0);
+    expect(orderRepository.createMarketSellOrder.mock.calls).toHaveLength(0);
+  });
+
+  it('rejects market sell order creation when persistence fails', async () => {
+    marketValidationService.validateMarketStatus.mockResolvedValue(
+      new MarketValidation(true, '1', 'OPEN', '2026-05-26T14:30:00.000Z'),
+    );
+    holdingsValidationService.validateSellHoldings.mockResolvedValue(
+      new HoldingsValidation(true, '101', '1', 3, 10, 'AAPL'),
+    );
+    orderRepository.createMarketSellOrder.mockResolvedValue({
+      approved: false,
+      reason: 'Unable to create order',
+      requiredQuantity: 3,
+    });
+
+    await expect(
+      service.createMarketSellOrder({
+        traderId: '101',
+        stockId: '1',
+        symbol: 'AAPL',
+        exchangeId: '1',
+        quantity: 3,
+        estimatedUnitPrice: 250,
+      }),
+    ).rejects.toThrow(ConflictException);
+  });
+
   it('validates required input before calling dependencies', async () => {
     await expect(
       service.createMarketBuyOrder({
@@ -254,6 +419,36 @@ describe('OrdersService', () => {
         estimatedUnitPrice: -1,
       }),
     ).rejects.toThrow(BadRequestException);
+  });
+
+  it('requires stock identifier for market sell orders', async () => {
+    await expect(
+      service.createMarketSellOrder({
+        traderId: '101',
+        stockId: '',
+        symbol: 'AAPL',
+        exchangeId: '1',
+        quantity: 1,
+        estimatedUnitPrice: 250,
+      }),
+    ).rejects.toThrow(BadRequestException);
+
+    expect(orderRepository.createMarketSellOrder.mock.calls).toHaveLength(0);
+  });
+
+  it('requires positive estimated price for market sell orders', async () => {
+    await expect(
+      service.createMarketSellOrder({
+        traderId: '101',
+        stockId: '1',
+        symbol: 'AAPL',
+        exchangeId: '1',
+        quantity: 1,
+        estimatedUnitPrice: 0,
+      }),
+    ).rejects.toThrow(BadRequestException);
+
+    expect(orderRepository.createMarketSellOrder.mock.calls).toHaveLength(0);
   });
 
   it('requires positive limit price', async () => {
