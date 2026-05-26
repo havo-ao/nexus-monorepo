@@ -41,6 +41,16 @@ export type CreateMarketSellOrderInput = {
   marketEvaluatedAt?: string;
 };
 
+export type CreateLimitSellOrderInput = {
+  traderId: string;
+  stockId: string;
+  symbol: string;
+  exchangeId: string;
+  quantity: number;
+  limitPrice: number;
+  currency?: string;
+};
+
 @Injectable()
 export class OrdersService {
   constructor(
@@ -177,12 +187,47 @@ export class OrdersService {
     return result.order;
   }
 
+  async createLimitSellOrder(
+    input: CreateLimitSellOrderInput,
+  ): Promise<TradingOrder> {
+    this.assertValidLimitSellOrder(input);
+
+    const holdingsValidation =
+      await this.holdingsValidationService.validateSellHoldings({
+        traderId: input.traderId,
+        stockId: input.stockId,
+        symbol: input.symbol,
+        quantity: input.quantity,
+      });
+
+    if (!holdingsValidation.approved) {
+      throw new ConflictException(
+        holdingsValidation.reason ?? 'Insufficient available holdings',
+      );
+    }
+
+    const grossAmount = roundMoney(input.quantity * input.limitPrice);
+    const result = await this.orderRepository.createLimitSellOrder({
+      traderId: input.traderId.trim(),
+      stockId: input.stockId.trim(),
+      symbol: input.symbol.trim().toUpperCase(),
+      exchangeId: input.exchangeId.trim(),
+      quantity: input.quantity,
+      limitPrice: input.limitPrice,
+      grossAmount,
+      currency: input.currency?.trim().toUpperCase() || 'USD',
+    });
+
+    if (!result.approved || !result.order) {
+      throw new ConflictException(result.reason ?? 'Unable to create order');
+    }
+
+    return result.order;
+  }
+
   private assertValidMarketSellOrder(input: CreateMarketSellOrderInput): void {
     this.assertValidOrderBase(input);
-
-    if (!input.stockId || input.stockId.trim().length === 0) {
-      throw new BadRequestException('stockId is required');
-    }
+    this.assertValidSellFields(input);
 
     if (
       !Number.isFinite(input.estimatedUnitPrice) ||
@@ -191,6 +236,21 @@ export class OrdersService {
       throw new BadRequestException(
         'estimatedUnitPrice must be greater than zero',
       );
+    }
+  }
+
+  private assertValidLimitSellOrder(input: CreateLimitSellOrderInput): void {
+    this.assertValidOrderBase(input);
+    this.assertValidSellFields(input);
+
+    if (!Number.isFinite(input.limitPrice) || input.limitPrice <= 0) {
+      throw new BadRequestException('limitPrice must be greater than zero');
+    }
+  }
+
+  private assertValidSellFields(input: { stockId: string }): void {
+    if (!input.stockId || input.stockId.trim().length === 0) {
+      throw new BadRequestException('stockId is required');
     }
   }
 
