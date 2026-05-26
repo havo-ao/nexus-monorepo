@@ -29,6 +29,7 @@ describe('OrdersService', () => {
       createMarketSellOrder: jest.fn(),
       createLimitSellOrder: jest.fn(),
       createStopLossOrder: jest.fn(),
+      createTakeProfitOrder: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -575,6 +576,107 @@ describe('OrdersService', () => {
     ).rejects.toThrow(ConflictException);
   });
 
+  it('creates a take profit order pending target condition', async () => {
+    const order = new TradingOrder(
+      '6',
+      'take-profit-order-reference',
+      '101',
+      'SELL',
+      'TAKE_PROFIT',
+      'PENDING_CONDITION',
+      'AAPL',
+      '1',
+      3,
+      290,
+      870,
+      0,
+      'USD',
+      '2026-05-26T14:30:00.000Z',
+      290,
+      undefined,
+      '1',
+    );
+    holdingsValidationService.validateSellHoldings.mockResolvedValue(
+      new HoldingsValidation(true, '101', '1', 3, 10, 'AAPL'),
+    );
+    orderRepository.createTakeProfitOrder.mockResolvedValue({
+      approved: true,
+      order,
+      requiredQuantity: 3,
+    });
+
+    await expect(
+      service.createTakeProfitOrder({
+        traderId: ' 101 ',
+        stockId: ' 1 ',
+        symbol: ' aapl ',
+        exchangeId: '1',
+        quantity: 3,
+        targetPrice: 290,
+      }),
+    ).resolves.toBe(order);
+
+    expect(orderRepository.createTakeProfitOrder.mock.calls[0][0]).toEqual({
+      traderId: '101',
+      stockId: '1',
+      symbol: 'AAPL',
+      exchangeId: '1',
+      quantity: 3,
+      targetPrice: 290,
+      grossAmount: 870,
+      currency: 'USD',
+    });
+  });
+
+  it('rejects take profit order creation when holdings are insufficient', async () => {
+    holdingsValidationService.validateSellHoldings.mockResolvedValue(
+      new HoldingsValidation(
+        false,
+        '101',
+        '1',
+        12,
+        10,
+        'AAPL',
+        'Insufficient available holdings',
+      ),
+    );
+
+    await expect(
+      service.createTakeProfitOrder({
+        traderId: '101',
+        stockId: '1',
+        symbol: 'AAPL',
+        exchangeId: '1',
+        quantity: 12,
+        targetPrice: 290,
+      }),
+    ).rejects.toThrow(ConflictException);
+
+    expect(orderRepository.createTakeProfitOrder.mock.calls).toHaveLength(0);
+  });
+
+  it('rejects take profit order creation when persistence fails', async () => {
+    holdingsValidationService.validateSellHoldings.mockResolvedValue(
+      new HoldingsValidation(true, '101', '1', 3, 10, 'AAPL'),
+    );
+    orderRepository.createTakeProfitOrder.mockResolvedValue({
+      approved: false,
+      reason: 'Unable to create order',
+      requiredQuantity: 3,
+    });
+
+    await expect(
+      service.createTakeProfitOrder({
+        traderId: '101',
+        stockId: '1',
+        symbol: 'AAPL',
+        exchangeId: '1',
+        quantity: 3,
+        targetPrice: 290,
+      }),
+    ).rejects.toThrow(ConflictException);
+  });
+
   it('validates required input before calling dependencies', async () => {
     await expect(
       service.createMarketBuyOrder({
@@ -686,6 +788,21 @@ describe('OrdersService', () => {
     ).rejects.toThrow(BadRequestException);
 
     expect(orderRepository.createStopLossOrder.mock.calls).toHaveLength(0);
+  });
+
+  it('requires positive target price for take profit orders', async () => {
+    await expect(
+      service.createTakeProfitOrder({
+        traderId: '101',
+        stockId: '1',
+        symbol: 'AAPL',
+        exchangeId: '1',
+        quantity: 1,
+        targetPrice: 0,
+      }),
+    ).rejects.toThrow(BadRequestException);
+
+    expect(orderRepository.createTakeProfitOrder.mock.calls).toHaveLength(0);
   });
 
   it('requires symbol and exchange identifiers', async () => {

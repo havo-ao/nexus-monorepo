@@ -61,6 +61,16 @@ export type CreateStopLossOrderInput = {
   currency?: string;
 };
 
+export type CreateTakeProfitOrderInput = {
+  traderId: string;
+  stockId: string;
+  symbol: string;
+  exchangeId: string;
+  quantity: number;
+  targetPrice: number;
+  currency?: string;
+};
+
 @Injectable()
 export class OrdersService {
   constructor(
@@ -273,6 +283,44 @@ export class OrdersService {
     return result.order;
   }
 
+  async createTakeProfitOrder(
+    input: CreateTakeProfitOrderInput,
+  ): Promise<TradingOrder> {
+    this.assertValidTakeProfitOrder(input);
+
+    const holdingsValidation =
+      await this.holdingsValidationService.validateSellHoldings({
+        traderId: input.traderId,
+        stockId: input.stockId,
+        symbol: input.symbol,
+        quantity: input.quantity,
+      });
+
+    if (!holdingsValidation.approved) {
+      throw new ConflictException(
+        holdingsValidation.reason ?? 'Insufficient available holdings',
+      );
+    }
+
+    const grossAmount = roundMoney(input.quantity * input.targetPrice);
+    const result = await this.orderRepository.createTakeProfitOrder({
+      traderId: input.traderId.trim(),
+      stockId: input.stockId.trim(),
+      symbol: input.symbol.trim().toUpperCase(),
+      exchangeId: input.exchangeId.trim(),
+      quantity: input.quantity,
+      targetPrice: input.targetPrice,
+      grossAmount,
+      currency: input.currency?.trim().toUpperCase() || 'USD',
+    });
+
+    if (!result.approved || !result.order) {
+      throw new ConflictException(result.reason ?? 'Unable to create order');
+    }
+
+    return result.order;
+  }
+
   private assertValidMarketSellOrder(input: CreateMarketSellOrderInput): void {
     this.assertValidOrderBase(input);
     this.assertValidSellFields(input);
@@ -302,6 +350,15 @@ export class OrdersService {
 
     if (!Number.isFinite(input.stopPrice) || input.stopPrice <= 0) {
       throw new BadRequestException('stopPrice must be greater than zero');
+    }
+  }
+
+  private assertValidTakeProfitOrder(input: CreateTakeProfitOrderInput): void {
+    this.assertValidOrderBase(input);
+    this.assertValidSellFields(input);
+
+    if (!Number.isFinite(input.targetPrice) || input.targetPrice <= 0) {
+      throw new BadRequestException('targetPrice must be greater than zero');
     }
   }
 

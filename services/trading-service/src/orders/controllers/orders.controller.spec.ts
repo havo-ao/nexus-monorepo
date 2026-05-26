@@ -14,6 +14,7 @@ describe('OrdersController', () => {
       createMarketSellOrder: jest.fn(),
       createLimitSellOrder: jest.fn(),
       createStopLossOrder: jest.fn(),
+      createTakeProfitOrder: jest.fn(),
     } as unknown as jest.Mocked<OrdersService>;
 
     const module: TestingModule = await Test.createTestingModule({
@@ -232,6 +233,49 @@ describe('OrdersController', () => {
       exchangeId: '1',
       quantity: 3,
       stopPrice: 220,
+    });
+  });
+
+  it('delegates take profit order creation to the service', async () => {
+    const order = new TradingOrder(
+      '6',
+      'take-profit-order-reference',
+      '101',
+      'SELL',
+      'TAKE_PROFIT',
+      'PENDING_CONDITION',
+      'AAPL',
+      '1',
+      3,
+      290,
+      870,
+      0,
+      'USD',
+      '2026-05-26T14:30:00.000Z',
+      290,
+      undefined,
+      '1',
+    );
+    ordersService.createTakeProfitOrder.mockResolvedValue(order);
+
+    await expect(
+      controller.createTakeProfitOrder({
+        traderId: '101',
+        stockId: '1',
+        symbol: 'AAPL',
+        exchangeId: '1',
+        quantity: 3,
+        targetPrice: 290,
+      }),
+    ).resolves.toBe(order);
+
+    expect(ordersService.createTakeProfitOrder.mock.calls[0][0]).toEqual({
+      traderId: '101',
+      stockId: '1',
+      symbol: 'AAPL',
+      exchangeId: '1',
+      quantity: 3,
+      targetPrice: 290,
     });
   });
 });
