@@ -5,7 +5,8 @@ import { TradingOrder } from '../entities/trading-order';
 import type {
   CreateLimitBuyOrderCommand,
   CreateMarketBuyOrderCommand,
-  MarketBuyOrderCreationResult,
+  CreateMarketSellOrderCommand,
+  OrderCreationResult,
   OrderRepository,
 } from './order.repository';
 
@@ -17,21 +18,42 @@ export class InMemoryOrderRepository implements OrderRepository {
 
   createMarketBuyOrder(
     command: CreateMarketBuyOrderCommand,
-  ): Promise<MarketBuyOrderCreationResult> {
+  ): Promise<OrderCreationResult> {
     return this.createBuyOrder(command, 'MARKET', 'PENDING_EXECUTION');
   }
 
   createLimitBuyOrder(
     command: CreateLimitBuyOrderCommand,
-  ): Promise<MarketBuyOrderCreationResult> {
+  ): Promise<OrderCreationResult> {
     return this.createBuyOrder(command, 'LIMIT', 'PENDING_CONDITION');
+  }
+
+  createMarketSellOrder(
+    command: CreateMarketSellOrderCommand,
+  ): Promise<OrderCreationResult> {
+    const order = this.createOrder(
+      command,
+      'SELL',
+      'MARKET',
+      'PENDING_EXECUTION',
+      0,
+      undefined,
+      command.stockId,
+    );
+    this.orders.push(order);
+
+    return Promise.resolve({
+      approved: true,
+      order,
+      requiredQuantity: command.quantity,
+    });
   }
 
   private createBuyOrder(
     command: CreateMarketBuyOrderCommand | CreateLimitBuyOrderCommand,
     orderType: 'MARKET' | 'LIMIT',
     status: 'PENDING_EXECUTION' | 'PENDING_CONDITION',
-  ): Promise<MarketBuyOrderCreationResult> {
+  ): Promise<OrderCreationResult> {
     const availableAmount = roundMoney(this.availableAmount);
 
     if (availableAmount < command.grossAmount) {
@@ -46,24 +68,12 @@ export class InMemoryOrderRepository implements OrderRepository {
     this.availableAmount = roundMoney(availableAmount - command.grossAmount);
     this.reservedAmount = roundMoney(this.reservedAmount + command.grossAmount);
 
-    const now = new Date().toISOString();
-    const order = new TradingOrder(
-      String(this.orders.length + 1),
-      randomUUID(),
-      command.traderId,
+    const order = this.createOrder(
+      command,
       'BUY',
       orderType,
       status,
-      command.symbol,
-      command.exchangeId,
-      command.quantity,
-      'estimatedUnitPrice' in command
-        ? command.estimatedUnitPrice
-        : command.limitPrice,
-      command.grossAmount,
       this.reservedAmount,
-      command.currency,
-      now,
       'limitPrice' in command ? command.limitPrice : undefined,
     );
 
@@ -75,5 +85,41 @@ export class InMemoryOrderRepository implements OrderRepository {
       availableAmount,
       requiredAmount: command.grossAmount,
     });
+  }
+
+  private createOrder(
+    command:
+      | CreateMarketBuyOrderCommand
+      | CreateLimitBuyOrderCommand
+      | CreateMarketSellOrderCommand,
+    side: 'BUY' | 'SELL',
+    orderType: 'MARKET' | 'LIMIT',
+    status: 'PENDING_EXECUTION' | 'PENDING_CONDITION',
+    reservedAmount: number,
+    limitPrice?: number,
+    stockId?: string,
+  ): TradingOrder {
+    const unitPrice =
+      'limitPrice' in command ? command.limitPrice : command.estimatedUnitPrice;
+
+    return new TradingOrder(
+      String(this.orders.length + 1),
+      randomUUID(),
+      command.traderId,
+      side,
+      orderType,
+      status,
+      command.symbol,
+      command.exchangeId,
+      command.quantity,
+      unitPrice,
+      command.grossAmount,
+      reservedAmount,
+      command.currency,
+      new Date().toISOString(),
+      limitPrice,
+      undefined,
+      stockId,
+    );
   }
 }

@@ -48,6 +48,9 @@ export class TradingOrderEntity {
   @Column({ name: 'exchange_id', type: 'bigint' })
   exchangeId!: string;
 
+  @Column({ name: 'stock_id', type: 'bigint', nullable: true })
+  stockId?: string;
+
   @Column({ type: 'decimal', precision: 18, scale: 6 })
   quantity!: string;
 

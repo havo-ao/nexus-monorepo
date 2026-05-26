@@ -76,4 +76,32 @@ describe('InMemoryOrderRepository', () => {
     });
     expect(repository.orders).toHaveLength(1);
   });
+
+  it('creates a pending execution market sell order without reserving funds', async () => {
+    const repository = new InMemoryOrderRepository();
+
+    const result = await repository.createMarketSellOrder({
+      traderId: '101',
+      stockId: '1',
+      symbol: 'AAPL',
+      exchangeId: '1',
+      quantity: 3,
+      estimatedUnitPrice: 250,
+      grossAmount: 750,
+      currency: 'USD',
+    });
+
+    expect(result.approved).toBe(true);
+    expect(result.order).toMatchObject({
+      traderId: '101',
+      stockId: '1',
+      side: 'SELL',
+      orderType: 'MARKET',
+      status: 'PENDING_EXECUTION',
+      symbol: 'AAPL',
+      grossAmount: 750,
+      reservedAmount: 0,
+    });
+    expect(repository.orders).toHaveLength(1);
+  });
 });

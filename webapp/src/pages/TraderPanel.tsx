@@ -20,6 +20,7 @@ import NavBar from "../components/NavBar";
 import {
   createLimitBuyOrder,
   createMarketBuyOrder,
+  createMarketSellOrder,
   validateBuyFunds,
   validateSellHoldings,
   validateMarketStatus,
@@ -33,6 +34,7 @@ import { formatUserDisplayName, getStoredUser } from "../auth/storage";
 import "./TraderPanel.css";
 
 type BuyOrderMode = "MARKET" | "LIMIT";
+type OrderSide = "BUY" | "SELL";
 
 const moneyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -45,6 +47,7 @@ const TraderPanel: React.FC = () => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [traderId, setTraderId] = useState("101");
   const [exchangeId, setExchangeId] = useState("1");
+  const [orderSide, setOrderSide] = useState<OrderSide>("BUY");
   const [orderMode, setOrderMode] = useState<BuyOrderMode>("MARKET");
   const [orderSymbol, setOrderSymbol] = useState("AAPL");
   const [stockId, setStockId] = useState("1");
@@ -79,7 +82,9 @@ const TraderPanel: React.FC = () => {
       ? quantity * activePrice
       : 0;
   const nextStatus =
-    orderMode === "MARKET" ? "Pending execution" : "Pending condition";
+    orderSide === "SELL" || orderMode === "MARKET"
+      ? "Pending execution"
+      : "Pending condition";
 
   useEffect(() => {
     const stored = getStoredUser();
@@ -187,6 +192,7 @@ const TraderPanel: React.FC = () => {
     if (
       !traderId.trim() ||
       !exchangeId.trim() ||
+      (orderSide === "SELL" && !stockId.trim()) ||
       !orderSymbol.trim() ||
       !Number.isFinite(quantity) ||
       quantity <= 0 ||
@@ -206,7 +212,13 @@ const TraderPanel: React.FC = () => {
         quantity,
       };
       const order =
-        orderMode === "MARKET"
+        orderSide === "SELL"
+          ? await createMarketSellOrder({
+              ...commonPayload,
+              stockId: stockId.trim(),
+              estimatedUnitPrice: activePrice,
+            })
+          : orderMode === "MARKET"
           ? await createMarketBuyOrder({
               ...commonPayload,
               estimatedUnitPrice: activePrice,
@@ -276,9 +288,29 @@ const TraderPanel: React.FC = () => {
                   <IonIcon icon={ticketOutline} />
                 </span>
                 <div>
-                  <h2>Buy order</h2>
+                  <h2>{orderSide === "BUY" ? "Buy order" : "Sell order"}</h2>
                   <p>Market orders wait for execution; limits wait for price.</p>
                 </div>
+              </div>
+
+              <div className="trader-order-mode" aria-label="Order side">
+                <button
+                  type="button"
+                  className={orderSide === "BUY" ? "active" : ""}
+                  onClick={() => setOrderSide("BUY")}
+                >
+                  Buy
+                </button>
+                <button
+                  type="button"
+                  className={orderSide === "SELL" ? "active" : ""}
+                  onClick={() => {
+                    setOrderSide("SELL");
+                    setOrderMode("MARKET");
+                  }}
+                >
+                  Sell
+                </button>
               </div>
 
               <div className="trader-order-mode" aria-label="Buy order type">
@@ -292,6 +324,7 @@ const TraderPanel: React.FC = () => {
                 <button
                   type="button"
                   className={orderMode === "LIMIT" ? "active" : ""}
+                  disabled={orderSide === "SELL"}
                   onClick={() => setOrderMode("LIMIT")}
                 >
                   Limit
@@ -379,7 +412,11 @@ const TraderPanel: React.FC = () => {
                 <div>
                   <span>Order type</span>
                   <strong>
-                    {orderMode === "MARKET" ? "Market buy" : "Limit buy"}
+                    {orderSide === "SELL"
+                      ? "Market sell"
+                      : orderMode === "MARKET"
+                        ? "Market buy"
+                        : "Limit buy"}
                   </strong>
                 </div>
                 <div>
@@ -396,16 +433,19 @@ const TraderPanel: React.FC = () => {
               >
                 {isCreatingOrder
                   ? "Creating"
-                  : `Create ${orderMode.toLowerCase()} buy order`}
+                  : `Create ${orderMode.toLowerCase()} ${orderSide.toLowerCase()} order`}
               </IonButton>
 
               {createdOrder && (
                 <p className="trader-panel-message approved">
                   Order {createdOrder.orderReference} is{" "}
                   {createdOrder.status.replaceAll("_", " ").toLowerCase()}.
-                  Reserved {createdOrder.currency}{" "}
-                  {createdOrder.reservedAmount.toFixed(2)} for{" "}
-                  {createdOrder.quantity} {createdOrder.symbol}.
+                  {createdOrder.side === "BUY"
+                    ? `Reserved ${createdOrder.currency} ${createdOrder.reservedAmount.toFixed(2)} for`
+                    : `Prepared ${createdOrder.quantity} shares of`}{" "}
+                  {createdOrder.side === "BUY"
+                    ? `${createdOrder.quantity} ${createdOrder.symbol}.`
+                    : `${createdOrder.symbol}.`}
                 </p>
               )}
               {orderError && (

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { HoldingsValidationModule } from '../holdings-validation/holdings-validation.module';
 import { MarketValidationModule } from '../market-validation/market-validation.module';
 import { OrdersController } from './controllers/orders.controller';
 import { InMemoryOrderRepository } from './repositories/in-memory-order.repository';
@@ -12,7 +13,7 @@ const orderRepository =
     : TypeOrmOrderRepository;
 
 @Module({
-  imports: [MarketValidationModule],
+  imports: [HoldingsValidationModule, MarketValidationModule],
   controllers: [OrdersController],
   providers: [
     OrdersService,

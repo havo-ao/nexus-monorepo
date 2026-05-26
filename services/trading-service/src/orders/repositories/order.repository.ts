@@ -22,20 +22,37 @@ export type CreateLimitBuyOrderCommand = {
   currency: string;
 };
 
-export type MarketBuyOrderCreationResult = {
+export type CreateMarketSellOrderCommand = {
+  traderId: string;
+  stockId: string;
+  symbol: string;
+  exchangeId: string;
+  quantity: number;
+  estimatedUnitPrice: number;
+  grossAmount: number;
+  currency: string;
+};
+
+export type OrderCreationResult = {
   approved: boolean;
   order?: TradingOrder;
   reason?: string;
-  availableAmount: number;
-  requiredAmount: number;
+  availableAmount?: number;
+  requiredAmount?: number;
+  availableQuantity?: number;
+  requiredQuantity?: number;
 };
 
 export interface OrderRepository {
   createMarketBuyOrder(
     command: CreateMarketBuyOrderCommand,
-  ): Promise<MarketBuyOrderCreationResult>;
+  ): Promise<OrderCreationResult>;
 
   createLimitBuyOrder(
     command: CreateLimitBuyOrderCommand,
-  ): Promise<MarketBuyOrderCreationResult>;
+  ): Promise<OrderCreationResult>;
+
+  createMarketSellOrder(
+    command: CreateMarketSellOrderCommand,
+  ): Promise<OrderCreationResult>;
 }
