@@ -132,6 +132,27 @@ export type TradingOrderResponse = {
   rejectionReason?: string;
 };
 
+export type OrderStatusResponse = {
+  orderId: string;
+  orderReference: string;
+  traderId: string;
+  side: "BUY" | "SELL";
+  orderType: TradingOrderResponse["orderType"];
+  status: TradingOrderResponse["status"];
+  symbol: string;
+  exchangeId: string;
+  stockId?: string;
+  quantity: number;
+  estimatedUnitPrice: number;
+  limitPrice?: number;
+  grossAmount: number;
+  reservedAmount: number;
+  currency: string;
+  createdAt: string;
+  updatedAt: string;
+  rejectionReason?: string;
+};
+
 async function readJsonSafe(response: Response): Promise<unknown> {
   const text = await response.text();
   if (!text) {
@@ -382,4 +403,31 @@ export async function createTakeProfitOrder(
   }
 
   return body as TradingOrderResponse;
+}
+
+export async function getOrderStatus(
+  orderReference: string,
+): Promise<OrderStatusResponse> {
+  const response = await fetch(
+    tradingApiUrl(
+      `${API_PATHS.tradingOrderStatus}/${encodeURIComponent(orderReference)}/status`,
+    ),
+    {
+      headers: {
+        Accept: "application/json",
+      },
+    },
+  );
+
+  const body = await readJsonSafe(response);
+
+  if (!response.ok) {
+    const maybeMessage =
+      body && typeof body === "object" && "message" in body
+        ? String((body as { message?: unknown }).message)
+        : "Unable to load order status.";
+    throw new Error(maybeMessage);
+  }
+
+  return body as OrderStatusResponse;
 }
