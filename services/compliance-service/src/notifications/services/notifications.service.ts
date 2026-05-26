@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { MailerService } from '@nestjs-modules/mailer';
 import {
   notificationTemplateNames,
@@ -51,6 +51,8 @@ const mailTemplateDefinitions: Record<
 
 @Injectable()
 export class NotificationsService {
+  private readonly logger = new Logger(NotificationsService.name);
+
   constructor(private readonly mailerService: MailerService) {}
 
   async sendEmailNotification(
@@ -160,12 +162,14 @@ export class NotificationsService {
 
   private normalizeTemplateName(value: unknown): NotificationTemplateName {
     if (typeof value !== 'string') {
+      this.logger.error(`Validation failed: templateName must be a string, but got ${typeof value}`);
       throw new BadRequestException('templateName must be a string');
     }
 
     const normalized = value.trim().toUpperCase() as NotificationTemplateName;
 
     if (!notificationTemplateNames.includes(normalized)) {
+      this.logger.error(`Validation failed: unsupported templateName '${normalized}'`);
       throw new BadRequestException(
         `templateName must be one of: ${notificationTemplateNames.join(', ')}`,
       );
@@ -176,6 +180,7 @@ export class NotificationsService {
 
   private normalizeNonEmptyString(value: unknown, field: string): string {
     if (typeof value !== 'string' || !value.trim()) {
+      this.logger.error(`Validation failed: ${field} must be a non-empty string, but got ${typeof value}`);
       throw new BadRequestException(`${field} must be a non-empty string`);
     }
 
@@ -184,6 +189,7 @@ export class NotificationsService {
 
   private normalizeIsoDateTime(value: unknown, field: string): string {
     if (typeof value !== 'string' || !value.trim()) {
+      this.logger.error(`Validation failed: ${field} must be a non-empty string, but got ${typeof value}`);
       throw new BadRequestException(`${field} must be a non-empty string`);
     }
 
@@ -191,6 +197,7 @@ export class NotificationsService {
     const parsedDate = new Date(normalized);
 
     if (Number.isNaN(parsedDate.getTime())) {
+      this.logger.error(`Validation failed: ${field} must be a valid ISO 8601 datetime string, but got '${normalized}'`);
       throw new BadRequestException(
         `${field} must be a valid ISO 8601 datetime string`,
       );

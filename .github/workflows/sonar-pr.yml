@@ -157,9 +157,7 @@ jobs:
       - name: Build identity service
         working-directory: services/identity-service
         env:
-          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3307/nexus
-          SPRING_DATASOURCE_USERNAME: nexus_user
-          SPRING_DATASOURCE_PASSWORD: nexus_password
+          SPRING_PROFILES_ACTIVE: test
           NEXUS_JWT_SECRET: local-ci-jwt-secret-change-before-production-123456
           ADMIN_EMAIL: admin@nexus.local
           ADMIN_PASSWORD: Admin123@
@@ -167,6 +165,7 @@ jobs:
           STRIPE_MONTHLY_PRICE: price_local_ci_monthly
           STRIPE_YEARLY_PRICE: price_local_ci_yearly
           FRONTEND_DOMAIN: http://localhost:8100
+          NOTIFICATION_SERVICE_URL: http://compliance-service:8885/api/v1/
         run: bash ./mvnw -B verify
 
       - name: Upload identity bytecode
@@ -239,7 +238,8 @@ jobs:
             -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
             -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
             -Dsonar.javascript.lcov.reportPaths=services/trading-service/coverage/lcov.info,services/market-service/coverage/lcov.info,services/portfolio-service/coverage/lcov.info            
+            -Dsonar.coverage.jacoco.xmlReportPaths=services/identity-service/target/site/jacoco/jacoco.xml
             -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/build/**,**/coverage/**,**/.next/**,**/.ionic/**,**/target/**,**/mvnw,**/mvnw.cmd,**/database/migrations/**,**/postman/**
-            -Dsonar.coverage.exclusions=webapp/**,services/identity-service/**,services/compliance-service/**,services/trading-service/database/**,services/market-service/database/**,services/portfolio-service/database/**,services/market-service/scripts/**,services/portfolio-service/scripts/**,services/portfolio-service/src/valuations/clients/**,**/repositories/**,services/portfolio-service/src/common/tracing/**,**/main.ts,**/*.module.ts,**/dto/**,**/entities/**,**/controllers/**
+            -Dsonar.coverage.exclusions=webapp/**,services/compliance-service/**,services/trading-service/database/**,services/market-service/database/**,services/portfolio-service/database/**,services/market-service/scripts/**,services/portfolio-service/scripts/**,services/portfolio-service/src/valuations/clients/**,services/identity-service/src/main/java/com/nexus/identityservice/service/NotificationServiceClient.java,**/repositories/**,services/portfolio-service/src/common/tracing/**,**/main.ts,**/*.module.ts,**/dto/**,**/entities/**,**/controllers/**
             -Dsonar.cpd.exclusions=**/*.spec.ts,**/*.e2e-spec.ts,**/*.test.ts,**/database/migrations/**,**/postman/**,**/controllers/**,**/dto/**,**/entities/**,services/portfolio-service/database/**,services/portfolio-service/src/common/tracing/**,**/repositories/**
             -Dsonar.qualitygate.wait=true

@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, Logger } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBody,
@@ -20,6 +20,8 @@ import { NotificationsService } from '../services/notifications.service';
   version: '1',
 })
 export class NotificationsController {
+  private readonly logger = new Logger(NotificationsController.name);
+
   constructor(private readonly notificationsService: NotificationsService) {}
 
   @Post('email')
@@ -80,6 +82,7 @@ export class NotificationsController {
   sendEmailNotification(
     @Body() dto: SendNotificationDto,
   ): Promise<NotificationResponseDto> {
+    this.logger.log(`Incoming email notification request: ${JSON.stringify(dto)}`);
     return this.notificationsService.sendEmailNotification(dto);
   }
 }

@@ -16,7 +16,8 @@ import {
   pricetagsOutline,
   ribbonOutline,
   shieldCheckmarkOutline,
-  sparklesOutline
+  sparklesOutline,
+  starOutline
 } from 'ionicons/icons';
 import { useHistory, useLocation } from 'react-router-dom';
 import type { UserProfile } from '../api/types';
@@ -83,6 +84,7 @@ const NavBar: React.FC = () => {
       { label: 'Notifications', icon: notificationsOutline, path: '/notifications', action: () => goToRoute('/notifications') },
       { label: 'Dashboard', icon: gridOutline, path: '/dashboard', action: () => goToRoute('/dashboard') },
       { label: 'Market', icon: analyticsOutline, path: '/markets', action: () => goToRoute('/markets') },
+      { label: 'Watchlist', icon: starOutline, path: '/watchlist', action: () => goToRoute('/watchlist') },
       { label: 'Portfolio', icon: albumsOutline, path: '/portfolio', action: () => goToRoute('/portfolio') }
     ],
     [goToRoute]
@@ -103,6 +105,10 @@ const NavBar: React.FC = () => {
   const isItemActive = (item: NavItem) => {
     if (item.path === '/markets') {
       return location.pathname.startsWith('/markets');
+    }
+
+    if (item.path === '/watchlist') {
+      return location.pathname.startsWith('/watchlist');
     }
 
     if (item.path && location.pathname !== item.path) {

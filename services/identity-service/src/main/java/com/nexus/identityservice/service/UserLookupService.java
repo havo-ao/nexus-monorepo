@@ -22,6 +22,7 @@ public class UserLookupService {
     private final BrokerRepository brokerRepository;
     private final AdminRepository adminRepository;
     private final LegalUserRepository legalUserRepository;
+    private final NotificationServiceClient notificationServiceClient;
 
     /**
      * Searches for a user by email in all user tables.
@@ -101,6 +102,7 @@ public class UserLookupService {
             user.setBanUntil(Instant.now().plusSeconds(600)); // 10 minutes
             // Audit log: User banned for 10 minutes due to 5 failed attempts
             // TODO: AuditLogService.log("User banned: " + user.getEmail());
+            notificationServiceClient.sendLoginFailed(user);
 
             if (user instanceof Trader trader) {
                 trader.setStatus(UserStatus.BANNED_FOR_TRIES);

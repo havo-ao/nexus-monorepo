@@ -22,6 +22,10 @@ import {
 } from "ionicons/icons";
 import NavBar from "../components/NavBar";
 import {
+  getCurrentTraderId,
+  notifyWatchlistChanged,
+} from "../auth/traderContext";
+import {
   addWatchlistItem,
   getInstrumentDetail,
   getInstruments,
@@ -48,17 +52,6 @@ type AsyncState = {
   isLoading: boolean;
   error: string;
 };
-
-type MarketLocationState = {
-  sellIntent?: {
-    positionId: string;
-    stockId: string;
-    symbol?: string;
-    quantity: number;
-  };
-};
-
-const traderId = "trader-123";
 
 function formatCurrency(value: number, currency = "USD"): string {
   return new Intl.NumberFormat("en-US", {
@@ -125,9 +118,7 @@ const Market: React.FC = () => {
   const { marketCode, symbol } = useParams<MarketRouteParams>();
   const selectedMarketCode = marketCode?.toUpperCase();
   const selectedSymbol = symbol?.toUpperCase();
-  const queryParams = new URLSearchParams(location.search);
-  const sellIntent =
-    queryParams.get("action") === "sell" ? location.state?.sellIntent : null;
+  const traderId = getCurrentTraderId();
 
   const [markets, setMarkets] = useState<MarketModel[]>([]);
   const [instruments, setInstruments] = useState<Instrument[]>([]);
@@ -179,11 +170,12 @@ const Market: React.FC = () => {
     setWatchlistMessage("");
 
     try {
-      const [loadedMarkets, loadedInstruments, loadedWatchlist] = await Promise.all([
-        getMarkets(),
-        getInstruments(),
-        getWatchlist(traderId).catch(() => null),
-      ]);
+      const [loadedMarkets, loadedInstruments, loadedWatchlist] =
+        await Promise.all([
+          getMarkets(),
+          getInstruments(),
+          traderId ? getWatchlist(traderId).catch(() => null) : null,
+        ]);
 
       setMarkets(loadedMarkets);
       setInstruments(loadedInstruments);
@@ -253,6 +245,11 @@ const Market: React.FC = () => {
       return;
     }
 
+    if (!traderId) {
+      setWatchlistMessage("You must sign in as a trader to manage your watchlist.");
+      return;
+    }
+
     setIsAddingWatchlist(true);
     setWatchlistMessage("");
 
@@ -263,6 +260,7 @@ const Market: React.FC = () => {
         nextSymbols.add(selectedSymbol);
         return nextSymbols;
       });
+      notifyWatchlistChanged();
       setWatchlistMessage(`${selectedSymbol} was added to your watchlist.`);
     } catch (requestError) {
       setWatchlistMessage(
@@ -276,8 +274,23 @@ const Market: React.FC = () => {
   };
 
   const toggleInstrumentWatchlist = async (instrumentSymbol: string) => {
+    if (!traderId) {
+      setStatus({
+        isLoading: false,
+        error: "You must sign in as a trader to manage your watchlist.",
+      });
+      return;
+    }
+
     const normalizedSymbol = instrumentSymbol.toUpperCase();
     const isInWatchlist = watchlistSymbols.has(normalizedSymbol);
+
+    if (
+      isInWatchlist &&
+      !window.confirm(`Remove ${normalizedSymbol} from your watchlist?`)
+    ) {
+      return;
+    }
 
     setPendingWatchlistSymbol(normalizedSymbol);
 
@@ -289,6 +302,7 @@ const Market: React.FC = () => {
           nextSymbols.delete(normalizedSymbol);
           return nextSymbols;
         });
+        notifyWatchlistChanged();
         return;
       }
 
@@ -298,6 +312,7 @@ const Market: React.FC = () => {
         nextSymbols.add(normalizedSymbol);
         return nextSymbols;
       });
+      notifyWatchlistChanged();
     } catch (requestError) {
       setStatus({
         isLoading: false,
