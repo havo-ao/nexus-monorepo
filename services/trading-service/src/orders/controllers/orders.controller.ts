@@ -1,6 +1,7 @@
 import { Body, Controller, HttpCode, Post } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreateLimitBuyOrderDto } from '../dto/create-limit-buy-order.dto';
+import { CreateLimitSellOrderDto } from '../dto/create-limit-sell-order.dto';
 import { CreateMarketBuyOrderDto } from '../dto/create-market-buy-order.dto';
 import { CreateMarketSellOrderDto } from '../dto/create-market-sell-order.dto';
 import { OrdersService } from '../services/orders.service';
@@ -106,5 +107,39 @@ export class OrdersController {
   })
   createMarketSellOrder(@Body() dto: CreateMarketSellOrderDto) {
     return this.ordersService.createMarketSellOrder(dto);
+  }
+
+  @Post('sell/limit')
+  @HttpCode(201)
+  @ApiOperation({
+    summary: 'Create a limit sell order with a target price condition',
+  })
+  @ApiResponse({
+    status: 201,
+    description:
+      'Limit sell order created and moved to pending condition state.',
+    schema: {
+      example: {
+        id: '4',
+        orderReference: '9258a579-7a4e-44a6-a913-0c9f38d90988',
+        traderId: '101',
+        stockId: '1',
+        side: 'SELL',
+        orderType: 'LIMIT',
+        status: 'PENDING_CONDITION',
+        symbol: 'AAPL',
+        exchangeId: '1',
+        quantity: 3,
+        estimatedUnitPrice: 260,
+        limitPrice: 260,
+        grossAmount: 780,
+        reservedAmount: 0,
+        currency: 'USD',
+        createdAt: '2026-05-26T14:30:00.000Z',
+      },
+    },
+  })
+  createLimitSellOrder(@Body() dto: CreateLimitSellOrderDto) {
+    return this.ordersService.createLimitSellOrder(dto);
   }
 }

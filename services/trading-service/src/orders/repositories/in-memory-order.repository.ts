@@ -4,6 +4,7 @@ import { roundMoney } from '../../common/money';
 import { TradingOrder } from '../entities/trading-order';
 import type {
   CreateLimitBuyOrderCommand,
+  CreateLimitSellOrderCommand,
   CreateMarketBuyOrderCommand,
   CreateMarketSellOrderCommand,
   OrderCreationResult,
@@ -31,13 +32,27 @@ export class InMemoryOrderRepository implements OrderRepository {
   createMarketSellOrder(
     command: CreateMarketSellOrderCommand,
   ): Promise<OrderCreationResult> {
+    return this.createSellOrder(command, 'MARKET', 'PENDING_EXECUTION');
+  }
+
+  createLimitSellOrder(
+    command: CreateLimitSellOrderCommand,
+  ): Promise<OrderCreationResult> {
+    return this.createSellOrder(command, 'LIMIT', 'PENDING_CONDITION');
+  }
+
+  private createSellOrder(
+    command: CreateMarketSellOrderCommand | CreateLimitSellOrderCommand,
+    orderType: 'MARKET' | 'LIMIT',
+    status: 'PENDING_EXECUTION' | 'PENDING_CONDITION',
+  ): Promise<OrderCreationResult> {
     const order = this.createOrder(
       command,
       'SELL',
-      'MARKET',
-      'PENDING_EXECUTION',
+      orderType,
+      status,
       0,
-      undefined,
+      'limitPrice' in command ? command.limitPrice : undefined,
       command.stockId,
     );
     this.orders.push(order);
@@ -91,7 +106,8 @@ export class InMemoryOrderRepository implements OrderRepository {
     command:
       | CreateMarketBuyOrderCommand
       | CreateLimitBuyOrderCommand
-      | CreateMarketSellOrderCommand,
+      | CreateMarketSellOrderCommand
+      | CreateLimitSellOrderCommand,
     side: 'BUY' | 'SELL',
     orderType: 'MARKET' | 'LIMIT',
     status: 'PENDING_EXECUTION' | 'PENDING_CONDITION',
