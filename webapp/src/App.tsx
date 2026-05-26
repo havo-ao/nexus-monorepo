@@ -4,9 +4,9 @@ import { IonReactRouter } from '@ionic/react-router';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import SignUp from './pages/SignUp';
-import TraderPanel from './pages/TraderPanel';
 import Dashboard from './pages/Dashboard';
 import Market from './pages/Market';
+import Watchlist from './pages/Watchlist';
 import PlanSelection from './pages/PlanSelection';
 import Profile from './pages/Profile';
 import Notifications from './pages/Notifications';
@@ -84,6 +84,9 @@ const App: React.FC = () => (
         </Route>
         <Route exact path="/markets/:marketCode/instruments/:symbol">
           <Market />
+        </Route>
+        <Route exact path="/watchlist">
+          <Watchlist />
         </Route>
         <Route exact path="/profile">
           <Profile />
