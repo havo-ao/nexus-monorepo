@@ -201,4 +201,37 @@ describe('AppController (e2e)', () => {
         expect(body.orderReference).toEqual(expect.any(String));
       });
   });
+
+  it('/api/v1/orders/sell/stop-loss (POST)', () => {
+    return request(app.getHttpServer())
+      .post('/api/v1/orders/sell/stop-loss')
+      .send({
+        traderId: '101',
+        stockId: '1',
+        symbol: 'AAPL',
+        exchangeId: '1',
+        quantity: 1,
+        stopPrice: 220,
+      })
+      .expect(201)
+      .expect((response) => {
+        const body = response.body as Record<string, unknown>;
+        expect(body).toMatchObject({
+          traderId: '101',
+          stockId: '1',
+          side: 'SELL',
+          orderType: 'STOP_LOSS',
+          status: 'PENDING_CONDITION',
+          symbol: 'AAPL',
+          exchangeId: '1',
+          quantity: 1,
+          estimatedUnitPrice: 220,
+          limitPrice: 220,
+          grossAmount: 220,
+          reservedAmount: 0,
+          currency: 'USD',
+        });
+        expect(body.orderReference).toEqual(expect.any(String));
+      });
+  });
 });

@@ -4,6 +4,7 @@ import { CreateLimitBuyOrderDto } from '../dto/create-limit-buy-order.dto';
 import { CreateLimitSellOrderDto } from '../dto/create-limit-sell-order.dto';
 import { CreateMarketBuyOrderDto } from '../dto/create-market-buy-order.dto';
 import { CreateMarketSellOrderDto } from '../dto/create-market-sell-order.dto';
+import { CreateStopLossOrderDto } from '../dto/create-stop-loss-order.dto';
 import { OrdersService } from '../services/orders.service';
 
 @ApiTags('orders')
@@ -141,5 +142,39 @@ export class OrdersController {
   })
   createLimitSellOrder(@Body() dto: CreateLimitSellOrderDto) {
     return this.ordersService.createLimitSellOrder(dto);
+  }
+
+  @Post('sell/stop-loss')
+  @HttpCode(201)
+  @ApiOperation({
+    summary: 'Create a stop loss order with a downside trigger condition',
+  })
+  @ApiResponse({
+    status: 201,
+    description:
+      'Stop loss order created and moved to pending condition state.',
+    schema: {
+      example: {
+        id: '5',
+        orderReference: 'eec72794-3242-4fb7-b8de-4199f9ae44f0',
+        traderId: '101',
+        stockId: '1',
+        side: 'SELL',
+        orderType: 'STOP_LOSS',
+        status: 'PENDING_CONDITION',
+        symbol: 'AAPL',
+        exchangeId: '1',
+        quantity: 3,
+        estimatedUnitPrice: 220,
+        limitPrice: 220,
+        grossAmount: 660,
+        reservedAmount: 0,
+        currency: 'USD',
+        createdAt: '2026-05-26T14:30:00.000Z',
+      },
+    },
+  })
+  createStopLossOrder(@Body() dto: CreateStopLossOrderDto) {
+    return this.ordersService.createStopLossOrder(dto);
   }
 }

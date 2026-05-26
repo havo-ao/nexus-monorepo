@@ -134,4 +134,34 @@ describe('InMemoryOrderRepository', () => {
     });
     expect(repository.orders).toHaveLength(1);
   });
+
+  it('creates a pending condition stop loss order without reserving funds', async () => {
+    const repository = new InMemoryOrderRepository();
+
+    const result = await repository.createStopLossOrder({
+      traderId: '101',
+      stockId: '1',
+      symbol: 'AAPL',
+      exchangeId: '1',
+      quantity: 3,
+      stopPrice: 220,
+      grossAmount: 660,
+      currency: 'USD',
+    });
+
+    expect(result.approved).toBe(true);
+    expect(result.order).toMatchObject({
+      traderId: '101',
+      stockId: '1',
+      side: 'SELL',
+      orderType: 'STOP_LOSS',
+      status: 'PENDING_CONDITION',
+      symbol: 'AAPL',
+      estimatedUnitPrice: 220,
+      limitPrice: 220,
+      grossAmount: 660,
+      reservedAmount: 0,
+    });
+    expect(repository.orders).toHaveLength(1);
+  });
 });
