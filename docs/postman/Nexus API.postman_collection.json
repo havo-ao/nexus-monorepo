@@ -604,6 +604,41 @@
                   "path": ["api", "v1", "orders", "sell", "take-profit"]
                 }
               }
+            },
+            {
+              "name": "Get Current Order Status",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+                      "pm.test('order status is present', function () { const body = pm.response.json(); pm.expect(body.orderReference).to.exist; pm.expect(body.status).to.exist; });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/orders/{{orderReference}}/status",
+                  "host": ["{{tradingBaseUrl}}"],
+                  "path": [
+                    "api",
+                    "v1",
+                    "orders",
+                    "{{orderReference}}",
+                    "status"
+                  ]
+                }
+              }
             }
           ]
         },
