@@ -51,6 +51,16 @@ export type CreateLimitSellOrderInput = {
   currency?: string;
 };
 
+export type CreateStopLossOrderInput = {
+  traderId: string;
+  stockId: string;
+  symbol: string;
+  exchangeId: string;
+  quantity: number;
+  stopPrice: number;
+  currency?: string;
+};
+
 @Injectable()
 export class OrdersService {
   constructor(
@@ -225,6 +235,44 @@ export class OrdersService {
     return result.order;
   }
 
+  async createStopLossOrder(
+    input: CreateStopLossOrderInput,
+  ): Promise<TradingOrder> {
+    this.assertValidStopLossOrder(input);
+
+    const holdingsValidation =
+      await this.holdingsValidationService.validateSellHoldings({
+        traderId: input.traderId,
+        stockId: input.stockId,
+        symbol: input.symbol,
+        quantity: input.quantity,
+      });
+
+    if (!holdingsValidation.approved) {
+      throw new ConflictException(
+        holdingsValidation.reason ?? 'Insufficient available holdings',
+      );
+    }
+
+    const grossAmount = roundMoney(input.quantity * input.stopPrice);
+    const result = await this.orderRepository.createStopLossOrder({
+      traderId: input.traderId.trim(),
+      stockId: input.stockId.trim(),
+      symbol: input.symbol.trim().toUpperCase(),
+      exchangeId: input.exchangeId.trim(),
+      quantity: input.quantity,
+      stopPrice: input.stopPrice,
+      grossAmount,
+      currency: input.currency?.trim().toUpperCase() || 'USD',
+    });
+
+    if (!result.approved || !result.order) {
+      throw new ConflictException(result.reason ?? 'Unable to create order');
+    }
+
+    return result.order;
+  }
+
   private assertValidMarketSellOrder(input: CreateMarketSellOrderInput): void {
     this.assertValidOrderBase(input);
     this.assertValidSellFields(input);
@@ -245,6 +293,15 @@ export class OrdersService {
 
     if (!Number.isFinite(input.limitPrice) || input.limitPrice <= 0) {
       throw new BadRequestException('limitPrice must be greater than zero');
+    }
+  }
+
+  private assertValidStopLossOrder(input: CreateStopLossOrderInput): void {
+    this.assertValidOrderBase(input);
+    this.assertValidSellFields(input);
+
+    if (!Number.isFinite(input.stopPrice) || input.stopPrice <= 0) {
+      throw new BadRequestException('stopPrice must be greater than zero');
     }
   }
 

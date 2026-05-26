@@ -279,6 +279,59 @@ describe('TypeOrmOrderRepository', () => {
     });
   });
 
+  it('persists a stop loss order with pending trigger status event', async () => {
+    const repository = new TypeOrmOrderRepository(dataSource);
+    orderRepository.save.mockImplementation((entity) => {
+      entity.id = '81';
+      entity.createdAt = new Date('2026-05-26T14:30:00.000Z');
+      entity.updatedAt = new Date('2026-05-26T14:30:00.000Z');
+      return Promise.resolve(entity);
+    });
+
+    const result = await repository.createStopLossOrder({
+      traderId: '101',
+      stockId: '1',
+      symbol: 'AAPL',
+      exchangeId: '1',
+      quantity: 3,
+      stopPrice: 220,
+      grossAmount: 660,
+      currency: 'USD',
+    });
+
+    expect(result.approved).toBe(true);
+    expect(result.order).toMatchObject({
+      id: '81',
+      traderId: '101',
+      stockId: '1',
+      side: 'SELL',
+      orderType: 'STOP_LOSS',
+      status: 'PENDING_CONDITION',
+      symbol: 'AAPL',
+      estimatedUnitPrice: 220,
+      limitPrice: 220,
+      grossAmount: 660,
+      reservedAmount: 0,
+    });
+    expect(orderRepository.save.mock.calls[0][0]).toMatchObject({
+      traderId: '101',
+      stockId: '1',
+      side: 'SELL',
+      orderType: 'STOP_LOSS',
+      status: 'PENDING_CONDITION',
+      estimatedUnitPrice: '220.00',
+      limitPrice: '220.00',
+      grossAmount: '660.00',
+      reservedAmount: '0.00',
+    });
+    expect(statusEventRepository.save.mock.calls[0][0]).toMatchObject({
+      toStatus: 'PENDING_CONDITION',
+      actorType: 'TRADER',
+      actorId: '101',
+      reason: 'Stop loss order created with pending trigger condition',
+    });
+  });
+
   it('records a rejected funds event when the trader has no wallet', async () => {
     const repository = new TypeOrmOrderRepository(dataSource);
     walletRepository.findOne.mockResolvedValue(null);
