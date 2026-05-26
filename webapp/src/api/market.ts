@@ -97,6 +97,31 @@ export type QuoteHistoryResponse = {
   prices: Quote[];
 };
 
+export type SyncInstrumentDetailResponse = {
+  status: "SUCCESS" | "PARTIAL_FAILURE" | "FAILED";
+  symbol: string;
+  metadata: {
+    status: "SUCCESS" | "PARTIAL_FAILURE" | "FAILED";
+    provider: string;
+    updatedCount?: number;
+    message: string;
+  };
+  quote: {
+    status: "SUCCESS" | "PARTIAL_FAILURE" | "FAILED";
+    provider: string;
+    updatedCount?: number;
+    message: string;
+  };
+  history: {
+    status: "SUCCESS" | "PARTIAL_FAILURE" | "FAILED";
+    provider: string;
+    updatedCount?: number;
+    message: string;
+  };
+  message: string;
+  instrument: InstrumentDetail;
+};
+
 export type WatchlistResponse = {
   traderId: string;
   items: Array<{
@@ -238,6 +263,16 @@ export async function getQuoteHistory(
   return getJson<QuoteHistoryResponse>(
     `${API_PATHS.marketQuotes}/${encodeURIComponent(symbol)}/history`,
     "Unable to load quote history.",
+  );
+}
+
+export async function syncInstrumentDetail(
+  symbol: string,
+): Promise<SyncInstrumentDetailResponse> {
+  return sendJson<SyncInstrumentDetailResponse>(
+    `${API_PATHS.marketInstruments}/${encodeURIComponent(symbol)}/detail/sync`,
+    "POST",
+    "Unable to synchronize instrument detail.",
   );
 }
 

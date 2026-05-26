@@ -39,6 +39,7 @@ interface InstrumentPersistenceSnapshot {
 }
 
 const INSERT_CHUNK_SIZE = 500;
+const DEFAULT_SECTOR = 'Unclassified';
 
 @Injectable()
 export class MysqlInstrumentsRepository implements InstrumentsRepository {
@@ -220,7 +221,7 @@ export class MysqlInstrumentsRepository implements InstrumentsRepository {
       name: row.name,
       marketCode: row.market_code,
       currency: row.currency,
-      sector: row.sector,
+      sector: this.normalizeRequiredText(row.sector, DEFAULT_SECTOR),
       status: row.status,
       assetType: row.asset_type,
       industry: row.industry,
@@ -229,5 +230,9 @@ export class MysqlInstrumentsRepository implements InstrumentsRepository {
       metadataProvider: row.metadata_provider,
       metadataUpdatedAt: row.metadata_updated_at,
     });
+  }
+
+  private normalizeRequiredText(value: unknown, fallback: string): string {
+    return typeof value === 'string' && value.trim() ? value : fallback;
   }
 }

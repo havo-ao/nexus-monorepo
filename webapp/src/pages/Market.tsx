@@ -1,4 +1,11 @@
-import { type MouseEvent, useEffect, useMemo, useState } from "react";
+import {
+  type MouseEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   IonButton,
   IonContent,
@@ -35,6 +42,7 @@ import {
   getQuoteHistory,
   getWatchlist,
   removeWatchlistItem,
+  syncInstrumentDetail,
   type Instrument,
   type InstrumentDetail,
   type Market as MarketModel,
@@ -129,6 +137,7 @@ const Market: React.FC = () => {
   const selectedSymbol = symbol?.toUpperCase();
   const sellIntent = location.state?.sellIntent;
   const traderId = getCurrentTraderId();
+  const syncedDetailSymbols = useRef<Set<string>>(new Set());
 
   const [markets, setMarkets] = useState<MarketModel[]>([]);
   const [instruments, setInstruments] = useState<Instrument[]>([]);
@@ -175,7 +184,7 @@ const Market: React.FC = () => {
       .slice(0, 80);
   }, [instruments, query, selectedMarketCode]);
 
-  const loadMarketData = async () => {
+  const loadMarketData = useCallback(async () => {
     setStatus({ isLoading: true, error: "" });
     setWatchlistMessage("");
 
@@ -205,14 +214,32 @@ const Market: React.FC = () => {
       }
 
       if (selectedSymbol) {
-        const loadedDetail = await getInstrumentDetail(selectedSymbol);
-        const [loadedQuote, loadedHistory] = await Promise.all([
-          getQuote(selectedSymbol).catch(() => null),
-          getQuoteHistory(selectedSymbol).catch(() => ({
-            symbol: selectedSymbol,
-            prices: [],
-          })),
-        ]);
+        let loadedDetail = await getInstrumentDetail(selectedSymbol);
+        let loadedQuote = await getQuote(selectedSymbol).catch(() => null);
+        let loadedHistory = await getQuoteHistory(selectedSymbol).catch(() => ({
+          symbol: selectedSymbol,
+          prices: [],
+        }));
+        const hasUsableLocalData =
+          Boolean(loadedDetail.metadataUpdatedAt) &&
+          Boolean(loadedQuote ?? loadedDetail.quote) &&
+          loadedHistory.prices.length > 0;
+
+        if (
+          !hasUsableLocalData &&
+          !syncedDetailSymbols.current.has(selectedSymbol)
+        ) {
+          syncedDetailSymbols.current.add(selectedSymbol);
+          await syncInstrumentDetail(selectedSymbol).catch(() => null);
+          loadedDetail = await getInstrumentDetail(selectedSymbol);
+          [loadedQuote, loadedHistory] = await Promise.all([
+            getQuote(selectedSymbol).catch(() => null),
+            getQuoteHistory(selectedSymbol).catch(() => ({
+              symbol: selectedSymbol,
+              prices: [],
+            })),
+          ]);
+        }
 
         setDetail(loadedDetail);
         setQuote(loadedQuote);
@@ -234,11 +261,11 @@ const Market: React.FC = () => {
     }
 
     setStatus({ isLoading: false, error: "" });
-  };
+  }, [selectedMarketCode, selectedSymbol, traderId]);
 
   useEffect(() => {
     void loadMarketData();
-  }, [selectedMarketCode, selectedSymbol]);
+  }, [loadMarketData]);
 
   const openMarket = (code: string) => {
     history.push(`/markets/${code}/instruments`);

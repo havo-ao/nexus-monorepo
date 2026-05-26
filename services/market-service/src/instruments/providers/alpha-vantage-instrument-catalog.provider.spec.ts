@@ -64,7 +64,7 @@ describe('AlphaVantageInstrumentCatalogProvider', () => {
     mockFetchResponse(
       [
         'symbol,name,exchange,assetType,ipoDate,delistingDate,status',
-        'OLD,Old Company,NYSE,Stock,2010-01-01,2020-01-01,Delisted',
+        'AAPL,Apple Inc.,NASDAQ,Stock,1980-12-12,2020-01-01,Delisted',
       ].join('\n'),
     );
     const provider = new AlphaVantageInstrumentCatalogProvider();
@@ -94,6 +94,44 @@ describe('AlphaVantageInstrumentCatalogProvider', () => {
     expect(instruments.map((instrument) => instrument.symbol)).toEqual([
       'AAPL',
       'MSFT',
+    ]);
+  });
+
+  it('filters unsupported securities that are not tradable curated equities', async () => {
+    mockFetchResponse(
+      [
+        'symbol,name,exchange,assetType,ipoDate,delistingDate,status',
+        'AACIW,Armada Acquisition Corp I - Warrants (13/08/2026),NASDAQ,Stock,2021-01-01,null,Active',
+        'AACIU,Armada Acquisition Corp I - Units,NASDAQ,Stock,2021-01-01,null,Active',
+        'SPY,SPDR S&P 500 ETF Trust,NYSE,ETF,1993-01-29,null,Active',
+        'MSFT,Microsoft Corporation,NASDAQ,Stock,1986-03-13,null,Active',
+        'AAPL,Apple Inc.,NASDAQ,Stock,1980-12-12,null,Active',
+      ].join('\n'),
+    );
+    const provider = new AlphaVantageInstrumentCatalogProvider();
+
+    const instruments = await provider.fetchInstruments();
+
+    expect(instruments.map((instrument) => instrument.symbol)).toEqual([
+      'MSFT',
+      'AAPL',
+    ]);
+  });
+
+  it('filters listings outside the backend curated supported symbol set', async () => {
+    mockFetchResponse(
+      [
+        'symbol,name,exchange,assetType,ipoDate,delistingDate,status',
+        'AAPL,Apple Inc.,NASDAQ,Stock,1980-12-12,null,Active',
+        'ABXL,Abraxas Petroleum Corp,NYSE,Stock,1980-01-01,null,Active',
+      ].join('\n'),
+    );
+    const provider = new AlphaVantageInstrumentCatalogProvider();
+
+    const instruments = await provider.fetchInstruments();
+
+    expect(instruments.map((instrument) => instrument.symbol)).toEqual([
+      'AAPL',
     ]);
   });
 
@@ -132,15 +170,15 @@ describe('AlphaVantageInstrumentCatalogProvider', () => {
     mockFetchResponse(
       [
         'symbol,name,exchange,assetType,ipoDate,delistingDate,status',
-        'BRK.A,"Berkshire Hathaway, Inc.",NYSE,Stock,1980-01-01,null,Active',
+        'AAPL,"Apple, Inc.",NASDAQ,Stock,1980-12-12,null,Active',
       ].join('\n'),
     );
     const provider = new AlphaVantageInstrumentCatalogProvider();
 
     await expect(provider.fetchInstruments()).resolves.toEqual([
       expect.objectContaining({
-        symbol: 'BRK.A',
-        name: 'Berkshire Hathaway, Inc.',
+        symbol: 'AAPL',
+        name: 'Apple, Inc.',
       }),
     ]);
   });

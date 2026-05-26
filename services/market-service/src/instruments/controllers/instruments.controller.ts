@@ -9,9 +9,11 @@ import {
 } from '@nestjs/swagger';
 import { InstrumentDetailResponseDto } from '../dto/instrument-detail-response.dto';
 import { InstrumentResponseDto } from '../dto/instrument-response.dto';
+import { SyncInstrumentDetailResponseDto } from '../dto/sync-instrument-detail-response.dto';
 import { SyncInstrumentMetadataResponseDto } from '../dto/sync-instrument-metadata-response.dto';
 import { SyncInstrumentsResponseDto } from '../dto/sync-instruments-response.dto';
 import { InstrumentDetailService } from '../services/instrument-detail.service';
+import { InstrumentDetailSyncService } from '../services/instrument-detail-sync.service';
 import { InstrumentMetadataSyncService } from '../services/instrument-metadata-sync.service';
 import { InstrumentsSyncService } from '../services/instruments-sync.service';
 import { InstrumentsService } from '../services/instruments.service';
@@ -25,6 +27,7 @@ export class InstrumentsController {
   constructor(
     private readonly instrumentsService: InstrumentsService,
     private readonly instrumentDetailService: InstrumentDetailService,
+    private readonly instrumentDetailSyncService: InstrumentDetailSyncService,
     private readonly instrumentsSyncService: InstrumentsSyncService,
     private readonly instrumentMetadataSyncService: InstrumentMetadataSyncService,
   ) {}
@@ -50,6 +53,23 @@ export class InstrumentsController {
   @ApiOkResponse({ type: InstrumentResponseDto, isArray: true })
   getAvailableInstruments(): Promise<InstrumentResponseDto[]> {
     return this.instrumentsService.getAvailableInstruments();
+  }
+
+  @Post(':symbol/detail/sync')
+  @HttpCode(200)
+  @ApiOperation({
+    summary: 'Synchronize full instrument detail view',
+    description:
+      'Orquesta NEX-76, NEX-77, NEX-78, NEX-109 y NEX-111: prepara metadata, cotizacion actual e historico para cargar la pantalla de detalle de una accion sin mezclar logica de proveedor en el frontend. Trazabilidad: EC-MOD-02, EC-REND-03, EC-DISP-08, ASR-19, ASR-24.',
+  })
+  @ApiParam({ name: 'symbol', example: 'AAPL' })
+  @ApiOkResponse({ type: SyncInstrumentDetailResponseDto })
+  @ApiBadRequestResponse({ description: 'Invalid instrument symbol' })
+  @ApiNotFoundResponse({ description: 'Instrument detail is not available' })
+  synchronizeInstrumentDetail(
+    @Param('symbol') symbol: string,
+  ): Promise<SyncInstrumentDetailResponseDto> {
+    return this.instrumentDetailSyncService.synchronizeInstrumentDetail(symbol);
   }
 
   @Post(':symbol/metadata/sync')

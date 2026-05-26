@@ -3,6 +3,8 @@ import {
   INSTRUMENT_STATUS,
   type InstrumentSnapshot,
 } from '../entities/instrument.entity';
+import { isSupportedEquity } from '../utils/supported-equity.util';
+import { isSupportedSymbol } from '../utils/supported-symbols.util';
 import type { InstrumentCatalogProvider } from './instrument-catalog.provider';
 
 const ALPHA_VANTAGE_BASE_URL = 'https://www.alphavantage.co/query';
@@ -22,6 +24,7 @@ interface ListingStatusRow {
   symbol: string;
   name: string;
   exchange: string;
+  assetType: string;
   status: string;
 }
 
@@ -81,6 +84,7 @@ export class AlphaVantageInstrumentCatalogProvider implements InstrumentCatalogP
       symbol: row.symbol ?? '',
       name: row.name ?? '',
       exchange: row.exchange ?? '',
+      assetType: row.assetType ?? '',
       status: row.status ?? '',
     };
   }
@@ -92,7 +96,13 @@ export class AlphaVantageInstrumentCatalogProvider implements InstrumentCatalogP
       row.exchange.trim().toUpperCase(),
     );
 
-    if (!market || !row.symbol.trim() || !row.name.trim()) {
+    if (
+      !market ||
+      !row.symbol.trim() ||
+      !row.name.trim() ||
+      !isSupportedEquity(row) ||
+      !isSupportedSymbol(row.symbol)
+    ) {
       return null;
     }
 

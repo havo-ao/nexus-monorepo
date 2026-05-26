@@ -73,7 +73,7 @@ describe('MysqlMarketsRepository', () => {
     ]);
   });
 
-  it('returns an empty symbol list when a market has no synchronized symbols', async () => {
+  it('returns no markets when a market has no synchronized supported symbols', async () => {
     pool.query
       .mockResolvedValueOnce([
         [
@@ -91,10 +91,10 @@ describe('MysqlMarketsRepository', () => {
 
     const markets = await repository.findAvailable();
 
-    expect(markets[0]?.toSnapshot().representativeSymbols).toEqual([]);
+    expect(markets).toEqual([]);
   });
 
-  it('rejects invalid stored symbols from the relational catalog', async () => {
+  it('ignores active markets that only have symbols outside the curated catalog', async () => {
     pool.query
       .mockResolvedValueOnce([
         [
@@ -108,8 +108,8 @@ describe('MysqlMarketsRepository', () => {
           },
         ],
       ])
-      .mockResolvedValueOnce([[{ market_code: 'NYSE', symbol: ' ' }]]);
+      .mockResolvedValueOnce([[{ market_code: 'NYSE', symbol: 'ABXL' }]]);
 
-    await expect(repository.findAvailable()).rejects.toThrow(TypeError);
+    await expect(repository.findAvailable()).resolves.toEqual([]);
   });
 });

@@ -14,6 +14,7 @@ import { InMemoryInstrumentsRepository } from './repositories/in-memory-instrume
 import { INSTRUMENTS_REPOSITORY } from './repositories/instruments.repository';
 import { MysqlInstrumentsRepository } from './repositories/mysql-instruments.repository';
 import { InstrumentDetailService } from './services/instrument-detail.service';
+import { InstrumentDetailSyncService } from './services/instrument-detail-sync.service';
 import { InstrumentMetadataSyncService } from './services/instrument-metadata-sync.service';
 import { InstrumentsSyncService } from './services/instruments-sync.service';
 import { InstrumentsService } from './services/instruments.service';
@@ -24,6 +25,7 @@ import { InstrumentsService } from './services/instruments.service';
   providers: [
     InstrumentsService,
     InstrumentDetailService,
+    InstrumentDetailSyncService,
     InstrumentMetadataSyncService,
     InstrumentsSyncService,
     AlphaVantageInstrumentCatalogProvider,
