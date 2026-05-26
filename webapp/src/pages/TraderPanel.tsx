@@ -11,6 +11,7 @@ import {
 import {
   cashOutline,
   checkmarkCircleOutline,
+  informationCircleOutline,
   layersOutline,
   pulseOutline,
   ticketOutline,
@@ -24,12 +25,14 @@ import {
   createMarketSellOrder,
   createStopLossOrder,
   createTakeProfitOrder,
+  getOrderStatus,
   validateBuyFunds,
   validateSellHoldings,
   validateMarketStatus,
   type FundsValidationResponse,
   type HoldingsValidationResponse,
   type MarketValidationResponse,
+  type OrderStatusResponse,
   type TradingOrderResponse,
 } from "../api/trading";
 import type { UserProfile } from "../api/types";
@@ -76,6 +79,12 @@ const TraderPanel: React.FC = () => {
     useState<MarketValidationResponse | null>(null);
   const [marketValidationError, setMarketValidationError] = useState("");
   const [isValidatingMarket, setIsValidatingMarket] = useState(false);
+  const [orderReference, setOrderReference] = useState("order-reference");
+  const [orderStatus, setOrderStatus] = useState<OrderStatusResponse | null>(
+    null,
+  );
+  const [orderStatusError, setOrderStatusError] = useState("");
+  const [isLoadingOrderStatus, setIsLoadingOrderStatus] = useState(false);
 
   const quantity = Number(orderQuantity);
   const activePrice =
@@ -198,6 +207,28 @@ const TraderPanel: React.FC = () => {
     }
   };
 
+  const handleLoadOrderStatus = async () => {
+    setOrderStatus(null);
+    setOrderStatusError("");
+
+    if (!orderReference.trim()) {
+      setOrderStatusError("Enter an order reference.");
+      return;
+    }
+
+    setIsLoadingOrderStatus(true);
+    try {
+      const result = await getOrderStatus(orderReference.trim());
+      setOrderStatus(result);
+    } catch (error) {
+      setOrderStatusError(
+        error instanceof Error ? error.message : "Unable to load order status.",
+      );
+    } finally {
+      setIsLoadingOrderStatus(false);
+    }
+  };
+
   const handleCreateBuyOrder = async () => {
     setCreatedOrder(null);
     setOrderError("");
@@ -259,6 +290,7 @@ const TraderPanel: React.FC = () => {
               limitPrice: activePrice,
             });
       setCreatedOrder(order);
+      setOrderReference(order.orderReference);
     } catch (error) {
       setOrderError(
         error instanceof Error
@@ -653,6 +685,43 @@ const TraderPanel: React.FC = () => {
                 {holdingsValidationError && (
                   <p className="trader-panel-message rejected">
                     {holdingsValidationError}
+                  </p>
+                )}
+              </section>
+
+              <section className="trader-precheck-section">
+                <div className="trader-precheck-title">
+                  <IonIcon icon={informationCircleOutline} />
+                  <h3>Status</h3>
+                </div>
+                <div className="trader-precheck-fields">
+                  <IonItem>
+                    <IonLabel position="stacked">Order reference</IonLabel>
+                    <IonInput
+                      value={orderReference}
+                      onIonInput={(event) =>
+                        setOrderReference(String(event.detail.value ?? ""))
+                      }
+                    />
+                  </IonItem>
+                </div>
+                <IonButton
+                  expand="block"
+                  fill="outline"
+                  onClick={handleLoadOrderStatus}
+                  disabled={isLoadingOrderStatus}
+                >
+                  {isLoadingOrderStatus ? "Loading" : "Load Status"}
+                </IonButton>
+                {orderStatus && (
+                  <p className="trader-panel-message approved">
+                    {orderStatus.symbol} {orderStatus.side.toLowerCase()} order
+                    is {orderStatus.status.replaceAll("_", " ").toLowerCase()}.
+                  </p>
+                )}
+                {orderStatusError && (
+                  <p className="trader-panel-message rejected">
+                    {orderStatusError}
                   </p>
                 )}
               </section>
