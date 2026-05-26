@@ -227,6 +227,10 @@
   margin-bottom: 12px;
 }
 
+.trader-precheck-fields.compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .trader-panel-message {
   margin: 14px 0 0;
   padding: 12px 14px;
@@ -265,7 +269,8 @@
 
   .trader-session-strip,
   .trader-ticket-grid,
-  .trader-order-summary {
+  .trader-order-summary,
+  .trader-precheck-fields.compact {
     grid-template-columns: 1fr;
   }
 }

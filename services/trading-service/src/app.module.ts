@@ -3,6 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from '../database/database.module';
 import { FundsValidationModule } from './funds-validation/funds-validation.module';
+import { HoldingsValidationModule } from './holdings-validation/holdings-validation.module';
 import { MarketValidationModule } from './market-validation/market-validation.module';
 import { OrdersModule } from './orders/orders.module';
 
@@ -12,6 +13,7 @@ const databaseImports = process.env.NODE_ENV === 'test' ? [] : [DatabaseModule];
   imports: [
     ...databaseImports,
     FundsValidationModule,
+    HoldingsValidationModule,
     MarketValidationModule,
     OrdersModule,
   ],

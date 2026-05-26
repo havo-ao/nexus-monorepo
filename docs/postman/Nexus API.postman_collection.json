@@ -376,6 +376,85 @@
           ]
         },
         {
+          "name": "Holdings Validation",
+          "item": [
+            {
+              "name": "Validate Sell Holdings - Approved",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+                      "pm.test('request is approved', function () { pm.expect(pm.response.json().approved).to.eql(true); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"traderId\": \"{{traderId}}\",\n  \"stockId\": \"{{stockId}}\",\n  \"symbol\": \"AAPL\",\n  \"quantity\": 3\n}"
+                },
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/validations/holdings/sell",
+                  "host": ["{{tradingBaseUrl}}"],
+                  "path": ["api", "v1", "validations", "holdings", "sell"]
+                }
+              }
+            },
+            {
+              "name": "Validate Sell Holdings - Rejected",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+                      "pm.test('request is rejected', function () { pm.expect(pm.response.json().approved).to.eql(false); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"traderId\": \"{{traderId}}\",\n  \"stockId\": \"{{stockId}}\",\n  \"symbol\": \"AAPL\",\n  \"quantity\": 999\n}"
+                },
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/validations/holdings/sell",
+                  "host": ["{{tradingBaseUrl}}"],
+                  "path": ["api", "v1", "validations", "holdings", "sell"]
+                }
+              }
+            }
+          ]
+        },
+        {
           "name": "Market Validation",
           "item": [
             {

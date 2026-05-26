@@ -1,10 +1,12 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { FundsValidationEvent } from '../src/funds-validation/entities/funds-validation-event.entity';
+import { HoldingsValidationEvent } from '../src/holdings-validation/entities/holdings-validation-event.entity';
 import { MarketExchange } from '../src/market/entities/market-exchange.entity';
 import { MarketValidationEvent } from '../src/market-validation/entities/market-validation-event.entity';
 import { OrderStatusEventEntity } from '../src/orders/entities/order-status-event.entity';
 import { TradingOrderEntity } from '../src/orders/entities/trading-order.entity';
+import { PortfolioPosition } from '../src/portfolio/entities/portfolio-position.entity';
 import { Wallet } from '../src/wallet/entities/wallet.entity';
 
 @Module({
@@ -18,9 +20,11 @@ import { Wallet } from '../src/wallet/entities/wallet.entity';
       database: process.env.DB_DATABASE ?? 'nexus',
       entities: [
         FundsValidationEvent,
+        HoldingsValidationEvent,
         MarketExchange,
         MarketValidationEvent,
         OrderStatusEventEntity,
+        PortfolioPosition,
         TradingOrderEntity,
         Wallet,
       ],
