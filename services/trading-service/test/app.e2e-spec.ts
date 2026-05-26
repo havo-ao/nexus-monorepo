@@ -54,6 +54,26 @@ describe('AppController (e2e)', () => {
       });
   });
 
+  it('/api/v1/validations/holdings/sell (POST)', () => {
+    return request(app.getHttpServer())
+      .post('/api/v1/validations/holdings/sell')
+      .send({
+        traderId: '101',
+        stockId: '1',
+        symbol: 'AAPL',
+        quantity: 3,
+      })
+      .expect(200)
+      .expect({
+        approved: true,
+        traderId: '101',
+        stockId: '1',
+        requestedQuantity: 3,
+        availableQuantity: 10,
+        symbol: 'AAPL',
+      });
+  });
+
   it('/api/v1/orders/buy/market (POST)', () => {
     return request(app.getHttpServer())
       .post('/api/v1/orders/buy/market')

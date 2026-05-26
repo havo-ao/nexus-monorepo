@@ -14,6 +14,23 @@ export type FundsValidationResponse = {
   reason?: string;
 };
 
+export type ValidateSellHoldingsRequest = {
+  traderId: string;
+  stockId: string;
+  symbol?: string;
+  quantity: number;
+};
+
+export type HoldingsValidationResponse = {
+  approved: boolean;
+  traderId: string;
+  stockId: string;
+  symbol?: string;
+  requestedQuantity: number;
+  availableQuantity: number;
+  reason?: string;
+};
+
 export type ValidateMarketStatusRequest = {
   exchangeId: string;
   evaluatedAt?: string;
@@ -108,6 +125,30 @@ export async function validateBuyFunds(
   }
 
   return body as FundsValidationResponse;
+}
+
+export async function validateSellHoldings(
+  request: ValidateSellHoldingsRequest,
+): Promise<HoldingsValidationResponse> {
+  const response = await fetch(
+    tradingApiUrl(API_PATHS.tradingValidateSellHoldings),
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(request),
+    },
+  );
+
+  const body = await readJsonSafe(response);
+
+  if (!response.ok) {
+    throw new Error("Unable to validate available holdings.");
+  }
+
+  return body as HoldingsValidationResponse;
 }
 
 export async function validateMarketStatus(

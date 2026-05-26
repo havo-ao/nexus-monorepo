@@ -11,6 +11,7 @@ import {
 import {
   cashOutline,
   checkmarkCircleOutline,
+  layersOutline,
   pulseOutline,
   ticketOutline,
 } from "ionicons/icons";
@@ -20,8 +21,10 @@ import {
   createLimitBuyOrder,
   createMarketBuyOrder,
   validateBuyFunds,
+  validateSellHoldings,
   validateMarketStatus,
   type FundsValidationResponse,
+  type HoldingsValidationResponse,
   type MarketValidationResponse,
   type TradingOrderResponse,
 } from "../api/trading";
@@ -44,6 +47,7 @@ const TraderPanel: React.FC = () => {
   const [exchangeId, setExchangeId] = useState("1");
   const [orderMode, setOrderMode] = useState<BuyOrderMode>("MARKET");
   const [orderSymbol, setOrderSymbol] = useState("AAPL");
+  const [stockId, setStockId] = useState("1");
   const [orderQuantity, setOrderQuantity] = useState("1");
   const [estimatedUnitPrice, setEstimatedUnitPrice] = useState("250");
   const [limitPrice, setLimitPrice] = useState("240");
@@ -58,6 +62,10 @@ const TraderPanel: React.FC = () => {
   );
   const [validationError, setValidationError] = useState("");
   const [isValidatingFunds, setIsValidatingFunds] = useState(false);
+  const [holdingsValidation, setHoldingsValidation] =
+    useState<HoldingsValidationResponse | null>(null);
+  const [holdingsValidationError, setHoldingsValidationError] = useState("");
+  const [isValidatingHoldings, setIsValidatingHoldings] = useState(false);
   const [marketValidation, setMarketValidation] =
     useState<MarketValidationResponse | null>(null);
   const [marketValidationError, setMarketValidationError] = useState("");
@@ -133,6 +141,42 @@ const TraderPanel: React.FC = () => {
       );
     } finally {
       setIsValidatingMarket(false);
+    }
+  };
+
+  const handleValidateHoldings = async () => {
+    setHoldingsValidation(null);
+    setHoldingsValidationError("");
+
+    if (
+      !traderId.trim() ||
+      !stockId.trim() ||
+      !Number.isFinite(quantity) ||
+      quantity <= 0
+    ) {
+      setHoldingsValidationError(
+        "Enter a valid trader, stock and sell quantity.",
+      );
+      return;
+    }
+
+    setIsValidatingHoldings(true);
+    try {
+      const result = await validateSellHoldings({
+        traderId: traderId.trim(),
+        stockId: stockId.trim(),
+        symbol: orderSymbol.trim().toUpperCase() || undefined,
+        quantity,
+      });
+      setHoldingsValidation(result);
+    } catch (error) {
+      setHoldingsValidationError(
+        error instanceof Error
+          ? error.message
+          : "Unable to validate available holdings.",
+      );
+    } finally {
+      setIsValidatingHoldings(false);
     }
   };
 
@@ -283,6 +327,15 @@ const TraderPanel: React.FC = () => {
                   />
                 </IonItem>
                 <IonItem>
+                  <IonLabel position="stacked">Stock</IonLabel>
+                  <IonInput
+                    value={stockId}
+                    onIonInput={(event) =>
+                      setStockId(String(event.detail.value ?? ""))
+                    }
+                  />
+                </IonItem>
+                <IonItem>
                   <IonLabel position="stacked">Currency</IonLabel>
                   <IonInput value="USD" readonly />
                 </IonItem>
@@ -325,7 +378,9 @@ const TraderPanel: React.FC = () => {
                 </div>
                 <div>
                   <span>Order type</span>
-                  <strong>{orderMode === "MARKET" ? "Market buy" : "Limit buy"}</strong>
+                  <strong>
+                    {orderMode === "MARKET" ? "Market buy" : "Limit buy"}
+                  </strong>
                 </div>
                 <div>
                   <span>Next status</span>
@@ -339,7 +394,9 @@ const TraderPanel: React.FC = () => {
                 onClick={handleCreateBuyOrder}
                 disabled={isCreatingOrder}
               >
-                {isCreatingOrder ? "Creating" : `Create ${orderMode.toLowerCase()} buy order`}
+                {isCreatingOrder
+                  ? "Creating"
+                  : `Create ${orderMode.toLowerCase()} buy order`}
               </IonButton>
 
               {createdOrder && (
@@ -442,6 +499,63 @@ const TraderPanel: React.FC = () => {
                 {marketValidationError && (
                   <p className="trader-panel-message rejected">
                     {marketValidationError}
+                  </p>
+                )}
+              </section>
+
+              <section className="trader-precheck-section">
+                <div className="trader-precheck-title">
+                  <IonIcon icon={layersOutline} />
+                  <h3>Holdings</h3>
+                </div>
+                <div className="trader-precheck-fields compact">
+                  <IonItem>
+                    <IonLabel position="stacked">Stock</IonLabel>
+                    <IonInput
+                      value={stockId}
+                      onIonInput={(event) =>
+                        setStockId(String(event.detail.value ?? ""))
+                      }
+                    />
+                  </IonItem>
+                  <IonItem>
+                    <IonLabel position="stacked">Quantity</IonLabel>
+                    <IonInput
+                      type="number"
+                      min="0"
+                      value={orderQuantity}
+                      onIonInput={(event) =>
+                        setOrderQuantity(String(event.detail.value ?? ""))
+                      }
+                    />
+                  </IonItem>
+                </div>
+                <IonButton
+                  expand="block"
+                  fill="outline"
+                  onClick={handleValidateHoldings}
+                  disabled={isValidatingHoldings}
+                >
+                  {isValidatingHoldings
+                    ? "Validating"
+                    : "Validate Holdings"}
+                </IonButton>
+                {holdingsValidation && (
+                  <p
+                    className={
+                      holdingsValidation.approved
+                        ? "trader-panel-message approved"
+                        : "trader-panel-message rejected"
+                    }
+                  >
+                    {holdingsValidation.approved
+                      ? `Sufficient holdings. ${holdingsValidation.availableQuantity} shares available.`
+                      : `Operation blocked. Available: ${holdingsValidation.availableQuantity} shares.`}
+                  </p>
+                )}
+                {holdingsValidationError && (
+                  <p className="trader-panel-message rejected">
+                    {holdingsValidationError}
                   </p>
                 )}
               </section>
