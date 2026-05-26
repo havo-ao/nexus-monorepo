@@ -1,4 +1,5 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import type { OrderStatusHistoryEntry } from '../entities/order-status-history-entry.entity';
 import type { OrderStatusSnapshot } from '../entities/order-status-snapshot.entity';
 import {
   ORDER_STATUS_REPOSITORY,
@@ -24,5 +25,23 @@ export class OrderStatusService {
     }
 
     return snapshot;
+  }
+
+  async getStatusHistory(
+    orderReference: string,
+  ): Promise<OrderStatusHistoryEntry[]> {
+    const normalizedReference = orderReference.trim();
+    const snapshot =
+      await this.orderStatusRepository.findCurrentStatusByReference(
+        normalizedReference,
+      );
+
+    if (!snapshot) {
+      throw new NotFoundException('Order was not found');
+    }
+
+    return this.orderStatusRepository.findStatusHistoryByReference(
+      normalizedReference,
+    );
   }
 }

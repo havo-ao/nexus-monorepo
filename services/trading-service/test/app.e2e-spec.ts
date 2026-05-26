@@ -128,6 +128,24 @@ describe('AppController (e2e)', () => {
       });
   });
 
+  it('/api/v1/orders/:orderReference/status-history (GET)', () => {
+    return request(app.getHttpServer())
+      .get('/api/v1/orders/order-reference/status-history')
+      .expect(200)
+      .expect([
+        {
+          id: '1',
+          orderId: '1',
+          orderReference: 'order-reference',
+          toStatus: 'PENDING_EXECUTION',
+          actorType: 'TRADER',
+          actorId: '101',
+          reason: 'Market buy order created after funds reservation',
+          createdAt: '2026-05-26T14:30:00.000Z',
+        },
+      ]);
+  });
+
   it('/api/v1/orders/buy/limit (POST)', () => {
     return request(app.getHttpServer())
       .post('/api/v1/orders/buy/limit')
