@@ -84,4 +84,35 @@ describe('AppController (e2e)', () => {
         expect(body.orderReference).toEqual(expect.any(String));
       });
   });
+
+  it('/api/v1/orders/buy/limit (POST)', () => {
+    return request(app.getHttpServer())
+      .post('/api/v1/orders/buy/limit')
+      .send({
+        traderId: '101',
+        symbol: 'AAPL',
+        exchangeId: '1',
+        quantity: 1,
+        limitPrice: 240,
+      })
+      .expect(201)
+      .expect((response) => {
+        const body = response.body as Record<string, unknown>;
+        expect(body).toMatchObject({
+          traderId: '101',
+          side: 'BUY',
+          orderType: 'LIMIT',
+          status: 'PENDING_CONDITION',
+          symbol: 'AAPL',
+          exchangeId: '1',
+          quantity: 1,
+          estimatedUnitPrice: 240,
+          limitPrice: 240,
+          grossAmount: 240,
+          reservedAmount: 240,
+          currency: 'USD',
+        });
+        expect(body.orderReference).toEqual(expect.any(String));
+      });
+  });
 });

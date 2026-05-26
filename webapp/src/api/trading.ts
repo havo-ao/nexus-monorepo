@@ -39,6 +39,15 @@ export type CreateMarketBuyOrderRequest = {
   currency?: string;
 };
 
+export type CreateLimitBuyOrderRequest = {
+  traderId: string;
+  symbol: string;
+  exchangeId: string;
+  quantity: number;
+  limitPrice: number;
+  currency?: string;
+};
+
 export type TradingOrderResponse = {
   id: string;
   orderReference: string;
@@ -48,6 +57,7 @@ export type TradingOrderResponse = {
   status:
     | "CREATED"
     | "PENDING_EXECUTION"
+    | "PENDING_CONDITION"
     | "REJECTED"
     | "CANCELLED"
     | "EXECUTED"
@@ -56,6 +66,7 @@ export type TradingOrderResponse = {
   exchangeId: string;
   quantity: number;
   estimatedUnitPrice: number;
+  limitPrice?: number;
   grossAmount: number;
   reservedAmount: number;
   currency: string;
@@ -145,6 +156,34 @@ export async function createMarketBuyOrder(
       body && typeof body === "object" && "message" in body
         ? String((body as { message?: unknown }).message)
         : "Unable to create market buy order.";
+    throw new Error(maybeMessage);
+  }
+
+  return body as TradingOrderResponse;
+}
+
+export async function createLimitBuyOrder(
+  request: CreateLimitBuyOrderRequest,
+): Promise<TradingOrderResponse> {
+  const response = await fetch(
+    tradingApiUrl(API_PATHS.tradingCreateLimitBuyOrder),
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(request),
+    },
+  );
+
+  const body = await readJsonSafe(response);
+
+  if (!response.ok) {
+    const maybeMessage =
+      body && typeof body === "object" && "message" in body
+        ? String((body as { message?: unknown }).message)
+        : "Unable to create limit buy order.";
     throw new Error(maybeMessage);
   }
 

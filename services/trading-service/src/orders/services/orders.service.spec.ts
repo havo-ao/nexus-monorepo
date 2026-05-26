@@ -19,6 +19,7 @@ describe('OrdersService', () => {
 
     orderRepository = {
       createMarketBuyOrder: jest.fn(),
+      createLimitBuyOrder: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -148,6 +149,74 @@ describe('OrdersService', () => {
     ).rejects.toThrow(ConflictException);
   });
 
+  it('creates a limit buy order pending price condition', async () => {
+    const order = new TradingOrder(
+      '2',
+      'limit-order-reference',
+      '101',
+      'BUY',
+      'LIMIT',
+      'PENDING_CONDITION',
+      'AAPL',
+      '1',
+      2,
+      240,
+      480,
+      480,
+      'USD',
+      '2026-05-26T14:30:00.000Z',
+      240,
+    );
+    orderRepository.createLimitBuyOrder.mockResolvedValue({
+      approved: true,
+      order,
+      availableAmount: 1000,
+      requiredAmount: 480,
+    });
+
+    await expect(
+      service.createLimitBuyOrder({
+        traderId: ' 101 ',
+        symbol: ' aapl ',
+        exchangeId: '1',
+        quantity: 2,
+        limitPrice: 240,
+      }),
+    ).resolves.toBe(order);
+
+    expect(
+      marketValidationService.validateMarketStatus.mock.calls,
+    ).toHaveLength(0);
+    expect(orderRepository.createLimitBuyOrder.mock.calls[0][0]).toEqual({
+      traderId: '101',
+      symbol: 'AAPL',
+      exchangeId: '1',
+      quantity: 2,
+      limitPrice: 240,
+      grossAmount: 480,
+      currency: 'USD',
+    });
+  });
+
+  it('rejects limit buy order creation when funds cannot be reserved', async () => {
+    orderRepository.createLimitBuyOrder.mockResolvedValue({
+      approved: false,
+      reason: 'Insufficient available funds',
+      availableAmount: 100,
+      requiredAmount: 480,
+    });
+
+    await expect(
+      service.createLimitBuyOrder({
+        traderId: '101',
+        symbol: 'AAPL',
+        exchangeId: '1',
+        quantity: 2,
+        limitPrice: 240,
+      }),
+    ).rejects.toThrow(ConflictException);
+  });
+
   it('validates required input before calling dependencies', async () => {
     await expect(
       service.createMarketBuyOrder({
@@ -185,6 +254,20 @@ describe('OrdersService', () => {
         estimatedUnitPrice: -1,
       }),
     ).rejects.toThrow(BadRequestException);
+  });
+
+  it('requires positive limit price', async () => {
+    await expect(
+      service.createLimitBuyOrder({
+        traderId: '101',
+        symbol: 'AAPL',
+        exchangeId: '1',
+        quantity: 1,
+        limitPrice: 0,
+      }),
+    ).rejects.toThrow(BadRequestException);
+
+    expect(orderRepository.createLimitBuyOrder.mock.calls).toHaveLength(0);
   });
 
   it('requires symbol and exchange identifiers', async () => {

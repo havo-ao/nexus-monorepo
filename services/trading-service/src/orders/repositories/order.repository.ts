@@ -12,6 +12,16 @@ export type CreateMarketBuyOrderCommand = {
   currency: string;
 };
 
+export type CreateLimitBuyOrderCommand = {
+  traderId: string;
+  symbol: string;
+  exchangeId: string;
+  quantity: number;
+  limitPrice: number;
+  grossAmount: number;
+  currency: string;
+};
+
 export type MarketBuyOrderCreationResult = {
   approved: boolean;
   order?: TradingOrder;
@@ -23,5 +33,9 @@ export type MarketBuyOrderCreationResult = {
 export interface OrderRepository {
   createMarketBuyOrder(
     command: CreateMarketBuyOrderCommand,
+  ): Promise<MarketBuyOrderCreationResult>;
+
+  createLimitBuyOrder(
+    command: CreateLimitBuyOrderCommand,
   ): Promise<MarketBuyOrderCreationResult>;
 }

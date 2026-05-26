@@ -10,6 +10,7 @@ describe('OrdersController', () => {
   beforeEach(async () => {
     ordersService = {
       createMarketBuyOrder: jest.fn(),
+      createLimitBuyOrder: jest.fn(),
     } as unknown as jest.Mocked<OrdersService>;
 
     const module: TestingModule = await Test.createTestingModule({
@@ -60,6 +61,45 @@ describe('OrdersController', () => {
       exchangeId: '1',
       quantity: 3,
       estimatedUnitPrice: 250,
+    });
+  });
+
+  it('delegates limit buy order creation to the service', async () => {
+    const order = new TradingOrder(
+      '2',
+      'limit-order-reference',
+      '101',
+      'BUY',
+      'LIMIT',
+      'PENDING_CONDITION',
+      'AAPL',
+      '1',
+      2,
+      240,
+      480,
+      480,
+      'USD',
+      '2026-05-26T14:30:00.000Z',
+      240,
+    );
+    ordersService.createLimitBuyOrder.mockResolvedValue(order);
+
+    await expect(
+      controller.createLimitBuyOrder({
+        traderId: '101',
+        symbol: 'AAPL',
+        exchangeId: '1',
+        quantity: 2,
+        limitPrice: 240,
+      }),
+    ).resolves.toBe(order);
+
+    expect(ordersService.createLimitBuyOrder.mock.calls[0][0]).toEqual({
+      traderId: '101',
+      symbol: 'AAPL',
+      exchangeId: '1',
+      quantity: 2,
+      limitPrice: 240,
     });
   });
 });
