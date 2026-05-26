@@ -26,12 +26,14 @@ import {
   createStopLossOrder,
   createTakeProfitOrder,
   getOrderStatus,
+  getOrderStatusHistory,
   validateBuyFunds,
   validateSellHoldings,
   validateMarketStatus,
   type FundsValidationResponse,
   type HoldingsValidationResponse,
   type MarketValidationResponse,
+  type OrderStatusHistoryEntryResponse,
   type OrderStatusResponse,
   type TradingOrderResponse,
 } from "../api/trading";
@@ -83,6 +85,9 @@ const TraderPanel: React.FC = () => {
   const [orderStatus, setOrderStatus] = useState<OrderStatusResponse | null>(
     null,
   );
+  const [orderStatusHistory, setOrderStatusHistory] = useState<
+    OrderStatusHistoryEntryResponse[]
+  >([]);
   const [orderStatusError, setOrderStatusError] = useState("");
   const [isLoadingOrderStatus, setIsLoadingOrderStatus] = useState(false);
 
@@ -209,6 +214,7 @@ const TraderPanel: React.FC = () => {
 
   const handleLoadOrderStatus = async () => {
     setOrderStatus(null);
+    setOrderStatusHistory([]);
     setOrderStatusError("");
 
     if (!orderReference.trim()) {
@@ -218,8 +224,13 @@ const TraderPanel: React.FC = () => {
 
     setIsLoadingOrderStatus(true);
     try {
-      const result = await getOrderStatus(orderReference.trim());
-      setOrderStatus(result);
+      const normalizedReference = orderReference.trim();
+      const [status, history] = await Promise.all([
+        getOrderStatus(normalizedReference),
+        getOrderStatusHistory(normalizedReference),
+      ]);
+      setOrderStatus(status);
+      setOrderStatusHistory(history);
     } catch (error) {
       setOrderStatusError(
         error instanceof Error ? error.message : "Unable to load order status.",
@@ -717,6 +728,18 @@ const TraderPanel: React.FC = () => {
                   <p className="trader-panel-message approved">
                     {orderStatus.symbol} {orderStatus.side.toLowerCase()} order
                     is {orderStatus.status.replaceAll("_", " ").toLowerCase()}.
+                  </p>
+                )}
+                {orderStatusHistory.length > 0 && (
+                  <p className="trader-panel-message approved">
+                    {orderStatusHistory.length} status event
+                    {orderStatusHistory.length === 1 ? "" : "s"} recorded.
+                    Last:{" "}
+                    {orderStatusHistory
+                      .at(-1)
+                      ?.toStatus.replaceAll("_", " ")
+                      .toLowerCase()}
+                    .
                   </p>
                 )}
                 {orderStatusError && (

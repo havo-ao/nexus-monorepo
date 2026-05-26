@@ -153,6 +153,18 @@ export type OrderStatusResponse = {
   rejectionReason?: string;
 };
 
+export type OrderStatusHistoryEntryResponse = {
+  id: string;
+  orderId: string;
+  orderReference: string;
+  fromStatus?: TradingOrderResponse["status"];
+  toStatus: TradingOrderResponse["status"];
+  actorType: "TRADER" | "SYSTEM" | "BROKER";
+  actorId: string;
+  reason: string;
+  createdAt: string;
+};
+
 async function readJsonSafe(response: Response): Promise<unknown> {
   const text = await response.text();
   if (!text) {
@@ -430,4 +442,31 @@ export async function getOrderStatus(
   }
 
   return body as OrderStatusResponse;
+}
+
+export async function getOrderStatusHistory(
+  orderReference: string,
+): Promise<OrderStatusHistoryEntryResponse[]> {
+  const response = await fetch(
+    tradingApiUrl(
+      `${API_PATHS.tradingOrderStatus}/${encodeURIComponent(orderReference)}/status-history`,
+    ),
+    {
+      headers: {
+        Accept: "application/json",
+      },
+    },
+  );
+
+  const body = await readJsonSafe(response);
+
+  if (!response.ok) {
+    const maybeMessage =
+      body && typeof body === "object" && "message" in body
+        ? String((body as { message?: unknown }).message)
+        : "Unable to load order status history.";
+    throw new Error(maybeMessage);
+  }
+
+  return body as OrderStatusHistoryEntryResponse[];
 }

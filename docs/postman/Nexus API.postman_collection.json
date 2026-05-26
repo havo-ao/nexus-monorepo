@@ -639,6 +639,41 @@
                   ]
                 }
               }
+            },
+            {
+              "name": "Get Order Status History",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+                      "pm.test('status history is present', function () { const body = pm.response.json(); pm.expect(body).to.be.an('array'); if (body.length > 0) { pm.expect(body[0].orderReference).to.exist; pm.expect(body[0].toStatus).to.exist; } });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/orders/{{orderReference}}/status-history",
+                  "host": ["{{tradingBaseUrl}}"],
+                  "path": [
+                    "api",
+                    "v1",
+                    "orders",
+                    "{{orderReference}}",
+                    "status-history"
+                  ]
+                }
+              }
             }
           ]
         },
