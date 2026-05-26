@@ -10,7 +10,8 @@ import { TradingOrderEntity } from '../entities/trading-order.entity';
 import type {
   CreateLimitBuyOrderCommand,
   CreateMarketBuyOrderCommand,
-  MarketBuyOrderCreationResult,
+  CreateMarketSellOrderCommand,
+  OrderCreationResult,
   OrderRepository,
 } from './order.repository';
 
@@ -20,7 +21,7 @@ export class TypeOrmOrderRepository implements OrderRepository {
 
   createMarketBuyOrder(
     command: CreateMarketBuyOrderCommand,
-  ): Promise<MarketBuyOrderCreationResult> {
+  ): Promise<OrderCreationResult> {
     return this.dataSource.transaction((manager) =>
       this.createBuyOrderInTransaction(
         manager,
@@ -34,7 +35,7 @@ export class TypeOrmOrderRepository implements OrderRepository {
 
   createLimitBuyOrder(
     command: CreateLimitBuyOrderCommand,
-  ): Promise<MarketBuyOrderCreationResult> {
+  ): Promise<OrderCreationResult> {
     return this.dataSource.transaction((manager) =>
       this.createBuyOrderInTransaction(
         manager,
@@ -46,13 +47,21 @@ export class TypeOrmOrderRepository implements OrderRepository {
     );
   }
 
+  createMarketSellOrder(
+    command: CreateMarketSellOrderCommand,
+  ): Promise<OrderCreationResult> {
+    return this.dataSource.transaction((manager) =>
+      this.createSellOrderInTransaction(manager, command),
+    );
+  }
+
   private async createBuyOrderInTransaction(
     manager: EntityManager,
     command: CreateMarketBuyOrderCommand | CreateLimitBuyOrderCommand,
     orderType: 'MARKET' | 'LIMIT',
     status: 'PENDING_EXECUTION' | 'PENDING_CONDITION',
     statusReason: string,
-  ): Promise<MarketBuyOrderCreationResult> {
+  ): Promise<OrderCreationResult> {
     const walletRepository = manager.getRepository(Wallet);
     const fundsEventRepository = manager.getRepository(FundsValidationEvent);
     const orderRepository = manager.getRepository(TradingOrderEntity);
@@ -148,6 +157,46 @@ export class TypeOrmOrderRepository implements OrderRepository {
     };
   }
 
+  private async createSellOrderInTransaction(
+    manager: EntityManager,
+    command: CreateMarketSellOrderCommand,
+  ): Promise<OrderCreationResult> {
+    const orderRepository = manager.getRepository(TradingOrderEntity);
+    const statusEventRepository = manager.getRepository(OrderStatusEventEntity);
+
+    const orderEntity = new TradingOrderEntity();
+    orderEntity.orderReference = randomUUID();
+    orderEntity.traderId = command.traderId;
+    orderEntity.side = 'SELL';
+    orderEntity.orderType = 'MARKET';
+    orderEntity.status = 'PENDING_EXECUTION';
+    orderEntity.symbol = command.symbol;
+    orderEntity.exchangeId = command.exchangeId;
+    orderEntity.stockId = command.stockId;
+    orderEntity.quantity = command.quantity.toFixed(6);
+    orderEntity.estimatedUnitPrice = this.toDecimal(command.estimatedUnitPrice);
+    orderEntity.grossAmount = this.toDecimal(command.grossAmount);
+    orderEntity.reservedAmount = this.toDecimal(0);
+    orderEntity.currency = command.currency;
+
+    const savedOrder = await orderRepository.save(orderEntity);
+
+    const statusEvent = new OrderStatusEventEntity();
+    statusEvent.orderId = savedOrder.id;
+    statusEvent.orderReference = savedOrder.orderReference;
+    statusEvent.toStatus = 'PENDING_EXECUTION';
+    statusEvent.actorType = 'TRADER';
+    statusEvent.actorId = command.traderId;
+    statusEvent.reason = 'Market sell order created after holdings validation';
+    await statusEventRepository.save(statusEvent);
+
+    return {
+      approved: true,
+      order: this.toDomain(savedOrder),
+      requiredQuantity: command.quantity,
+    };
+  }
+
   private toFundsEvent(result: {
     approved: boolean;
     traderId: string;
@@ -185,6 +234,7 @@ export class TypeOrmOrderRepository implements OrderRepository {
       entity.createdAt.toISOString(),
       entity.limitPrice ? Number(entity.limitPrice) : undefined,
       entity.rejectionReason,
+      entity.stockId,
     );
   }
 

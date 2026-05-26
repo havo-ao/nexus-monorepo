@@ -5,6 +5,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { roundMoney } from '../../common/money';
+import { HoldingsValidationService } from '../../holdings-validation/services/holdings-validation.service';
 import { MarketValidationService } from '../../market-validation/services/market-validation.service';
 import { TradingOrder } from '../entities/trading-order';
 import { ORDER_REPOSITORY } from '../repositories/order.repository';
@@ -29,10 +30,22 @@ export type CreateLimitBuyOrderInput = {
   currency?: string;
 };
 
+export type CreateMarketSellOrderInput = {
+  traderId: string;
+  stockId: string;
+  symbol: string;
+  exchangeId: string;
+  quantity: number;
+  estimatedUnitPrice: number;
+  currency?: string;
+  marketEvaluatedAt?: string;
+};
+
 @Injectable()
 export class OrdersService {
   constructor(
     private readonly marketValidationService: MarketValidationService,
+    private readonly holdingsValidationService: HoldingsValidationService,
     @Inject(ORDER_REPOSITORY)
     private readonly orderRepository: OrderRepository,
   ) {}
@@ -74,7 +87,7 @@ export class OrdersService {
   }
 
   private assertValidMarketBuyOrder(input: CreateMarketBuyOrderInput): void {
-    this.assertValidBuyOrderBase(input);
+    this.assertValidOrderBase(input);
 
     if (
       !Number.isFinite(input.estimatedUnitPrice) ||
@@ -89,7 +102,7 @@ export class OrdersService {
   async createLimitBuyOrder(
     input: CreateLimitBuyOrderInput,
   ): Promise<TradingOrder> {
-    this.assertValidBuyOrderBase(input);
+    this.assertValidOrderBase(input);
 
     if (!Number.isFinite(input.limitPrice) || input.limitPrice <= 0) {
       throw new BadRequestException('limitPrice must be greater than zero');
@@ -113,7 +126,75 @@ export class OrdersService {
     return result.order;
   }
 
-  private assertValidBuyOrderBase(
+  async createMarketSellOrder(
+    input: CreateMarketSellOrderInput,
+  ): Promise<TradingOrder> {
+    this.assertValidMarketSellOrder(input);
+
+    const marketValidation =
+      await this.marketValidationService.validateMarketStatus(
+        input.exchangeId,
+        input.marketEvaluatedAt,
+      );
+
+    if (!marketValidation.canOperate) {
+      throw new ConflictException(
+        marketValidation.reason ??
+          `Market cannot operate with status ${marketValidation.marketStatus}`,
+      );
+    }
+
+    const holdingsValidation =
+      await this.holdingsValidationService.validateSellHoldings({
+        traderId: input.traderId,
+        stockId: input.stockId,
+        symbol: input.symbol,
+        quantity: input.quantity,
+      });
+
+    if (!holdingsValidation.approved) {
+      throw new ConflictException(
+        holdingsValidation.reason ?? 'Insufficient available holdings',
+      );
+    }
+
+    const grossAmount = roundMoney(input.quantity * input.estimatedUnitPrice);
+    const result = await this.orderRepository.createMarketSellOrder({
+      traderId: input.traderId.trim(),
+      stockId: input.stockId.trim(),
+      symbol: input.symbol.trim().toUpperCase(),
+      exchangeId: input.exchangeId.trim(),
+      quantity: input.quantity,
+      estimatedUnitPrice: input.estimatedUnitPrice,
+      grossAmount,
+      currency: input.currency?.trim().toUpperCase() || 'USD',
+    });
+
+    if (!result.approved || !result.order) {
+      throw new ConflictException(result.reason ?? 'Unable to create order');
+    }
+
+    return result.order;
+  }
+
+  private assertValidMarketSellOrder(input: CreateMarketSellOrderInput): void {
+    this.assertValidOrderBase(input);
+
+    if (!input.stockId || input.stockId.trim().length === 0) {
+      throw new BadRequestException('stockId is required');
+    }
+
+    if (
+      !Number.isFinite(input.estimatedUnitPrice) ||
+      input.estimatedUnitPrice <= 0
+    ) {
+      throw new BadRequestException(
+        'estimatedUnitPrice must be greater than zero',
+      );
+    }
+  }
+
+  private assertValidOrderBase(
     input: Pick<
       CreateMarketBuyOrderInput,
       'traderId' | 'symbol' | 'exchangeId' | 'quantity'

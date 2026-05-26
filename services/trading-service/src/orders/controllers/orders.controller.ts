@@ -2,6 +2,7 @@ import { Body, Controller, HttpCode, Post } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreateLimitBuyOrderDto } from '../dto/create-limit-buy-order.dto';
 import { CreateMarketBuyOrderDto } from '../dto/create-market-buy-order.dto';
+import { CreateMarketSellOrderDto } from '../dto/create-market-sell-order.dto';
 import { OrdersService } from '../services/orders.service';
 
 @ApiTags('orders')
@@ -72,5 +73,38 @@ export class OrdersController {
   })
   createLimitBuyOrder(@Body() dto: CreateLimitBuyOrderDto) {
     return this.ordersService.createLimitBuyOrder(dto);
+  }
+
+  @Post('sell/market')
+  @HttpCode(201)
+  @ApiOperation({
+    summary: 'Create a market sell order after validating market and holdings',
+  })
+  @ApiResponse({
+    status: 201,
+    description:
+      'Market sell order created and moved to pending execution state.',
+    schema: {
+      example: {
+        id: '3',
+        orderReference: '3606a8e4-3cbb-4e0b-9f29-2f5aa94e3d40',
+        traderId: '101',
+        stockId: '1',
+        side: 'SELL',
+        orderType: 'MARKET',
+        status: 'PENDING_EXECUTION',
+        symbol: 'AAPL',
+        exchangeId: '1',
+        quantity: 3,
+        estimatedUnitPrice: 250,
+        grossAmount: 750,
+        reservedAmount: 0,
+        currency: 'USD',
+        createdAt: '2026-05-26T14:30:00.000Z',
+      },
+    },
+  })
+  createMarketSellOrder(@Body() dto: CreateMarketSellOrderDto) {
+    return this.ordersService.createMarketSellOrder(dto);
   }
 }

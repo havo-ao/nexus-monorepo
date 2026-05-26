@@ -162,6 +162,11 @@
   border-color: rgba(96, 165, 250, 0.42);
 }
 
+.trader-order-mode button:disabled {
+  color: rgba(148, 163, 184, 0.45);
+  cursor: not-allowed;
+}
+
 .trader-ticket-grid ion-item,
 .trader-precheck-fields ion-item {
   --background: rgba(255, 255, 255, 0.04);

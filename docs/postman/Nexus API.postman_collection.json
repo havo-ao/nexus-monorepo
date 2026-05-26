@@ -455,6 +455,48 @@
           ]
         },
         {
+          "name": "Orders",
+          "item": [
+            {
+              "name": "Create Market Sell Order",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 201', function () { pm.response.to.have.status(201); });",
+                      "pm.test('market sell order is pending execution', function () { const body = pm.response.json(); pm.expect(body.side).to.eql('SELL'); pm.expect(body.orderType).to.eql('MARKET'); pm.expect(body.status).to.eql('PENDING_EXECUTION'); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"traderId\": \"{{traderId}}\",\n  \"stockId\": \"{{stockId}}\",\n  \"symbol\": \"AAPL\",\n  \"exchangeId\": \"{{exchangeId}}\",\n  \"quantity\": 1,\n  \"estimatedUnitPrice\": 250,\n  \"marketEvaluatedAt\": \"2026-05-12T14:30:00.000Z\"\n}"
+                },
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/orders/sell/market",
+                  "host": ["{{tradingBaseUrl}}"],
+                  "path": ["api", "v1", "orders", "sell", "market"]
+                }
+              }
+            }
+          ]
+        },
+        {
           "name": "Market Validation",
           "item": [
             {
