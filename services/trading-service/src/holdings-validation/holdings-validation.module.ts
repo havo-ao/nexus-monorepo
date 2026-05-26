@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
-import { HoldingsValidationController } from './presentation/http/holdings-validation.controller';
-import { InMemoryTraderHoldingsRepository } from './infrastructure/repositories/in-memory-trader-holdings.repository';
-import { TRADER_HOLDINGS_REPOSITORY } from './domain/repositories/trader-holdings.repository';
-import { TypeOrmTraderHoldingsRepository } from './infrastructure/repositories/typeorm-trader-holdings.repository';
-import { HoldingsValidationService } from './application/services/holdings-validation.service';
+import { HoldingsValidationController } from './controllers/holdings-validation.controller';
+import { InMemoryTraderHoldingsRepository } from './repositories/in-memory-trader-holdings.repository';
+import { TRADER_HOLDINGS_REPOSITORY } from './repositories/trader-holdings.repository';
+import { TypeOrmTraderHoldingsRepository } from './repositories/typeorm-trader-holdings.repository';
+import { HoldingsValidationService } from './services/holdings-validation.service';
 
 const holdingsRepository =
   process.env.NODE_ENV === 'test'
