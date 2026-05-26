@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
+import { OrderStatusEventEntity } from '../../orders/entities/order-status-event.entity';
 import { TradingOrderEntity } from '../../orders/entities/trading-order.entity';
+import { OrderStatusHistoryEntry } from '../entities/order-status-history-entry.entity';
 import { OrderStatusSnapshot } from '../entities/order-status-snapshot.entity';
 import type { OrderStatusRepository } from './order-status.repository';
 
@@ -38,6 +40,32 @@ export class TypeOrmOrderStatusRepository implements OrderStatusRepository {
       order.stockId,
       order.limitPrice ? Number(order.limitPrice) : undefined,
       order.rejectionReason,
+    );
+  }
+
+  async findStatusHistoryByReference(
+    orderReference: string,
+  ): Promise<OrderStatusHistoryEntry[]> {
+    const events = await this.dataSource
+      .getRepository(OrderStatusEventEntity)
+      .find({
+        where: { orderReference },
+        order: { createdAt: 'ASC', id: 'ASC' },
+      });
+
+    return events.map(
+      (event) =>
+        new OrderStatusHistoryEntry(
+          event.id,
+          event.orderId,
+          event.orderReference,
+          event.toStatus,
+          event.actorType,
+          event.actorId,
+          event.reason,
+          event.createdAt.toISOString(),
+          event.fromStatus,
+        ),
     );
   }
 }

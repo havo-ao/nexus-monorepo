@@ -21,4 +21,26 @@ describe('InMemoryOrderStatusRepository', () => {
       repository.findCurrentStatusByReference('missing-order'),
     ).resolves.toBeNull();
   });
+
+  it('finds seeded status history by reference', async () => {
+    const repository = new InMemoryOrderStatusRepository();
+
+    await expect(
+      repository.findStatusHistoryByReference('order-reference'),
+    ).resolves.toEqual([
+      expect.objectContaining({
+        orderReference: 'order-reference',
+        toStatus: 'PENDING_EXECUTION',
+        actorType: 'TRADER',
+      }),
+    ]);
+  });
+
+  it('returns empty history when the reference is unknown', async () => {
+    const repository = new InMemoryOrderStatusRepository();
+
+    await expect(
+      repository.findStatusHistoryByReference('missing-order'),
+    ).resolves.toEqual([]);
+  });
 });
