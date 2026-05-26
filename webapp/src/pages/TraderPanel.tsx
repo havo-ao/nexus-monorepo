@@ -22,6 +22,7 @@ import {
   createLimitSellOrder,
   createMarketBuyOrder,
   createMarketSellOrder,
+  createStopLossOrder,
   validateBuyFunds,
   validateSellHoldings,
   validateMarketStatus,
@@ -34,7 +35,7 @@ import type { UserProfile } from "../api/types";
 import { formatUserDisplayName, getStoredUser } from "../auth/storage";
 import "./TraderPanel.css";
 
-type BuyOrderMode = "MARKET" | "LIMIT";
+type BuyOrderMode = "MARKET" | "LIMIT" | "STOP_LOSS";
 type OrderSide = "BUY" | "SELL";
 
 const moneyFormatter = new Intl.NumberFormat("en-US", {
@@ -83,7 +84,7 @@ const TraderPanel: React.FC = () => {
       ? quantity * activePrice
       : 0;
   const nextStatus =
-    orderSide === "SELL" || orderMode === "MARKET"
+    orderSide === "SELL" && orderMode === "MARKET"
       ? "Pending execution"
       : "Pending condition";
 
@@ -219,11 +220,17 @@ const TraderPanel: React.FC = () => {
               stockId: stockId.trim(),
               estimatedUnitPrice: activePrice,
             })
-          : orderSide === "SELL"
+          : orderSide === "SELL" && orderMode === "LIMIT"
             ? await createLimitSellOrder({
                 ...commonPayload,
                 stockId: stockId.trim(),
                 limitPrice: activePrice,
+              })
+          : orderSide === "SELL"
+            ? await createStopLossOrder({
+                ...commonPayload,
+                stockId: stockId.trim(),
+                stopPrice: activePrice,
               })
           : orderMode === "MARKET"
           ? await createMarketBuyOrder({
@@ -332,6 +339,15 @@ const TraderPanel: React.FC = () => {
                 >
                   Limit
                 </button>
+                {orderSide === "SELL" && (
+                  <button
+                    type="button"
+                    className={orderMode === "STOP_LOSS" ? "active" : ""}
+                    onClick={() => setOrderMode("STOP_LOSS")}
+                  >
+                    Stop loss
+                  </button>
+                )}
               </div>
 
               <div className="trader-ticket-grid">
@@ -388,7 +404,11 @@ const TraderPanel: React.FC = () => {
                 </IonItem>
                 <IonItem>
                   <IonLabel position="stacked">
-                    {orderMode === "MARKET" ? "Estimated price" : "Limit price"}
+                    {orderMode === "MARKET"
+                      ? "Estimated price"
+                      : orderMode === "STOP_LOSS"
+                        ? "Stop price"
+                        : "Limit price"}
                   </IonLabel>
                   <IonInput
                     type="number"
@@ -418,7 +438,9 @@ const TraderPanel: React.FC = () => {
                     {orderSide === "SELL"
                       ? orderMode === "MARKET"
                         ? "Market sell"
-                        : "Limit sell"
+                        : orderMode === "STOP_LOSS"
+                          ? "Stop loss"
+                          : "Limit sell"
                       : orderMode === "MARKET"
                         ? "Market buy"
                         : "Limit buy"}

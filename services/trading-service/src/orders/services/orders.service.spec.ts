@@ -28,6 +28,7 @@ describe('OrdersService', () => {
       createLimitBuyOrder: jest.fn(),
       createMarketSellOrder: jest.fn(),
       createLimitSellOrder: jest.fn(),
+      createStopLossOrder: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -473,6 +474,107 @@ describe('OrdersService', () => {
     expect(orderRepository.createLimitSellOrder.mock.calls).toHaveLength(0);
   });
 
+  it('creates a stop loss order pending trigger condition', async () => {
+    const order = new TradingOrder(
+      '5',
+      'stop-loss-order-reference',
+      '101',
+      'SELL',
+      'STOP_LOSS',
+      'PENDING_CONDITION',
+      'AAPL',
+      '1',
+      3,
+      220,
+      660,
+      0,
+      'USD',
+      '2026-05-26T14:30:00.000Z',
+      220,
+      undefined,
+      '1',
+    );
+    holdingsValidationService.validateSellHoldings.mockResolvedValue(
+      new HoldingsValidation(true, '101', '1', 3, 10, 'AAPL'),
+    );
+    orderRepository.createStopLossOrder.mockResolvedValue({
+      approved: true,
+      order,
+      requiredQuantity: 3,
+    });
+
+    await expect(
+      service.createStopLossOrder({
+        traderId: ' 101 ',
+        stockId: ' 1 ',
+        symbol: ' aapl ',
+        exchangeId: '1',
+        quantity: 3,
+        stopPrice: 220,
+      }),
+    ).resolves.toBe(order);
+
+    expect(orderRepository.createStopLossOrder.mock.calls[0][0]).toEqual({
+      traderId: '101',
+      stockId: '1',
+      symbol: 'AAPL',
+      exchangeId: '1',
+      quantity: 3,
+      stopPrice: 220,
+      grossAmount: 660,
+      currency: 'USD',
+    });
+  });
+
+  it('rejects stop loss order creation when holdings are insufficient', async () => {
+    holdingsValidationService.validateSellHoldings.mockResolvedValue(
+      new HoldingsValidation(
+        false,
+        '101',
+        '1',
+        12,
+        10,
+        'AAPL',
+        'Insufficient available holdings',
+      ),
+    );
+
+    await expect(
+      service.createStopLossOrder({
+        traderId: '101',
+        stockId: '1',
+        symbol: 'AAPL',
+        exchangeId: '1',
+        quantity: 12,
+        stopPrice: 220,
+      }),
+    ).rejects.toThrow(ConflictException);
+
+    expect(orderRepository.createStopLossOrder.mock.calls).toHaveLength(0);
+  });
+
+  it('rejects stop loss order creation when persistence fails', async () => {
+    holdingsValidationService.validateSellHoldings.mockResolvedValue(
+      new HoldingsValidation(true, '101', '1', 3, 10, 'AAPL'),
+    );
+    orderRepository.createStopLossOrder.mockResolvedValue({
+      approved: false,
+      reason: 'Unable to create order',
+      requiredQuantity: 3,
+    });
+
+    await expect(
+      service.createStopLossOrder({
+        traderId: '101',
+        stockId: '1',
+        symbol: 'AAPL',
+        exchangeId: '1',
+        quantity: 3,
+        stopPrice: 220,
+      }),
+    ).rejects.toThrow(ConflictException);
+  });
+
   it('validates required input before calling dependencies', async () => {
     await expect(
       service.createMarketBuyOrder({
@@ -569,6 +671,21 @@ describe('OrdersService', () => {
     ).rejects.toThrow(BadRequestException);
 
     expect(orderRepository.createLimitSellOrder.mock.calls).toHaveLength(0);
+  });
+
+  it('requires positive stop price for stop loss orders', async () => {
+    await expect(
+      service.createStopLossOrder({
+        traderId: '101',
+        stockId: '1',
+        symbol: 'AAPL',
+        exchangeId: '1',
+        quantity: 1,
+        stopPrice: 0,
+      }),
+    ).rejects.toThrow(BadRequestException);
+
+    expect(orderRepository.createStopLossOrder.mock.calls).toHaveLength(0);
   });
 
   it('requires symbol and exchange identifiers', async () => {
