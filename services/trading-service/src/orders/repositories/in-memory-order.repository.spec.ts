@@ -104,4 +104,34 @@ describe('InMemoryOrderRepository', () => {
     });
     expect(repository.orders).toHaveLength(1);
   });
+
+  it('creates a pending condition limit sell order without reserving funds', async () => {
+    const repository = new InMemoryOrderRepository();
+
+    const result = await repository.createLimitSellOrder({
+      traderId: '101',
+      stockId: '1',
+      symbol: 'AAPL',
+      exchangeId: '1',
+      quantity: 3,
+      limitPrice: 260,
+      grossAmount: 780,
+      currency: 'USD',
+    });
+
+    expect(result.approved).toBe(true);
+    expect(result.order).toMatchObject({
+      traderId: '101',
+      stockId: '1',
+      side: 'SELL',
+      orderType: 'LIMIT',
+      status: 'PENDING_CONDITION',
+      symbol: 'AAPL',
+      estimatedUnitPrice: 260,
+      limitPrice: 260,
+      grossAmount: 780,
+      reservedAmount: 0,
+    });
+    expect(repository.orders).toHaveLength(1);
+  });
 });

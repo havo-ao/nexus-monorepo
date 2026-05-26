@@ -226,6 +226,59 @@ describe('TypeOrmOrderRepository', () => {
     });
   });
 
+  it('persists a limit sell order with pending condition status event', async () => {
+    const repository = new TypeOrmOrderRepository(dataSource);
+    orderRepository.save.mockImplementation((entity) => {
+      entity.id = '80';
+      entity.createdAt = new Date('2026-05-26T14:30:00.000Z');
+      entity.updatedAt = new Date('2026-05-26T14:30:00.000Z');
+      return Promise.resolve(entity);
+    });
+
+    const result = await repository.createLimitSellOrder({
+      traderId: '101',
+      stockId: '1',
+      symbol: 'AAPL',
+      exchangeId: '1',
+      quantity: 3,
+      limitPrice: 260,
+      grossAmount: 780,
+      currency: 'USD',
+    });
+
+    expect(result.approved).toBe(true);
+    expect(result.order).toMatchObject({
+      id: '80',
+      traderId: '101',
+      stockId: '1',
+      side: 'SELL',
+      orderType: 'LIMIT',
+      status: 'PENDING_CONDITION',
+      symbol: 'AAPL',
+      estimatedUnitPrice: 260,
+      limitPrice: 260,
+      grossAmount: 780,
+      reservedAmount: 0,
+    });
+    expect(orderRepository.save.mock.calls[0][0]).toMatchObject({
+      traderId: '101',
+      stockId: '1',
+      side: 'SELL',
+      orderType: 'LIMIT',
+      status: 'PENDING_CONDITION',
+      estimatedUnitPrice: '260.00',
+      limitPrice: '260.00',
+      grossAmount: '780.00',
+      reservedAmount: '0.00',
+    });
+    expect(statusEventRepository.save.mock.calls[0][0]).toMatchObject({
+      toStatus: 'PENDING_CONDITION',
+      actorType: 'TRADER',
+      actorId: '101',
+      reason: 'Limit sell order created with pending price condition',
+    });
+  });
+
   it('records a rejected funds event when the trader has no wallet', async () => {
     const repository = new TypeOrmOrderRepository(dataSource);
     walletRepository.findOne.mockResolvedValue(null);

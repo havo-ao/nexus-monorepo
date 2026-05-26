@@ -9,6 +9,7 @@ import { TradingOrder } from '../entities/trading-order';
 import { TradingOrderEntity } from '../entities/trading-order.entity';
 import type {
   CreateLimitBuyOrderCommand,
+  CreateLimitSellOrderCommand,
   CreateMarketBuyOrderCommand,
   CreateMarketSellOrderCommand,
   OrderCreationResult,
@@ -51,7 +52,27 @@ export class TypeOrmOrderRepository implements OrderRepository {
     command: CreateMarketSellOrderCommand,
   ): Promise<OrderCreationResult> {
     return this.dataSource.transaction((manager) =>
-      this.createSellOrderInTransaction(manager, command),
+      this.createSellOrderInTransaction(
+        manager,
+        command,
+        'MARKET',
+        'PENDING_EXECUTION',
+        'Market sell order created after holdings validation',
+      ),
+    );
+  }
+
+  createLimitSellOrder(
+    command: CreateLimitSellOrderCommand,
+  ): Promise<OrderCreationResult> {
+    return this.dataSource.transaction((manager) =>
+      this.createSellOrderInTransaction(
+        manager,
+        command,
+        'LIMIT',
+        'PENDING_CONDITION',
+        'Limit sell order created with pending price condition',
+      ),
     );
   }
 
@@ -159,7 +180,10 @@ export class TypeOrmOrderRepository implements OrderRepository {
 
   private async createSellOrderInTransaction(
     manager: EntityManager,
-    command: CreateMarketSellOrderCommand,
+    command: CreateMarketSellOrderCommand | CreateLimitSellOrderCommand,
+    orderType: 'MARKET' | 'LIMIT',
+    status: 'PENDING_EXECUTION' | 'PENDING_CONDITION',
+    statusReason: string,
   ): Promise<OrderCreationResult> {
     const orderRepository = manager.getRepository(TradingOrderEntity);
     const statusEventRepository = manager.getRepository(OrderStatusEventEntity);
@@ -168,13 +192,19 @@ export class TypeOrmOrderRepository implements OrderRepository {
     orderEntity.orderReference = randomUUID();
     orderEntity.traderId = command.traderId;
     orderEntity.side = 'SELL';
-    orderEntity.orderType = 'MARKET';
-    orderEntity.status = 'PENDING_EXECUTION';
+    orderEntity.orderType = orderType;
+    orderEntity.status = status;
     orderEntity.symbol = command.symbol;
     orderEntity.exchangeId = command.exchangeId;
     orderEntity.stockId = command.stockId;
     orderEntity.quantity = command.quantity.toFixed(6);
-    orderEntity.estimatedUnitPrice = this.toDecimal(command.estimatedUnitPrice);
+    orderEntity.estimatedUnitPrice = this.toDecimal(
+      'estimatedUnitPrice' in command
+        ? command.estimatedUnitPrice
+        : command.limitPrice,
+    );
+    orderEntity.limitPrice =
+      'limitPrice' in command ? this.toDecimal(command.limitPrice) : undefined;
     orderEntity.grossAmount = this.toDecimal(command.grossAmount);
     orderEntity.reservedAmount = this.toDecimal(0);
     orderEntity.currency = command.currency;
@@ -184,10 +214,10 @@ export class TypeOrmOrderRepository implements OrderRepository {
     const statusEvent = new OrderStatusEventEntity();
     statusEvent.orderId = savedOrder.id;
     statusEvent.orderReference = savedOrder.orderReference;
-    statusEvent.toStatus = 'PENDING_EXECUTION';
+    statusEvent.toStatus = status;
     statusEvent.actorType = 'TRADER';
     statusEvent.actorId = command.traderId;
-    statusEvent.reason = 'Market sell order created after holdings validation';
+    statusEvent.reason = statusReason;
     await statusEventRepository.save(statusEvent);
 
     return {

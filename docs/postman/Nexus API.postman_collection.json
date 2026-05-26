@@ -493,6 +493,43 @@
                   "path": ["api", "v1", "orders", "sell", "market"]
                 }
               }
+            },
+            {
+              "name": "Create Limit Sell Order",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 201', function () { pm.response.to.have.status(201); });",
+                      "pm.test('limit sell order is pending condition', function () { const body = pm.response.json(); pm.expect(body.side).to.eql('SELL'); pm.expect(body.orderType).to.eql('LIMIT'); pm.expect(body.status).to.eql('PENDING_CONDITION'); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"traderId\": \"{{traderId}}\",\n  \"stockId\": \"{{stockId}}\",\n  \"symbol\": \"AAPL\",\n  \"exchangeId\": \"{{exchangeId}}\",\n  \"quantity\": 1,\n  \"limitPrice\": 260\n}"
+                },
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/orders/sell/limit",
+                  "host": ["{{tradingBaseUrl}}"],
+                  "path": ["api", "v1", "orders", "sell", "limit"]
+                }
+              }
             }
           ]
         },
