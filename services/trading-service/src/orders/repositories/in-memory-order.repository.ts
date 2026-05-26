@@ -8,6 +8,7 @@ import type {
   CreateMarketBuyOrderCommand,
   CreateMarketSellOrderCommand,
   CreateStopLossOrderCommand,
+  CreateTakeProfitOrderCommand,
   OrderCreationResult,
   OrderRepository,
 } from './order.repository';
@@ -48,12 +49,19 @@ export class InMemoryOrderRepository implements OrderRepository {
     return this.createSellOrder(command, 'STOP_LOSS', 'PENDING_CONDITION');
   }
 
+  createTakeProfitOrder(
+    command: CreateTakeProfitOrderCommand,
+  ): Promise<OrderCreationResult> {
+    return this.createSellOrder(command, 'TAKE_PROFIT', 'PENDING_CONDITION');
+  }
+
   private createSellOrder(
     command:
       | CreateMarketSellOrderCommand
       | CreateLimitSellOrderCommand
-      | CreateStopLossOrderCommand,
-    orderType: 'MARKET' | 'LIMIT' | 'STOP_LOSS',
+      | CreateStopLossOrderCommand
+      | CreateTakeProfitOrderCommand,
+    orderType: 'MARKET' | 'LIMIT' | 'STOP_LOSS' | 'TAKE_PROFIT',
     status: 'PENDING_EXECUTION' | 'PENDING_CONDITION',
   ): Promise<OrderCreationResult> {
     const order = this.createOrder(
@@ -118,9 +126,10 @@ export class InMemoryOrderRepository implements OrderRepository {
       | CreateLimitBuyOrderCommand
       | CreateMarketSellOrderCommand
       | CreateLimitSellOrderCommand
-      | CreateStopLossOrderCommand,
+      | CreateStopLossOrderCommand
+      | CreateTakeProfitOrderCommand,
     side: 'BUY' | 'SELL',
-    orderType: 'MARKET' | 'LIMIT' | 'STOP_LOSS',
+    orderType: 'MARKET' | 'LIMIT' | 'STOP_LOSS' | 'TAKE_PROFIT',
     status: 'PENDING_EXECUTION' | 'PENDING_CONDITION',
     reservedAmount: number,
     limitPrice?: number,
@@ -155,13 +164,17 @@ export class InMemoryOrderRepository implements OrderRepository {
       | CreateLimitBuyOrderCommand
       | CreateMarketSellOrderCommand
       | CreateLimitSellOrderCommand
-      | CreateStopLossOrderCommand,
+      | CreateStopLossOrderCommand
+      | CreateTakeProfitOrderCommand,
   ): number {
     if ('estimatedUnitPrice' in command) {
       return command.estimatedUnitPrice;
     }
     if ('limitPrice' in command) {
       return command.limitPrice;
+    }
+    if ('targetPrice' in command) {
+      return command.targetPrice;
     }
     return command.stopPrice;
   }
@@ -170,13 +183,17 @@ export class InMemoryOrderRepository implements OrderRepository {
     command:
       | CreateMarketSellOrderCommand
       | CreateLimitSellOrderCommand
-      | CreateStopLossOrderCommand,
+      | CreateStopLossOrderCommand
+      | CreateTakeProfitOrderCommand,
   ): number | undefined {
     if ('limitPrice' in command) {
       return command.limitPrice;
     }
     if ('stopPrice' in command) {
       return command.stopPrice;
+    }
+    if ('targetPrice' in command) {
+      return command.targetPrice;
     }
     return undefined;
   }

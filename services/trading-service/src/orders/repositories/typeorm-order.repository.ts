@@ -13,6 +13,7 @@ import type {
   CreateMarketBuyOrderCommand,
   CreateMarketSellOrderCommand,
   CreateStopLossOrderCommand,
+  CreateTakeProfitOrderCommand,
   OrderCreationResult,
   OrderRepository,
 } from './order.repository';
@@ -87,6 +88,20 @@ export class TypeOrmOrderRepository implements OrderRepository {
         'STOP_LOSS',
         'PENDING_CONDITION',
         'Stop loss order created with pending trigger condition',
+      ),
+    );
+  }
+
+  createTakeProfitOrder(
+    command: CreateTakeProfitOrderCommand,
+  ): Promise<OrderCreationResult> {
+    return this.dataSource.transaction((manager) =>
+      this.createSellOrderInTransaction(
+        manager,
+        command,
+        'TAKE_PROFIT',
+        'PENDING_CONDITION',
+        'Take profit order created with pending target condition',
       ),
     );
   }
@@ -198,8 +213,9 @@ export class TypeOrmOrderRepository implements OrderRepository {
     command:
       | CreateMarketSellOrderCommand
       | CreateLimitSellOrderCommand
-      | CreateStopLossOrderCommand,
-    orderType: 'MARKET' | 'LIMIT' | 'STOP_LOSS',
+      | CreateStopLossOrderCommand
+      | CreateTakeProfitOrderCommand,
+    orderType: 'MARKET' | 'LIMIT' | 'STOP_LOSS' | 'TAKE_PROFIT',
     status: 'PENDING_EXECUTION' | 'PENDING_CONDITION',
     statusReason: string,
   ): Promise<OrderCreationResult> {
@@ -293,13 +309,17 @@ export class TypeOrmOrderRepository implements OrderRepository {
     command:
       | CreateMarketSellOrderCommand
       | CreateLimitSellOrderCommand
-      | CreateStopLossOrderCommand,
+      | CreateStopLossOrderCommand
+      | CreateTakeProfitOrderCommand,
   ): number {
     if ('estimatedUnitPrice' in command) {
       return command.estimatedUnitPrice;
     }
     if ('limitPrice' in command) {
       return command.limitPrice;
+    }
+    if ('targetPrice' in command) {
+      return command.targetPrice;
     }
     return command.stopPrice;
   }
@@ -308,13 +328,17 @@ export class TypeOrmOrderRepository implements OrderRepository {
     command:
       | CreateMarketSellOrderCommand
       | CreateLimitSellOrderCommand
-      | CreateStopLossOrderCommand,
+      | CreateStopLossOrderCommand
+      | CreateTakeProfitOrderCommand,
   ): number | undefined {
     if ('limitPrice' in command) {
       return command.limitPrice;
     }
     if ('stopPrice' in command) {
       return command.stopPrice;
+    }
+    if ('targetPrice' in command) {
+      return command.targetPrice;
     }
     return undefined;
   }

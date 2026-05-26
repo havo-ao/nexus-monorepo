@@ -23,6 +23,7 @@ import {
   createMarketBuyOrder,
   createMarketSellOrder,
   createStopLossOrder,
+  createTakeProfitOrder,
   validateBuyFunds,
   validateSellHoldings,
   validateMarketStatus,
@@ -35,7 +36,7 @@ import type { UserProfile } from "../api/types";
 import { formatUserDisplayName, getStoredUser } from "../auth/storage";
 import "./TraderPanel.css";
 
-type BuyOrderMode = "MARKET" | "LIMIT" | "STOP_LOSS";
+type BuyOrderMode = "MARKET" | "LIMIT" | "STOP_LOSS" | "TAKE_PROFIT";
 type OrderSide = "BUY" | "SELL";
 
 const moneyFormatter = new Intl.NumberFormat("en-US", {
@@ -87,6 +88,16 @@ const TraderPanel: React.FC = () => {
     orderSide === "SELL" && orderMode === "MARKET"
       ? "Pending execution"
       : "Pending condition";
+
+  const handleOrderSideChange = (nextSide: OrderSide) => {
+    setOrderSide(nextSide);
+    if (
+      nextSide === "BUY" &&
+      (orderMode === "STOP_LOSS" || orderMode === "TAKE_PROFIT")
+    ) {
+      setOrderMode("MARKET");
+    }
+  };
 
   useEffect(() => {
     const stored = getStoredUser();
@@ -227,11 +238,17 @@ const TraderPanel: React.FC = () => {
                 limitPrice: activePrice,
               })
           : orderSide === "SELL"
-            ? await createStopLossOrder({
-                ...commonPayload,
-                stockId: stockId.trim(),
-                stopPrice: activePrice,
-              })
+            ? orderMode === "STOP_LOSS"
+              ? await createStopLossOrder({
+                  ...commonPayload,
+                  stockId: stockId.trim(),
+                  stopPrice: activePrice,
+                })
+              : await createTakeProfitOrder({
+                  ...commonPayload,
+                  stockId: stockId.trim(),
+                  targetPrice: activePrice,
+                })
           : orderMode === "MARKET"
           ? await createMarketBuyOrder({
               ...commonPayload,
@@ -267,8 +284,8 @@ const TraderPanel: React.FC = () => {
               <span className="trader-panel-eyebrow">Trading</span>
               <h1>Order ticket</h1>
               <p>
-                Create market and limit buy orders after reserving available
-                buying power.
+                Create buy and sell orders with the validations required before
+                execution.
               </p>
             </div>
             <button
@@ -311,20 +328,20 @@ const TraderPanel: React.FC = () => {
                 <button
                   type="button"
                   className={orderSide === "BUY" ? "active" : ""}
-                  onClick={() => setOrderSide("BUY")}
+                  onClick={() => handleOrderSideChange("BUY")}
                 >
                   Buy
                 </button>
                 <button
                   type="button"
                   className={orderSide === "SELL" ? "active" : ""}
-                  onClick={() => setOrderSide("SELL")}
+                  onClick={() => handleOrderSideChange("SELL")}
                 >
                   Sell
                 </button>
               </div>
 
-              <div className="trader-order-mode" aria-label="Buy order type">
+              <div className="trader-order-mode" aria-label="Order type">
                 <button
                   type="button"
                   className={orderMode === "MARKET" ? "active" : ""}
@@ -340,13 +357,22 @@ const TraderPanel: React.FC = () => {
                   Limit
                 </button>
                 {orderSide === "SELL" && (
-                  <button
-                    type="button"
-                    className={orderMode === "STOP_LOSS" ? "active" : ""}
-                    onClick={() => setOrderMode("STOP_LOSS")}
-                  >
-                    Stop loss
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      className={orderMode === "STOP_LOSS" ? "active" : ""}
+                      onClick={() => setOrderMode("STOP_LOSS")}
+                    >
+                      Stop loss
+                    </button>
+                    <button
+                      type="button"
+                      className={orderMode === "TAKE_PROFIT" ? "active" : ""}
+                      onClick={() => setOrderMode("TAKE_PROFIT")}
+                    >
+                      Take profit
+                    </button>
+                  </>
                 )}
               </div>
 
@@ -408,6 +434,8 @@ const TraderPanel: React.FC = () => {
                       ? "Estimated price"
                       : orderMode === "STOP_LOSS"
                         ? "Stop price"
+                        : orderMode === "TAKE_PROFIT"
+                          ? "Target price"
                         : "Limit price"}
                   </IonLabel>
                   <IonInput
@@ -440,6 +468,8 @@ const TraderPanel: React.FC = () => {
                         ? "Market sell"
                         : orderMode === "STOP_LOSS"
                           ? "Stop loss"
+                          : orderMode === "TAKE_PROFIT"
+                            ? "Take profit"
                           : "Limit sell"
                       : orderMode === "MARKET"
                         ? "Market buy"
