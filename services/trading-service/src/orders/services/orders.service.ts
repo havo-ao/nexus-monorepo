@@ -20,6 +20,15 @@ export type CreateMarketBuyOrderInput = {
   marketEvaluatedAt?: string;
 };
 
+export type CreateLimitBuyOrderInput = {
+  traderId: string;
+  symbol: string;
+  exchangeId: string;
+  quantity: number;
+  limitPrice: number;
+  currency?: string;
+};
+
 @Injectable()
 export class OrdersService {
   constructor(
@@ -65,6 +74,51 @@ export class OrdersService {
   }
 
   private assertValidMarketBuyOrder(input: CreateMarketBuyOrderInput): void {
+    this.assertValidBuyOrderBase(input);
+
+    if (
+      !Number.isFinite(input.estimatedUnitPrice) ||
+      input.estimatedUnitPrice <= 0
+    ) {
+      throw new BadRequestException(
+        'estimatedUnitPrice must be greater than zero',
+      );
+    }
+  }
+
+  async createLimitBuyOrder(
+    input: CreateLimitBuyOrderInput,
+  ): Promise<TradingOrder> {
+    this.assertValidBuyOrderBase(input);
+
+    if (!Number.isFinite(input.limitPrice) || input.limitPrice <= 0) {
+      throw new BadRequestException('limitPrice must be greater than zero');
+    }
+
+    const grossAmount = roundMoney(input.quantity * input.limitPrice);
+    const result = await this.orderRepository.createLimitBuyOrder({
+      traderId: input.traderId.trim(),
+      symbol: input.symbol.trim().toUpperCase(),
+      exchangeId: input.exchangeId.trim(),
+      quantity: input.quantity,
+      limitPrice: input.limitPrice,
+      grossAmount,
+      currency: input.currency?.trim().toUpperCase() || 'USD',
+    });
+
+    if (!result.approved || !result.order) {
+      throw new ConflictException(result.reason ?? 'Unable to create order');
+    }
+
+    return result.order;
+  }
+
+  private assertValidBuyOrderBase(
+    input: Pick<
+      CreateMarketBuyOrderInput,
+      'traderId' | 'symbol' | 'exchangeId' | 'quantity'
+    >,
+  ): void {
     if (!input.traderId || input.traderId.trim().length === 0) {
       throw new BadRequestException('traderId is required');
     }
@@ -79,15 +133,6 @@ export class OrdersService {
 
     if (!Number.isFinite(input.quantity) || input.quantity <= 0) {
       throw new BadRequestException('quantity must be greater than zero');
-    }
-
-    if (
-      !Number.isFinite(input.estimatedUnitPrice) ||
-      input.estimatedUnitPrice <= 0
-    ) {
-      throw new BadRequestException(
-        'estimatedUnitPrice must be greater than zero',
-      );
     }
   }
 }

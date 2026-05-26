@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { roundMoney } from '../../common/money';
 import { TradingOrder } from '../entities/trading-order';
 import type {
+  CreateLimitBuyOrderCommand,
   CreateMarketBuyOrderCommand,
   MarketBuyOrderCreationResult,
   OrderRepository,
@@ -16,6 +17,20 @@ export class InMemoryOrderRepository implements OrderRepository {
 
   createMarketBuyOrder(
     command: CreateMarketBuyOrderCommand,
+  ): Promise<MarketBuyOrderCreationResult> {
+    return this.createBuyOrder(command, 'MARKET', 'PENDING_EXECUTION');
+  }
+
+  createLimitBuyOrder(
+    command: CreateLimitBuyOrderCommand,
+  ): Promise<MarketBuyOrderCreationResult> {
+    return this.createBuyOrder(command, 'LIMIT', 'PENDING_CONDITION');
+  }
+
+  private createBuyOrder(
+    command: CreateMarketBuyOrderCommand | CreateLimitBuyOrderCommand,
+    orderType: 'MARKET' | 'LIMIT',
+    status: 'PENDING_EXECUTION' | 'PENDING_CONDITION',
   ): Promise<MarketBuyOrderCreationResult> {
     const availableAmount = roundMoney(this.availableAmount);
 
@@ -37,16 +52,19 @@ export class InMemoryOrderRepository implements OrderRepository {
       randomUUID(),
       command.traderId,
       'BUY',
-      'MARKET',
-      'PENDING_EXECUTION',
+      orderType,
+      status,
       command.symbol,
       command.exchangeId,
       command.quantity,
-      command.estimatedUnitPrice,
+      'estimatedUnitPrice' in command
+        ? command.estimatedUnitPrice
+        : command.limitPrice,
       command.grossAmount,
       this.reservedAmount,
       command.currency,
       now,
+      'limitPrice' in command ? command.limitPrice : undefined,
     );
 
     this.orders.push(order);

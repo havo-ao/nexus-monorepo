@@ -48,4 +48,32 @@ describe('InMemoryOrderRepository', () => {
     });
     expect(repository.orders).toHaveLength(0);
   });
+
+  it('creates a pending condition limit buy order and reserves funds', async () => {
+    const repository = new InMemoryOrderRepository();
+
+    const result = await repository.createLimitBuyOrder({
+      traderId: '101',
+      symbol: 'AAPL',
+      exchangeId: '1',
+      quantity: 2,
+      limitPrice: 240,
+      grossAmount: 480,
+      currency: 'USD',
+    });
+
+    expect(result.approved).toBe(true);
+    expect(result.order).toMatchObject({
+      traderId: '101',
+      side: 'BUY',
+      orderType: 'LIMIT',
+      status: 'PENDING_CONDITION',
+      symbol: 'AAPL',
+      estimatedUnitPrice: 240,
+      limitPrice: 240,
+      grossAmount: 480,
+      reservedAmount: 480,
+    });
+    expect(repository.orders).toHaveLength(1);
+  });
 });

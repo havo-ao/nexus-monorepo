@@ -11,6 +11,7 @@ export type OrderType = 'MARKET' | 'LIMIT' | 'STOP_LOSS' | 'TAKE_PROFIT';
 export type OrderStatus =
   | 'CREATED'
   | 'PENDING_EXECUTION'
+  | 'PENDING_CONDITION'
   | 'REJECTED'
   | 'CANCELLED'
   | 'EXECUTED'
@@ -57,6 +58,15 @@ export class TradingOrderEntity {
     scale: 2,
   })
   estimatedUnitPrice!: string;
+
+  @Column({
+    name: 'limit_price',
+    type: 'decimal',
+    precision: 18,
+    scale: 2,
+    nullable: true,
+  })
+  limitPrice?: string;
 
   @Column({ name: 'gross_amount', type: 'decimal', precision: 18, scale: 2 })
   grossAmount!: string;

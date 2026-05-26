@@ -16,6 +16,7 @@ export class TradingOrder {
     readonly reservedAmount: number,
     readonly currency: string,
     readonly createdAt: string,
+    readonly limitPrice?: number,
     readonly rejectionReason?: string,
   ) {}
 }
