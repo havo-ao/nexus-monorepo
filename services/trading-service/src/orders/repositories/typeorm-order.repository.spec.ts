@@ -1,0 +1,169 @@
+import { DataSource, EntityManager, Repository } from 'typeorm';
+import { FundsValidationEvent } from '../../funds-validation/entities/funds-validation-event.entity';
+import { Wallet } from '../../wallet/entities/wallet.entity';
+import { OrderStatusEventEntity } from '../entities/order-status-event.entity';
+import { TradingOrderEntity } from '../entities/trading-order.entity';
+import { TypeOrmOrderRepository } from './typeorm-order.repository';
+
+describe('TypeOrmOrderRepository', () => {
+  let dataSource: jest.Mocked<DataSource>;
+  let walletRepository: jest.Mocked<Repository<Wallet>>;
+  let fundsEventRepository: jest.Mocked<Repository<FundsValidationEvent>>;
+  let orderRepository: jest.Mocked<Repository<TradingOrderEntity>>;
+  let statusEventRepository: jest.Mocked<Repository<OrderStatusEventEntity>>;
+
+  beforeEach(() => {
+    walletRepository = {
+      findOne: jest.fn(),
+      save: jest.fn(),
+    } as unknown as jest.Mocked<Repository<Wallet>>;
+    fundsEventRepository = {
+      save: jest.fn(),
+    } as unknown as jest.Mocked<Repository<FundsValidationEvent>>;
+    orderRepository = {
+      save: jest.fn(),
+    } as unknown as jest.Mocked<Repository<TradingOrderEntity>>;
+    statusEventRepository = {
+      save: jest.fn(),
+    } as unknown as jest.Mocked<Repository<OrderStatusEventEntity>>;
+
+    const entityManager = {
+      getRepository: jest.fn((entity) => {
+        if (entity === Wallet) {
+          return walletRepository;
+        }
+        if (entity === FundsValidationEvent) {
+          return fundsEventRepository;
+        }
+        if (entity === TradingOrderEntity) {
+          return orderRepository;
+        }
+        return statusEventRepository;
+      }),
+    } as unknown as EntityManager;
+
+    dataSource = {
+      transaction: jest.fn(<T>(callback: (manager: EntityManager) => T) =>
+        callback(entityManager),
+      ),
+    } as unknown as jest.Mocked<DataSource>;
+  });
+
+  it('reserves wallet funds and persists order with initial status event', async () => {
+    const repository = new TypeOrmOrderRepository(dataSource);
+    const wallet = walletEntity('101', '1000.00', '0.00');
+    walletRepository.findOne.mockResolvedValue(wallet);
+    orderRepository.save.mockImplementation((entity) => {
+      entity.id = '77';
+      entity.createdAt = new Date('2026-05-26T14:30:00.000Z');
+      entity.updatedAt = new Date('2026-05-26T14:30:00.000Z');
+      return Promise.resolve(entity);
+    });
+
+    const result = await repository.createMarketBuyOrder({
+      traderId: '101',
+      symbol: 'AAPL',
+      exchangeId: '1',
+      quantity: 3,
+      estimatedUnitPrice: 250,
+      grossAmount: 750,
+      currency: 'USD',
+    });
+
+    expect(result.approved).toBe(true);
+    expect(result.order).toMatchObject({
+      id: '77',
+      traderId: '101',
+      side: 'BUY',
+      orderType: 'MARKET',
+      status: 'PENDING_EXECUTION',
+      symbol: 'AAPL',
+      grossAmount: 750,
+    });
+    expect(wallet.availableBalance).toBe('250.00');
+    expect(wallet.reservedBalance).toBe('750.00');
+    expect(fundsEventRepository.save.mock.calls[0][0]).toMatchObject({
+      validationType: 'BUY_ORDER_FUNDS_RESERVATION',
+      approved: true,
+      requiredAmount: '750.00',
+    });
+    expect(statusEventRepository.save.mock.calls[0][0]).toMatchObject({
+      toStatus: 'PENDING_EXECUTION',
+      actorType: 'TRADER',
+      actorId: '101',
+    });
+  });
+
+  it('records a rejected funds event without creating an order', async () => {
+    const repository = new TypeOrmOrderRepository(dataSource);
+    walletRepository.findOne.mockResolvedValue(
+      walletEntity('101', '100.00', '0.00'),
+    );
+
+    const result = await repository.createMarketBuyOrder({
+      traderId: '101',
+      symbol: 'AAPL',
+      exchangeId: '1',
+      quantity: 3,
+      estimatedUnitPrice: 250,
+      grossAmount: 750,
+      currency: 'USD',
+    });
+
+    expect(result).toEqual({
+      approved: false,
+      reason: 'Insufficient available funds',
+      availableAmount: 100,
+      requiredAmount: 750,
+    });
+    expect(orderRepository.save.mock.calls).toHaveLength(0);
+    expect(statusEventRepository.save.mock.calls).toHaveLength(0);
+    expect(fundsEventRepository.save.mock.calls[0][0]).toMatchObject({
+      approved: false,
+      reason: 'Insufficient available funds',
+    });
+  });
+
+  it('records a rejected funds event when the trader has no wallet', async () => {
+    const repository = new TypeOrmOrderRepository(dataSource);
+    walletRepository.findOne.mockResolvedValue(null);
+
+    const result = await repository.createMarketBuyOrder({
+      traderId: '404',
+      symbol: 'AAPL',
+      exchangeId: '1',
+      quantity: 1,
+      estimatedUnitPrice: 250,
+      grossAmount: 250,
+      currency: 'USD',
+    });
+
+    expect(result).toEqual({
+      approved: false,
+      reason: 'Insufficient available funds',
+      availableAmount: 0,
+      requiredAmount: 250,
+    });
+    expect(fundsEventRepository.save.mock.calls[0][0]).toMatchObject({
+      traderId: '404',
+      availableAmount: '0.00',
+      reservedAmount: '0.00',
+    });
+  });
+
+  function walletEntity(
+    traderId: string,
+    availableBalance: string,
+    reservedBalance: string,
+  ): Wallet {
+    const wallet = new Wallet();
+    wallet.id = '1';
+    wallet.traderId = traderId;
+    wallet.availableBalance = availableBalance;
+    wallet.reservedBalance = reservedBalance;
+    wallet.currency = 'USD';
+    wallet.createdAt = new Date('2026-05-26T14:00:00.000Z');
+    wallet.updatedAt = new Date('2026-05-26T14:00:00.000Z');
+    return wallet;
+  }
+});

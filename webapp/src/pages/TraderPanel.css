@@ -1,100 +1,245 @@
 .trader-panel-content {
-  --background: var(--ion-background-color, #0f0f14);
+  --background: #0f0f14;
   color: var(--ion-text-color, #f4f5f8);
 }
 
-.trader-panel-card {
-  max-width: 480px;
-  margin: 56px auto;
-  padding: 28px;
-  background: rgba(20, 22, 35, 0.9);
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(var(--nexus-accent-rgb), 0.35);
-  border: 1px solid rgba(var(--nexus-accent-rgb), 0.25);
+.trader-panel-shell {
+  width: min(1120px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 44px 0;
 }
 
-.trader-panel-card h1 {
-  margin: 0 0 12px;
-  font-size: 1.75rem;
-  color: var(--ion-text-color, #f4f5f8);
+.trader-panel-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 20px;
 }
 
-.trader-panel-greeting {
-  margin: 0 0 24px;
-  color: rgba(244, 245, 248, 0.88);
-  font-size: 1.05rem;
+.trader-panel-eyebrow,
+.trader-session-strip span,
+.trader-order-summary span,
+.trader-panel-section-heading p {
+  color: rgba(203, 213, 225, 0.72);
+  font-size: 0.78rem;
+}
+
+.trader-panel-eyebrow {
+  display: block;
+  margin-bottom: 8px;
+  color: rgba(var(--nexus-accent-soft-rgb), 0.95);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.trader-panel-header h1 {
+  margin: 0;
+  font-size: 2rem;
+  color: #f8fafc;
+}
+
+.trader-panel-header p {
+  max-width: 620px;
+  margin: 10px 0 0;
+  color: rgba(226, 232, 240, 0.78);
   line-height: 1.5;
 }
 
-.trader-panel-details {
-  margin: 0;
+.trader-panel-secondary-action {
+  height: 38px;
+  padding: 0 16px;
+  color: #dbeafe;
+  background: rgba(37, 99, 235, 0.16);
+  border: 1px solid rgba(96, 165, 250, 0.38);
+  border-radius: 8px;
+  font-weight: 700;
 }
 
-.trader-panel-details > div {
-  margin-bottom: 16px;
+.trader-session-strip,
+.trader-order-ticket,
+.trader-precheck-panel {
+  background: rgba(15, 23, 42, 0.86);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 8px;
 }
 
-.trader-panel-details > div:last-child {
-  margin-bottom: 0;
-}
-
-.trader-panel-details dt {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: rgba(var(--nexus-accent-soft-rgb), 0.95);
-  margin-bottom: 4px;
-}
-
-.trader-panel-details dd {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 500;
-  color: var(--ion-text-color, #f4f5f8);
-}
-
-.funds-validation-section {
-  margin-top: 28px;
-  padding-top: 24px;
-  border-top: 1px solid rgba(244, 245, 248, 0.14);
-}
-
-.funds-validation-section h2 {
-  margin: 0 0 16px;
-  font-size: 1.15rem;
-  color: var(--ion-text-color, #f4f5f8);
-}
-
-.funds-validation-fields {
+.trader-session-strip {
   display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  margin-bottom: 18px;
+  overflow: hidden;
+}
+
+.trader-session-strip > div {
+  min-width: 0;
+  padding: 16px 18px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.trader-session-strip span,
+.trader-session-strip strong {
+  display: block;
+}
+
+.trader-session-strip strong {
+  margin-top: 5px;
+  color: #f8fafc;
+  font-size: 0.98rem;
+}
+
+.trader-panel-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.9fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.trader-order-ticket,
+.trader-precheck-panel {
+  padding: 22px;
+}
+
+.trader-panel-section-heading {
+  display: flex;
+  align-items: center;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
 }
 
-.funds-validation-fields ion-item {
+.trader-panel-section-heading > span {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  color: #bfdbfe;
+  background: rgba(37, 99, 235, 0.18);
+  border: 1px solid rgba(96, 165, 250, 0.28);
+  border-radius: 8px;
+}
+
+.trader-panel-section-heading h2 {
+  margin: 0;
+  color: #f8fafc;
+  font-size: 1.1rem;
+}
+
+.trader-panel-section-heading p {
+  margin: 3px 0 0;
+}
+
+.trader-ticket-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.trader-ticket-grid ion-item,
+.trader-precheck-fields ion-item {
   --background: rgba(255, 255, 255, 0.04);
-  --border-color: rgba(244, 245, 248, 0.16);
+  --border-color: rgba(148, 163, 184, 0.18);
   --border-radius: 8px;
-  --color: var(--ion-text-color, #f4f5f8);
-  --highlight-color-focused: rgba(184, 133, 255, 0.95);
+  --color: #f8fafc;
+  --highlight-color-focused: rgba(96, 165, 250, 0.95);
 }
 
-.funds-validation-message {
+.trader-order-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.trader-order-summary > div {
+  min-width: 0;
+  padding: 14px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 8px;
+}
+
+.trader-order-summary strong {
+  display: block;
+  margin-top: 6px;
+  color: #f8fafc;
+}
+
+.trader-primary-button {
+  --border-radius: 8px;
+  margin-top: 4px;
+}
+
+.trader-precheck-section {
+  padding-top: 16px;
+  margin-top: 16px;
+  border-top: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.trader-precheck-section:first-of-type {
+  margin-top: 0;
+}
+
+.trader-precheck-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: #bfdbfe;
+}
+
+.trader-precheck-title h3 {
+  margin: 0;
+  color: #f8fafc;
+  font-size: 0.98rem;
+}
+
+.trader-precheck-fields {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.trader-panel-message {
   margin: 14px 0 0;
   padding: 12px 14px;
   border-radius: 8px;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   line-height: 1.45;
 }
 
-.funds-validation-message.approved {
+.trader-panel-message.approved {
   color: #d8f8e2;
   background: rgba(31, 122, 68, 0.28);
   border: 1px solid rgba(92, 214, 131, 0.35);
 }
 
-.funds-validation-message.rejected {
+.trader-panel-message.rejected {
   color: #ffe3e3;
   background: rgba(143, 36, 54, 0.28);
   border: 1px solid rgba(255, 125, 145, 0.36);
+}
+
+@media (max-width: 920px) {
+  .trader-panel-shell {
+    width: min(100% - 28px, 720px);
+    padding: 28px 0;
+  }
+
+  .trader-panel-header,
+  .trader-panel-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .trader-panel-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .trader-session-strip,
+  .trader-ticket-grid,
+  .trader-order-summary {
+    grid-template-columns: 1fr;
+  }
 }

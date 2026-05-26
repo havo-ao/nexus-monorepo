@@ -4,6 +4,7 @@ import { IonReactRouter } from '@ionic/react-router';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import SignUp from './pages/SignUp';
+import TraderPanel from './pages/TraderPanel';
 import Dashboard from './pages/Dashboard';
 import Market from './pages/Market';
 import Watchlist from './pages/Watchlist';
@@ -75,6 +76,9 @@ const App: React.FC = () => (
         </Route>
         <Route exact path="/dashboard">
           <Dashboard />
+        </Route>
+        <Route exact path="/trader-panel">
+          <TraderPanel />
         </Route>
         <Route exact path="/markets">
           <Market />

@@ -2,19 +2,27 @@ import { useEffect, useState } from "react";
 import {
   IonButton,
   IonContent,
+  IonIcon,
   IonInput,
   IonItem,
   IonLabel,
   IonPage,
-  IonText,
 } from "@ionic/react";
+import {
+  cashOutline,
+  checkmarkCircleOutline,
+  pulseOutline,
+  ticketOutline,
+} from "ionicons/icons";
 import { useHistory, useLocation } from "react-router-dom";
 import NavBar from "../components/NavBar";
 import {
+  createMarketBuyOrder,
   validateBuyFunds,
   validateMarketStatus,
   type FundsValidationResponse,
   type MarketValidationResponse,
+  type TradingOrderResponse,
 } from "../api/trading";
 import type { UserProfile } from "../api/types";
 import { formatUserDisplayName, getStoredUser } from "../auth/storage";
@@ -36,6 +44,21 @@ const TraderPanel: React.FC = () => {
     useState<MarketValidationResponse | null>(null);
   const [marketValidationError, setMarketValidationError] = useState("");
   const [isValidatingMarket, setIsValidatingMarket] = useState(false);
+  const [orderSymbol, setOrderSymbol] = useState("AAPL");
+  const [orderQuantity, setOrderQuantity] = useState("1");
+  const [estimatedUnitPrice, setEstimatedUnitPrice] = useState("250");
+  const [createdOrder, setCreatedOrder] = useState<TradingOrderResponse | null>(
+    null,
+  );
+  const [orderError, setOrderError] = useState("");
+  const [isCreatingOrder, setIsCreatingOrder] = useState(false);
+  const orderQuantityValue = Number(orderQuantity);
+  const estimatedUnitPriceValue = Number(estimatedUnitPrice);
+  const estimatedGrossAmount =
+    Number.isFinite(orderQuantityValue) &&
+    Number.isFinite(estimatedUnitPriceValue)
+      ? orderQuantityValue * estimatedUnitPriceValue
+      : 0;
 
   // Ionic keeps pages in the navigation stack; the same component instance can be reused.
   // `location.key` changes on each navigation, so we always re-read session from storage.
@@ -102,6 +125,47 @@ const TraderPanel: React.FC = () => {
     }
   };
 
+  const handleCreateMarketBuyOrder = async () => {
+    setCreatedOrder(null);
+    setOrderError("");
+
+    const quantity = Number(orderQuantity);
+    const price = Number(estimatedUnitPrice);
+
+    if (
+      !traderId.trim() ||
+      !exchangeId.trim() ||
+      !orderSymbol.trim() ||
+      !Number.isFinite(quantity) ||
+      quantity <= 0 ||
+      !Number.isFinite(price) ||
+      price <= 0
+    ) {
+      setOrderError("Enter a valid trader, market, symbol, quantity and price.");
+      return;
+    }
+
+    setIsCreatingOrder(true);
+    try {
+      const order = await createMarketBuyOrder({
+        traderId: traderId.trim(),
+        symbol: orderSymbol.trim().toUpperCase(),
+        exchangeId: exchangeId.trim(),
+        quantity,
+        estimatedUnitPrice: price,
+      });
+      setCreatedOrder(order);
+    } catch (error) {
+      setOrderError(
+        error instanceof Error
+          ? error.message
+          : "Unable to create market buy order.",
+      );
+    } finally {
+      setIsCreatingOrder(false);
+    }
+  };
+
   if (!user) {
     return null;
   }
@@ -109,44 +173,170 @@ const TraderPanel: React.FC = () => {
   return (
     <IonPage>
       <NavBar />
-      <IonContent fullscreen className="ion-padding trader-panel-content">
-        <div className="trader-panel-card">
-          <IonText>
-            <h1>Welcome</h1>
-          </IonText>
-          <p className="trader-panel-greeting">
-            Hello, <strong>{formatUserDisplayName(user)}</strong>.
-          </p>
-          <dl className="trader-panel-details">
+      <IonContent fullscreen className="trader-panel-content">
+        <main className="trader-panel-shell">
+          <header className="trader-panel-header">
             <div>
-              <dt>Username</dt>
-              <dd>{user.username}</dd>
+              <span className="trader-panel-eyebrow">Trading</span>
+              <h1>Order ticket</h1>
+              <p>
+                Create a market buy order after validating market rules and
+                reserving available buying power.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="trader-panel-secondary-action"
+              onClick={() => history.push("/markets")}
+            >
+              Market
+            </button>
+          </header>
+
+          <section className="trader-session-strip">
+            <div>
+              <span>Trader</span>
+              <strong>{formatUserDisplayName(user)}</strong>
             </div>
             <div>
-              <dt>First name</dt>
-              <dd>{user.name}</dd>
+              <span>Username</span>
+              <strong>@{user.username}</strong>
             </div>
             <div>
-              <dt>Last name</dt>
-              <dd>{user.surname}</dd>
+              <span>Default currency</span>
+              <strong>USD</strong>
             </div>
-          </dl>
-          <section className="funds-validation-section">
-            <IonText>
-              <h2>Validate Buy Order</h2>
-            </IonText>
-            <div className="funds-validation-fields">
+          </section>
+
+          <section className="trader-panel-grid">
+            <article className="trader-order-ticket">
+              <div className="trader-panel-section-heading">
+                <span>
+                  <IonIcon icon={ticketOutline} />
+                </span>
+                <div>
+                  <h2>Market buy</h2>
+                  <p>Funds are reserved locally before broker execution.</p>
+                </div>
+              </div>
+
+              <div className="trader-ticket-grid">
+                <IonItem>
+                  <IonLabel position="stacked">Trader</IonLabel>
+                  <IonInput
+                    value={traderId}
+                    onIonInput={(event) =>
+                      setTraderId(String(event.detail.value ?? ""))
+                    }
+                  />
+                </IonItem>
+                <IonItem>
+                  <IonLabel position="stacked">Market</IonLabel>
+                  <IonInput
+                    value={exchangeId}
+                    onIonInput={(event) =>
+                      setExchangeId(String(event.detail.value ?? ""))
+                    }
+                  />
+                </IonItem>
               <IonItem>
-                <IonLabel position="stacked">Trader</IonLabel>
+                <IonLabel position="stacked">Symbol</IonLabel>
                 <IonInput
-                  value={traderId}
+                  value={orderSymbol}
                   onIonInput={(event) =>
-                    setTraderId(String(event.detail.value ?? ""))
+                    setOrderSymbol(String(event.detail.value ?? ""))
+                  }
+                />
+              </IonItem>
+                <IonItem>
+                  <IonLabel position="stacked">Currency</IonLabel>
+                  <IonInput value="USD" readonly />
+                </IonItem>
+              <IonItem>
+                <IonLabel position="stacked">Quantity</IonLabel>
+                <IonInput
+                  type="number"
+                  min="0"
+                  value={orderQuantity}
+                  onIonInput={(event) =>
+                    setOrderQuantity(String(event.detail.value ?? ""))
                   }
                 />
               </IonItem>
               <IonItem>
-                <IonLabel position="stacked">Amount</IonLabel>
+                  <IonLabel position="stacked">Estimated price</IonLabel>
+                <IonInput
+                  type="number"
+                  min="0"
+                  value={estimatedUnitPrice}
+                  onIonInput={(event) =>
+                    setEstimatedUnitPrice(String(event.detail.value ?? ""))
+                  }
+                />
+              </IonItem>
+            </div>
+
+              <div className="trader-order-summary">
+                <div>
+                  <span>Estimated amount</span>
+                  <strong>
+                    {new Intl.NumberFormat("en-US", {
+                      style: "currency",
+                      currency: "USD",
+                    }).format(Math.max(estimatedGrossAmount, 0))}
+                  </strong>
+                </div>
+                <div>
+                  <span>Order type</span>
+                  <strong>Market buy</strong>
+                </div>
+                <div>
+                  <span>Next status</span>
+                  <strong>Pending execution</strong>
+                </div>
+              </div>
+
+            <IonButton
+              expand="block"
+                className="trader-primary-button"
+              onClick={handleCreateMarketBuyOrder}
+              disabled={isCreatingOrder}
+            >
+              {isCreatingOrder ? "Creating" : "Create Market Buy Order"}
+            </IonButton>
+            {createdOrder && (
+              <p className="funds-validation-message approved">
+                Order {createdOrder.orderReference} is{" "}
+                {createdOrder.status.replaceAll("_", " ").toLowerCase()}.
+                Reserved {createdOrder.currency}{" "}
+                {createdOrder.reservedAmount.toFixed(2)} for{" "}
+                {createdOrder.quantity} {createdOrder.symbol}.
+              </p>
+            )}
+            {orderError && (
+                <p className="trader-panel-message rejected">{orderError}</p>
+            )}
+            </article>
+
+            <aside className="trader-precheck-panel">
+              <div className="trader-panel-section-heading">
+                <span>
+                  <IonIcon icon={checkmarkCircleOutline} />
+                </span>
+                <div>
+                  <h2>Pre-checks</h2>
+                  <p>Run validations independently when you need evidence.</p>
+                </div>
+              </div>
+
+              <section className="trader-precheck-section">
+                <div className="trader-precheck-title">
+                  <IonIcon icon={cashOutline} />
+                  <h3>Funds</h3>
+                </div>
+                <div className="trader-precheck-fields">
+              <IonItem>
+                    <IonLabel position="stacked">Amount</IonLabel>
                 <IonInput
                   type="number"
                   min="0"
@@ -159,6 +349,7 @@ const TraderPanel: React.FC = () => {
             </div>
             <IonButton
               expand="block"
+                  fill="outline"
               onClick={handleValidateFunds}
               disabled={isValidatingFunds}
             >
@@ -168,8 +359,8 @@ const TraderPanel: React.FC = () => {
               <p
                 className={
                   validation.approved
-                    ? "funds-validation-message approved"
-                    : "funds-validation-message rejected"
+                        ? "trader-panel-message approved"
+                        : "trader-panel-message rejected"
                 }
               >
                 {validation.approved
@@ -178,28 +369,20 @@ const TraderPanel: React.FC = () => {
               </p>
             )}
             {validationError && (
-              <p className="funds-validation-message rejected">
+                  <p className="trader-panel-message rejected">
                 {validationError}
               </p>
             )}
           </section>
-          <section className="funds-validation-section">
-            <IonText>
-              <h2>Validate Market</h2>
-            </IonText>
-            <div className="funds-validation-fields">
-              <IonItem>
-                <IonLabel position="stacked">Market</IonLabel>
-                <IonInput
-                  value={exchangeId}
-                  onIonInput={(event) =>
-                    setExchangeId(String(event.detail.value ?? ""))
-                  }
-                />
-              </IonItem>
-            </div>
+
+              <section className="trader-precheck-section">
+                <div className="trader-precheck-title">
+                  <IonIcon icon={pulseOutline} />
+                  <h3>Market</h3>
+                </div>
             <IonButton
               expand="block"
+                  fill="outline"
               onClick={handleValidateMarket}
               disabled={isValidatingMarket}
             >
@@ -209,8 +392,8 @@ const TraderPanel: React.FC = () => {
               <p
                 className={
                   marketValidation.canOperate
-                    ? "funds-validation-message approved"
-                    : "funds-validation-message rejected"
+                        ? "trader-panel-message approved"
+                        : "trader-panel-message rejected"
                 }
               >
                 {marketValidation.canOperate
@@ -219,12 +402,14 @@ const TraderPanel: React.FC = () => {
               </p>
             )}
             {marketValidationError && (
-              <p className="funds-validation-message rejected">
+                  <p className="trader-panel-message rejected">
                 {marketValidationError}
               </p>
             )}
           </section>
-        </div>
+            </aside>
+          </section>
+        </main>
       </IonContent>
     </IonPage>
   );

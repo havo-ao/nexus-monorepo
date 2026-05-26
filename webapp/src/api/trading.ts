@@ -30,6 +30,39 @@ export type MarketValidationResponse = {
   reason?: string;
 };
 
+export type CreateMarketBuyOrderRequest = {
+  traderId: string;
+  symbol: string;
+  exchangeId: string;
+  quantity: number;
+  estimatedUnitPrice: number;
+  currency?: string;
+};
+
+export type TradingOrderResponse = {
+  id: string;
+  orderReference: string;
+  traderId: string;
+  side: "BUY" | "SELL";
+  orderType: "MARKET" | "LIMIT" | "STOP_LOSS" | "TAKE_PROFIT";
+  status:
+    | "CREATED"
+    | "PENDING_EXECUTION"
+    | "REJECTED"
+    | "CANCELLED"
+    | "EXECUTED"
+    | "FAILED";
+  symbol: string;
+  exchangeId: string;
+  quantity: number;
+  estimatedUnitPrice: number;
+  grossAmount: number;
+  reservedAmount: number;
+  currency: string;
+  createdAt: string;
+  rejectionReason?: string;
+};
+
 async function readJsonSafe(response: Response): Promise<unknown> {
   const text = await response.text();
   if (!text) {
@@ -88,4 +121,32 @@ export async function validateMarketStatus(
   }
 
   return body as MarketValidationResponse;
+}
+
+export async function createMarketBuyOrder(
+  request: CreateMarketBuyOrderRequest,
+): Promise<TradingOrderResponse> {
+  const response = await fetch(
+    tradingApiUrl(API_PATHS.tradingCreateMarketBuyOrder),
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(request),
+    },
+  );
+
+  const body = await readJsonSafe(response);
+
+  if (!response.ok) {
+    const maybeMessage =
+      body && typeof body === "object" && "message" in body
+        ? String((body as { message?: unknown }).message)
+        : "Unable to create market buy order.";
+    throw new Error(maybeMessage);
+  }
+
+  return body as TradingOrderResponse;
 }
