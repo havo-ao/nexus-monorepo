@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { IonIcon } from '@ionic/react';
 import {
   albumsOutline,
@@ -51,13 +51,13 @@ const NavBar: React.FC = () => {
     };
   }, []);
 
-  const goToHomeSection = (sectionId: string) => {
+  const goToHomeSection = useCallback((sectionId: string) => {
     history.push({ pathname: '/', hash: `#${sectionId}` });
-  };
+  }, [history]);
 
-  const goToRoute = (path: string) => {
+  const goToRoute = useCallback((path: string) => {
     history.push(path);
-  };
+  }, [history]);
 
   const handleLogout = () => {
     clearAuthSession();
@@ -74,7 +74,7 @@ const NavBar: React.FC = () => {
       { label: 'Markets', icon: analyticsOutline, path: '/', hash: '#markets-section', action: () => goToHomeSection('markets-section') },
       { label: 'Security', icon: shieldCheckmarkOutline, path: '/', hash: '#security-section', action: () => goToHomeSection('security-section') }
     ],
-    [history]
+    [goToHomeSection, goToRoute]
   );
 
   const memberLinks = useMemo<NavItem[]>(
@@ -87,7 +87,7 @@ const NavBar: React.FC = () => {
       { label: 'Watchlist', icon: starOutline, path: '/watchlist', action: () => goToRoute('/watchlist') },
       { label: 'Portfolio', icon: albumsOutline, path: '/portfolio', action: () => goToRoute('/portfolio') }
     ],
-    [history]
+    [goToRoute]
   );
 
   const adminLinks = useMemo<NavItem[]>(
@@ -97,7 +97,7 @@ const NavBar: React.FC = () => {
       { label: 'Manage Admins', icon: ribbonOutline, path: '/manage-admins', action: () => goToRoute('/manage-admins') },
       { label: 'Manage Plans', icon: cardOutline, path: '/manage-plans', action: () => goToRoute('/manage-plans') }
     ],
-    [history]
+    [goToRoute]
   );
 
   const navItems = sessionUser ? (isAdmin ? adminLinks : memberLinks) : guestLinks;

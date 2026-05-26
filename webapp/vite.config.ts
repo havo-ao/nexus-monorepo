@@ -20,6 +20,11 @@ export default defineConfig({
         target: process.env.VITE_PROXY_MARKET_API_TARGET ?? 'http://localhost:8884',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/market-api/, '')
+      },
+      '/portfolio-api': {
+        target: process.env.VITE_PROXY_PORTFOLIO_API_TARGET ?? 'http://localhost:8883',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/portfolio-api/, '')
       }
     }
   },

@@ -212,13 +212,25 @@ const SignUp: React.FC = () => {
 
     try {
       await registerTrader(payload);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Registration failed. Please try again.";
+      showAlert("Registration failed", message);
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
       const auth = await login({ email: payload.email, password: payload.password });
       persistAuthSession(auth);
       history.push("/profile");
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : "Registration failed. Please try again.";
-      showAlert("Registration failed", message);
+        err instanceof Error ? err.message : "We created your account, but could not sign you in automatically.";
+      showAlert(
+        "Account created",
+        `${message}\n\nPlease go to login and sign in with your new credentials.`
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -343,7 +355,7 @@ const SignUp: React.FC = () => {
                   <span className="password-rules-icon" aria-hidden>
                     {passwordRuleState.hasSpecial ? "✓" : "○"}
                   </span>
-                  At least one special character: @ # $ % ^ & + =
+                  At least one special character: @ # $ % ^ & + = !
                 </li>
                 <li className={passwordRuleState.noSpaces ? "met" : ""}>
                   <span className="password-rules-icon" aria-hidden>
