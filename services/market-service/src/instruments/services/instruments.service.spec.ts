@@ -16,6 +16,7 @@ describe('InstrumentsService', () => {
 
   beforeEach(async () => {
     jest.resetAllMocks();
+    delete process.env.ALPHA_VANTAGE_INSTRUMENT_LIMIT;
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -51,6 +52,93 @@ describe('InstrumentsService', () => {
         sector: 'Technology',
         status: 'ACTIVE',
       },
+    ]);
+  });
+
+  it('filters unsupported listings that cannot be enriched as common equities', async () => {
+    repository.findAvailable.mockResolvedValue([
+      Instrument.restore({
+        symbol: 'AACIW',
+        name: 'Armada Acquisition Corp I - Warrants (13/08/2026)',
+        marketCode: 'NASDAQ',
+        currency: 'USD',
+        sector: 'Unclassified',
+        status: 'ACTIVE',
+        assetType: 'Stock',
+      }),
+      Instrument.restore({
+        symbol: 'AAPL',
+        name: 'Apple Inc.',
+        marketCode: 'NASDAQ',
+        currency: 'USD',
+        sector: 'Technology',
+        status: 'ACTIVE',
+        assetType: 'Stock',
+      }),
+    ]);
+
+    await expect(service.getAvailableInstruments()).resolves.toEqual([
+      {
+        symbol: 'AAPL',
+        name: 'Apple Inc.',
+        marketCode: 'NASDAQ',
+        currency: 'USD',
+        sector: 'Technology',
+        status: 'ACTIVE',
+      },
+    ]);
+  });
+
+  it('limits the public catalog to the configured instrument count', async () => {
+    process.env.ALPHA_VANTAGE_INSTRUMENT_LIMIT = '1';
+    repository.findAvailable.mockResolvedValue([
+      Instrument.restore({
+        symbol: 'AAPL',
+        name: 'Apple Inc.',
+        marketCode: 'NASDAQ',
+        currency: 'USD',
+        sector: 'Technology',
+        status: 'ACTIVE',
+        assetType: 'Stock',
+      }),
+      Instrument.restore({
+        symbol: 'MSFT',
+        name: 'Microsoft Corporation',
+        marketCode: 'NASDAQ',
+        currency: 'USD',
+        sector: 'Technology',
+        status: 'ACTIVE',
+        assetType: 'Stock',
+      }),
+    ]);
+
+    await expect(service.getAvailableInstruments()).resolves.toHaveLength(1);
+  });
+
+  it('filters listings outside the backend curated Alpha Vantage symbol set', async () => {
+    repository.findAvailable.mockResolvedValue([
+      Instrument.restore({
+        symbol: 'AAPL',
+        name: 'Apple Inc.',
+        marketCode: 'NASDAQ',
+        currency: 'USD',
+        sector: 'Technology',
+        status: 'ACTIVE',
+        assetType: 'Stock',
+      }),
+      Instrument.restore({
+        symbol: 'ABXL',
+        name: 'Abraxas Petroleum Corp',
+        marketCode: 'NYSE',
+        currency: 'USD',
+        sector: 'Energy',
+        status: 'ACTIVE',
+        assetType: 'Stock',
+      }),
+    ]);
+
+    await expect(service.getAvailableInstruments()).resolves.toEqual([
+      expect.objectContaining({ symbol: 'AAPL' }),
     ]);
   });
 });

@@ -56,6 +56,28 @@ describe('MysqlInstrumentsRepository', () => {
     ]);
   });
 
+  it('uses the default sector when stored metadata is incomplete', async () => {
+    pool.query.mockResolvedValueOnce([
+      [
+        {
+          symbol: 'ABXL',
+          name: 'Abaxx Technologies Inc',
+          market_code: 'NYSE',
+          currency: 'USD',
+          sector: '',
+          status: 'ACTIVE',
+        },
+      ],
+    ]);
+
+    const instruments = await repository.findAvailable();
+
+    expect(instruments[0].toSnapshot()).toMatchObject({
+      symbol: 'ABXL',
+      sector: 'Unclassified',
+    });
+  });
+
   it('upserts synchronized instruments', async () => {
     const instrument = Instrument.restore({
       symbol: 'nvda',

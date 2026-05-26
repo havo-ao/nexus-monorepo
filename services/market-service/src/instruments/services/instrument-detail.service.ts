@@ -12,6 +12,7 @@ import { InstrumentDetailResponseDto } from '../dto/instrument-detail-response.d
 import { Instrument } from '../entities/instrument.entity';
 import { INSTRUMENTS_REPOSITORY } from '../repositories/instruments.repository';
 import type { InstrumentsRepository } from '../repositories/instruments.repository';
+import { isSupportedEquity } from '../utils/supported-equity.util';
 
 @Injectable()
 export class InstrumentDetailService {
@@ -29,7 +30,7 @@ export class InstrumentDetailService {
     const instrument =
       await this.instrumentsRepository.findBySymbol(normalizedSymbol);
 
-    if (!instrument) {
+    if (!instrument || !isSupportedEquity(instrument.toSnapshot())) {
       throw new NotFoundException(
         `Instrument ${normalizedSymbol} is not available`,
       );

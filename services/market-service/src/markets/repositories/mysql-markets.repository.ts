@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { Pool, RowDataPacket } from 'mysql2/promise';
 import { MYSQL_POOL } from '../../../database/database.module';
+import { resolveSupportedSymbols } from '../../instruments/utils/supported-symbols.util';
 import { Market } from '../entities/market.entity';
 import type { MarketStatus } from '../entities/market.entity';
 import type { MarketsRepository } from './markets.repository';
@@ -41,7 +42,9 @@ export class MysqlMarketsRepository implements MarketsRepository {
 
     const symbolsByMarket = await this.findRepresentativeSymbols();
 
-    return rows.map((row) => this.toMarket(row, symbolsByMarket));
+    return rows
+      .map((row) => this.toMarket(row, symbolsByMarket))
+      .filter((market) => market.toSnapshot().representativeSymbols.length > 0);
   }
 
   private async findRepresentativeSymbols(): Promise<Map<string, string[]>> {
@@ -56,7 +59,13 @@ export class MysqlMarketsRepository implements MarketsRepository {
 
     const symbolsByMarket = new Map<string, string[]>();
 
+    const supportedSymbols = resolveSupportedSymbols();
+
     for (const row of rows) {
+      if (!supportedSymbols.has(row.symbol.trim().toUpperCase())) {
+        continue;
+      }
+
       const marketSymbols = symbolsByMarket.get(row.market_code) ?? [];
       if (marketSymbols.length >= REPRESENTATIVE_SYMBOLS_LIMIT) {
         continue;

@@ -61,6 +61,26 @@ interface SyncInstrumentMetadataResponse {
   instrument: InstrumentDetailResponse;
 }
 
+interface SyncInstrumentDetailResponse {
+  status: string;
+  symbol: string;
+  metadata: {
+    status: string;
+    provider: string;
+  };
+  quote: {
+    status: string;
+    provider: string;
+    updatedCount: number;
+  };
+  history: {
+    status: string;
+    provider: string;
+    updatedCount: number;
+  };
+  instrument: InstrumentDetailResponse;
+}
+
 interface MarketQuoteResponse {
   symbol: string;
   price: number;
@@ -350,6 +370,55 @@ describe('AppController (e2e)', () => {
 
         expect(body.description).toContain('Apple Inc.');
         expect(body.metadataUpdatedAt).toEqual(expect.any(String));
+      });
+  });
+
+  it('/api/v1/instruments/:symbol/detail/sync (POST) prepares detail view data', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/instruments/AAPL/detail/sync')
+      .expect(200)
+      .expect((response) => {
+        const body = response.body as SyncInstrumentDetailResponse;
+
+        expect(body).toEqual(
+          expect.objectContaining({
+            status: 'SUCCESS',
+            symbol: 'AAPL',
+          }),
+        );
+        expect(body.metadata).toEqual(
+          expect.objectContaining({
+            status: 'SUCCESS',
+            provider: 'alpha-vantage-overview-compatible',
+          }),
+        );
+        expect(body.quote).toEqual(
+          expect.objectContaining({
+            status: 'SUCCESS',
+            provider: 'alpha-vantage-compatible',
+            updatedCount: 1,
+          }),
+        );
+        expect(body.history).toEqual(
+          expect.objectContaining({
+            status: 'SUCCESS',
+            provider: 'alpha-vantage-history-compatible',
+          }),
+        );
+        expect(body.history.updatedCount).toBeGreaterThan(0);
+        expect(body.instrument).toEqual(
+          expect.objectContaining({
+            symbol: 'AAPL',
+            assetType: 'Common Stock',
+            metadataProvider: 'alpha-vantage-overview-compatible',
+          }),
+        );
+        expect(body.instrument.quote).toEqual(
+          expect.objectContaining({
+            symbol: 'AAPL',
+            provider: 'alpha-vantage-compatible',
+          }),
+        );
       });
   });
 

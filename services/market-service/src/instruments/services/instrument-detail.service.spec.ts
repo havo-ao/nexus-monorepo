@@ -130,4 +130,23 @@ describe('InstrumentDetailService', () => {
       NotFoundException,
     );
   });
+
+  it('returns not found for unsupported provider listings kept from an old catalog', async () => {
+    instrumentsRepository.findBySymbol.mockResolvedValue(
+      Instrument.restore({
+        symbol: 'AACIW',
+        name: 'Armada Acquisition Corp I - Warrants (13/08/2026)',
+        marketCode: 'NASDAQ',
+        currency: 'USD',
+        sector: 'Unclassified',
+        status: 'ACTIVE',
+        assetType: 'Stock',
+      }),
+    );
+
+    await expect(service.getInstrumentDetail('AACIW')).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+    expect(quotesRepository.findLatestBySymbol.mock.calls).toHaveLength(0);
+  });
 });
