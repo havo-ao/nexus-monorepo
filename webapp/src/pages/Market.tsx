@@ -48,6 +48,15 @@ type MarketRouteParams = {
   symbol?: string;
 };
 
+type MarketLocationState = {
+  sellIntent?: {
+    positionId?: string | number;
+    stockId?: string | number;
+    symbol?: string;
+    quantity: number;
+  };
+};
+
 type AsyncState = {
   isLoading: boolean;
   error: string;
@@ -118,6 +127,7 @@ const Market: React.FC = () => {
   const { marketCode, symbol } = useParams<MarketRouteParams>();
   const selectedMarketCode = marketCode?.toUpperCase();
   const selectedSymbol = symbol?.toUpperCase();
+  const sellIntent = location.state?.sellIntent;
   const traderId = getCurrentTraderId();
 
   const [markets, setMarkets] = useState<MarketModel[]>([]);

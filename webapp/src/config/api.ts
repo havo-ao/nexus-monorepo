@@ -58,6 +58,7 @@ export const API_PATHS = {
   authRegisterTrader: "/api/auth/register/trader",
   tradingValidateBuyFunds: "/api/v1/validations/funds/buy",
   tradingValidateMarketStatus: "/api/v1/validations/market/status",
+  tradingCreateMarketBuyOrder: "/api/v1/orders/buy/market",
   marketDashboard: "/api/v1/dashboard",
   marketMarkets: "/api/v1/markets",
   marketInstruments: "/api/v1/instruments",

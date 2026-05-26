@@ -5,6 +5,7 @@ import {
   analyticsOutline,
   briefcaseOutline,
   cardOutline,
+  cartOutline,
   gridOutline,
   homeOutline,
   informationCircleOutline,
@@ -83,6 +84,7 @@ const NavBar: React.FC = () => {
       { label: 'Subscription', icon: sparklesOutline, path: '/plan-selection', action: () => goToRoute('/plan-selection') },
       { label: 'Notifications', icon: notificationsOutline, path: '/notifications', action: () => goToRoute('/notifications') },
       { label: 'Dashboard', icon: gridOutline, path: '/dashboard', action: () => goToRoute('/dashboard') },
+      { label: 'Trading', icon: cartOutline, path: '/trader-panel', action: () => goToRoute('/trader-panel') },
       { label: 'Market', icon: analyticsOutline, path: '/markets', action: () => goToRoute('/markets') },
       { label: 'Watchlist', icon: starOutline, path: '/watchlist', action: () => goToRoute('/watchlist') },
       { label: 'Portfolio', icon: albumsOutline, path: '/portfolio', action: () => goToRoute('/portfolio') }
