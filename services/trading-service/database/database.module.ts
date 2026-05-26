@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { FundsValidationEvent } from '../src/funds-validation/entities/funds-validation-event.entity';
-import { HoldingsValidationEvent } from '../src/holdings-validation/entities/holdings-validation-event.entity';
-import { MarketExchange } from '../src/market/entities/market-exchange.entity';
-import { MarketValidationEvent } from '../src/market-validation/entities/market-validation-event.entity';
-import { OrderStatusEventEntity } from '../src/orders/entities/order-status-event.entity';
-import { TradingOrderEntity } from '../src/orders/entities/trading-order.entity';
-import { PortfolioPosition } from '../src/portfolio/entities/portfolio-position.entity';
-import { Wallet } from '../src/wallet/entities/wallet.entity';
+import { FundsValidationEvent } from '../src/funds-validation/domain/entities/funds-validation-event.entity';
+import { HoldingsValidationEvent } from '../src/holdings-validation/domain/entities/holdings-validation-event.entity';
+import { MarketExchange } from '../src/market/domain/entities/market-exchange.entity';
+import { MarketValidationEvent } from '../src/market-validation/domain/entities/market-validation-event.entity';
+import { OrderStatusEventEntity } from '../src/orders/domain/entities/order-status-event.entity';
+import { TradingOrderEntity } from '../src/orders/domain/entities/trading-order.entity';
+import { PortfolioPosition } from '../src/portfolio/domain/entities/portfolio-position.entity';
+import { Wallet } from '../src/wallet/domain/entities/wallet.entity';
 
 @Module({
   imports: [

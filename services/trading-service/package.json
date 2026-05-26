@@ -78,6 +78,7 @@
       "!**/dto/**",
       "!**/entities/**",
       "!**/controllers/**",
+      "!**/presentation/http/**",
       "!**/*.spec.ts"
     ],
     "coverageDirectory": "../coverage",

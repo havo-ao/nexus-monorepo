@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
-import { FundsValidationController } from './controllers/funds-validation.controller';
-import { InMemoryTraderFundsRepository } from './repositories/in-memory-trader-funds.repository';
-import { TRADER_FUNDS_REPOSITORY } from './repositories/trader-funds.repository';
-import { TypeOrmTraderFundsRepository } from './repositories/typeorm-trader-funds.repository';
-import { FundsValidationService } from './services/funds-validation.service';
+import { FundsValidationController } from './presentation/http/funds-validation.controller';
+import { InMemoryTraderFundsRepository } from './infrastructure/repositories/in-memory-trader-funds.repository';
+import { TRADER_FUNDS_REPOSITORY } from './domain/repositories/trader-funds.repository';
+import { TypeOrmTraderFundsRepository } from './infrastructure/repositories/typeorm-trader-funds.repository';
+import { FundsValidationService } from './application/services/funds-validation.service';
 
 const fundsRepository =
   process.env.NODE_ENV === 'test'
