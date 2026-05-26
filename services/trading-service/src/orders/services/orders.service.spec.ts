@@ -27,6 +27,7 @@ describe('OrdersService', () => {
       createMarketBuyOrder: jest.fn(),
       createLimitBuyOrder: jest.fn(),
       createMarketSellOrder: jest.fn(),
+      createLimitSellOrder: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -382,6 +383,96 @@ describe('OrdersService', () => {
     ).rejects.toThrow(ConflictException);
   });
 
+  it('creates a limit sell order pending price condition', async () => {
+    const order = new TradingOrder(
+      '4',
+      'limit-sell-order-reference',
+      '101',
+      'SELL',
+      'LIMIT',
+      'PENDING_CONDITION',
+      'AAPL',
+      '1',
+      3,
+      260,
+      780,
+      0,
+      'USD',
+      '2026-05-26T14:30:00.000Z',
+      260,
+      undefined,
+      '1',
+    );
+    holdingsValidationService.validateSellHoldings.mockResolvedValue(
+      new HoldingsValidation(true, '101', '1', 3, 10, 'AAPL'),
+    );
+    orderRepository.createLimitSellOrder.mockResolvedValue({
+      approved: true,
+      order,
+      requiredQuantity: 3,
+    });
+
+    await expect(
+      service.createLimitSellOrder({
+        traderId: ' 101 ',
+        stockId: ' 1 ',
+        symbol: ' aapl ',
+        exchangeId: '1',
+        quantity: 3,
+        limitPrice: 260,
+      }),
+    ).resolves.toBe(order);
+
+    expect(
+      marketValidationService.validateMarketStatus.mock.calls,
+    ).toHaveLength(0);
+    expect(
+      holdingsValidationService.validateSellHoldings.mock.calls[0][0],
+    ).toEqual({
+      traderId: ' 101 ',
+      stockId: ' 1 ',
+      symbol: ' aapl ',
+      quantity: 3,
+    });
+    expect(orderRepository.createLimitSellOrder.mock.calls[0][0]).toEqual({
+      traderId: '101',
+      stockId: '1',
+      symbol: 'AAPL',
+      exchangeId: '1',
+      quantity: 3,
+      limitPrice: 260,
+      grossAmount: 780,
+      currency: 'USD',
+    });
+  });
+
+  it('rejects limit sell order creation when holdings are insufficient', async () => {
+    holdingsValidationService.validateSellHoldings.mockResolvedValue(
+      new HoldingsValidation(
+        false,
+        '101',
+        '1',
+        12,
+        10,
+        'AAPL',
+        'Insufficient available holdings',
+      ),
+    );
+
+    await expect(
+      service.createLimitSellOrder({
+        traderId: '101',
+        stockId: '1',
+        symbol: 'AAPL',
+        exchangeId: '1',
+        quantity: 12,
+        limitPrice: 260,
+      }),
+    ).rejects.toThrow(ConflictException);
+
+    expect(orderRepository.createLimitSellOrder.mock.calls).toHaveLength(0);
+  });
+
   it('validates required input before calling dependencies', async () => {
     await expect(
       service.createMarketBuyOrder({
@@ -463,6 +554,21 @@ describe('OrdersService', () => {
     ).rejects.toThrow(BadRequestException);
 
     expect(orderRepository.createLimitBuyOrder.mock.calls).toHaveLength(0);
+  });
+
+  it('requires positive limit price for limit sell orders', async () => {
+    await expect(
+      service.createLimitSellOrder({
+        traderId: '101',
+        stockId: '1',
+        symbol: 'AAPL',
+        exchangeId: '1',
+        quantity: 1,
+        limitPrice: 0,
+      }),
+    ).rejects.toThrow(BadRequestException);
+
+    expect(orderRepository.createLimitSellOrder.mock.calls).toHaveLength(0);
   });
 
   it('requires symbol and exchange identifiers', async () => {

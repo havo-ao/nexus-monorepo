@@ -19,6 +19,7 @@ import { useHistory, useLocation } from "react-router-dom";
 import NavBar from "../components/NavBar";
 import {
   createLimitBuyOrder,
+  createLimitSellOrder,
   createMarketBuyOrder,
   createMarketSellOrder,
   validateBuyFunds,
@@ -212,12 +213,18 @@ const TraderPanel: React.FC = () => {
         quantity,
       };
       const order =
-        orderSide === "SELL"
+        orderSide === "SELL" && orderMode === "MARKET"
           ? await createMarketSellOrder({
               ...commonPayload,
               stockId: stockId.trim(),
               estimatedUnitPrice: activePrice,
             })
+          : orderSide === "SELL"
+            ? await createLimitSellOrder({
+                ...commonPayload,
+                stockId: stockId.trim(),
+                limitPrice: activePrice,
+              })
           : orderMode === "MARKET"
           ? await createMarketBuyOrder({
               ...commonPayload,
@@ -304,10 +311,7 @@ const TraderPanel: React.FC = () => {
                 <button
                   type="button"
                   className={orderSide === "SELL" ? "active" : ""}
-                  onClick={() => {
-                    setOrderSide("SELL");
-                    setOrderMode("MARKET");
-                  }}
+                  onClick={() => setOrderSide("SELL")}
                 >
                   Sell
                 </button>
@@ -324,7 +328,6 @@ const TraderPanel: React.FC = () => {
                 <button
                   type="button"
                   className={orderMode === "LIMIT" ? "active" : ""}
-                  disabled={orderSide === "SELL"}
                   onClick={() => setOrderMode("LIMIT")}
                 >
                   Limit
@@ -413,7 +416,9 @@ const TraderPanel: React.FC = () => {
                   <span>Order type</span>
                   <strong>
                     {orderSide === "SELL"
-                      ? "Market sell"
+                      ? orderMode === "MARKET"
+                        ? "Market sell"
+                        : "Limit sell"
                       : orderMode === "MARKET"
                         ? "Market buy"
                         : "Limit buy"}
