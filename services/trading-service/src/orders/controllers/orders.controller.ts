@@ -5,6 +5,7 @@ import { CreateLimitSellOrderDto } from '../dto/create-limit-sell-order.dto';
 import { CreateMarketBuyOrderDto } from '../dto/create-market-buy-order.dto';
 import { CreateMarketSellOrderDto } from '../dto/create-market-sell-order.dto';
 import { CreateStopLossOrderDto } from '../dto/create-stop-loss-order.dto';
+import { CreateTakeProfitOrderDto } from '../dto/create-take-profit-order.dto';
 import { OrdersService } from '../services/orders.service';
 
 @ApiTags('orders')
@@ -176,5 +177,39 @@ export class OrdersController {
   })
   createStopLossOrder(@Body() dto: CreateStopLossOrderDto) {
     return this.ordersService.createStopLossOrder(dto);
+  }
+
+  @Post('sell/take-profit')
+  @HttpCode(201)
+  @ApiOperation({
+    summary: 'Create a take profit order with an upside target condition',
+  })
+  @ApiResponse({
+    status: 201,
+    description:
+      'Take profit order created and moved to pending condition state.',
+    schema: {
+      example: {
+        id: '6',
+        orderReference: 'fac909bf-65a5-4070-8d81-9fc984189be5',
+        traderId: '101',
+        stockId: '1',
+        side: 'SELL',
+        orderType: 'TAKE_PROFIT',
+        status: 'PENDING_CONDITION',
+        symbol: 'AAPL',
+        exchangeId: '1',
+        quantity: 3,
+        estimatedUnitPrice: 290,
+        limitPrice: 290,
+        grossAmount: 870,
+        reservedAmount: 0,
+        currency: 'USD',
+        createdAt: '2026-05-26T14:30:00.000Z',
+      },
+    },
+  })
+  createTakeProfitOrder(@Body() dto: CreateTakeProfitOrderDto) {
+    return this.ordersService.createTakeProfitOrder(dto);
   }
 }

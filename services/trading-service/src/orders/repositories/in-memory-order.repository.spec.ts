@@ -164,4 +164,34 @@ describe('InMemoryOrderRepository', () => {
     });
     expect(repository.orders).toHaveLength(1);
   });
+
+  it('creates a pending condition take profit order without reserving funds', async () => {
+    const repository = new InMemoryOrderRepository();
+
+    const result = await repository.createTakeProfitOrder({
+      traderId: '101',
+      stockId: '1',
+      symbol: 'AAPL',
+      exchangeId: '1',
+      quantity: 3,
+      targetPrice: 290,
+      grossAmount: 870,
+      currency: 'USD',
+    });
+
+    expect(result.approved).toBe(true);
+    expect(result.order).toMatchObject({
+      traderId: '101',
+      stockId: '1',
+      side: 'SELL',
+      orderType: 'TAKE_PROFIT',
+      status: 'PENDING_CONDITION',
+      symbol: 'AAPL',
+      estimatedUnitPrice: 290,
+      limitPrice: 290,
+      grossAmount: 870,
+      reservedAmount: 0,
+    });
+    expect(repository.orders).toHaveLength(1);
+  });
 });

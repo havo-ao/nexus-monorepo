@@ -234,4 +234,37 @@ describe('AppController (e2e)', () => {
         expect(body.orderReference).toEqual(expect.any(String));
       });
   });
+
+  it('/api/v1/orders/sell/take-profit (POST)', () => {
+    return request(app.getHttpServer())
+      .post('/api/v1/orders/sell/take-profit')
+      .send({
+        traderId: '101',
+        stockId: '1',
+        symbol: 'AAPL',
+        exchangeId: '1',
+        quantity: 1,
+        targetPrice: 290,
+      })
+      .expect(201)
+      .expect((response) => {
+        const body = response.body as Record<string, unknown>;
+        expect(body).toMatchObject({
+          traderId: '101',
+          stockId: '1',
+          side: 'SELL',
+          orderType: 'TAKE_PROFIT',
+          status: 'PENDING_CONDITION',
+          symbol: 'AAPL',
+          exchangeId: '1',
+          quantity: 1,
+          estimatedUnitPrice: 290,
+          limitPrice: 290,
+          grossAmount: 290,
+          reservedAmount: 0,
+          currency: 'USD',
+        });
+        expect(body.orderReference).toEqual(expect.any(String));
+      });
+  });
 });
