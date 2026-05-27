@@ -3,6 +3,8 @@ import { INestApplication, VersioningType } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
+import { InMemoryOrderSettlementRepository } from './../src/settlements/repositories/in-memory-order-settlement.repository';
+import { ORDER_SETTLEMENT_REPOSITORY } from './../src/settlements/repositories/order-settlement.repository';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
@@ -170,6 +172,71 @@ describe('AppController (e2e)', () => {
           brokerName: 'ALPACA',
         });
         expect(body.sentAt).toEqual(expect.any(String));
+      });
+  });
+
+  it('/api/v1/orders/:orderReference/settlement/sync (POST)', () => {
+    const settlementRepository = app.get<InMemoryOrderSettlementRepository>(
+      ORDER_SETTLEMENT_REPOSITORY,
+    );
+    settlementRepository.context = {
+      order: {
+        id: '1',
+        orderReference: 'settlement-order-reference',
+        traderId: '101',
+        side: 'BUY',
+        orderType: 'MARKET',
+        status: 'SENT_TO_BROKER',
+        symbol: 'AAPL',
+        stockId: '1',
+        quantity: 1,
+        estimatedUnitPrice: 250,
+        grossAmount: 250,
+        reservedAmount: 251,
+        currency: 'USD',
+      },
+      execution: {
+        brokerName: 'ALPACA',
+        externalOrderId: 'alpaca-settlement-reference',
+        brokerStatus: 'ACCEPTED',
+      },
+    };
+
+    return request(app.getHttpServer())
+      .post('/api/v1/orders/settlement-order-reference/settlement/sync')
+      .set('Authorization', 'Bearer trader-token')
+      .send({
+        actorId: 'broker-reviewer',
+        notificationRecipient: {
+          email: 'trader@nexus.local',
+          name: 'Andy Trader',
+        },
+      })
+      .expect(200)
+      .expect((response) => {
+        const body = response.body as Record<string, unknown>;
+        expect(body).toMatchObject({
+          orderId: '1',
+          orderReference: 'settlement-order-reference',
+          traderId: '101',
+          side: 'BUY',
+          status: 'EXECUTED',
+          symbol: 'AAPL',
+          quantity: 1,
+          filledQuantity: 1,
+          averageFilledPrice: 250,
+          settledAmount: 250,
+          commissionAmount: 1,
+          netAmount: 251,
+          currency: 'USD',
+          brokerName: 'ALPACA',
+          externalOrderId: 'alpaca-settlement-reference',
+          brokerStatus: 'filled',
+          portfolioUpdated: true,
+          fundsUpdated: true,
+          notificationDelivered: true,
+        });
+        expect(body.settledAt).toEqual(expect.any(String));
       });
   });
 
