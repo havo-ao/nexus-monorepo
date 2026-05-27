@@ -8,6 +8,7 @@ import { ExecutionsModule } from './executions/executions.module';
 import { FundsValidationModule } from './funds-validation/funds-validation.module';
 import { HoldingsValidationModule } from './holdings-validation/holdings-validation.module';
 import { MarketValidationModule } from './market-validation/market-validation.module';
+import { OrderCancellationModule } from './order-cancellation/order-cancellation.module';
 import { OrderStatusModule } from './order-status/order-status.module';
 import { OrdersModule } from './orders/orders.module';
 
@@ -22,6 +23,7 @@ const databaseImports = process.env.NODE_ENV === 'test' ? [] : [DatabaseModule];
     FundsValidationModule,
     HoldingsValidationModule,
     MarketValidationModule,
+    OrderCancellationModule,
     OrderStatusModule,
     OrdersModule,
   ],

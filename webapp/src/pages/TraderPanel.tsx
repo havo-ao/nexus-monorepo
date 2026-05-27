@@ -21,6 +21,7 @@ import { useHistory, useLocation } from "react-router-dom";
 import NavBar from "../components/NavBar";
 import {
   calculateCommission,
+  cancelOrder,
   createLimitBuyOrder,
   createLimitSellOrder,
   createMarketBuyOrder,
@@ -42,6 +43,7 @@ import {
   type MarketValidationResponse,
   type OrderStatusHistoryEntryResponse,
   type OrderStatusResponse,
+  type CancelOrderResponse,
   type TradingOrderResponse,
 } from "../api/trading";
 import type { UserProfile } from "../api/types";
@@ -107,12 +109,15 @@ const TraderPanel: React.FC = () => {
   const [orderStatusHistory, setOrderStatusHistory] = useState<
     OrderStatusHistoryEntryResponse[]
   >([]);
+  const [cancelledOrder, setCancelledOrder] =
+    useState<CancelOrderResponse | null>(null);
   const [orderStatusError, setOrderStatusError] = useState("");
   const [isLoadingOrderStatus, setIsLoadingOrderStatus] = useState(false);
   const [brokerValidation, setBrokerValidation] =
     useState<BrokerOrderValidationResponse | null>(null);
   const [brokerValidationError, setBrokerValidationError] = useState("");
   const [isValidatingBrokerOrder, setIsValidatingBrokerOrder] = useState(false);
+  const [isCancellingOrder, setIsCancellingOrder] = useState(false);
 
   const quantity = Number(orderQuantity);
   const activePrice =
@@ -305,6 +310,7 @@ const TraderPanel: React.FC = () => {
   const handleLoadOrderStatus = async () => {
     setOrderStatus(null);
     setOrderStatusHistory([]);
+    setCancelledOrder(null);
     setOrderStatusError("");
 
     if (!orderReference.trim()) {
@@ -360,6 +366,42 @@ const TraderPanel: React.FC = () => {
       );
     } finally {
       setIsValidatingBrokerOrder(false);
+    }
+  };
+
+  const handleCancelOrder = async () => {
+    setCancelledOrder(null);
+    setOrderStatusError("");
+
+    if (!orderReference.trim() || !traderId.trim()) {
+      setOrderStatusError("Enter an order reference and trader.");
+      return;
+    }
+
+    setIsCancellingOrder(true);
+    try {
+      const result = await cancelOrder(orderReference.trim(), {
+        actorId: traderId.trim(),
+      });
+      setCancelledOrder(result);
+      setOrderStatus((current) =>
+        current
+          ? {
+              ...current,
+              status: result.currentStatus,
+              reservedAmount: Math.max(
+                current.reservedAmount - result.releasedAmount,
+                0,
+              ),
+            }
+          : current,
+      );
+    } catch (error) {
+      setOrderStatusError(
+        error instanceof Error ? error.message : "Unable to cancel order.",
+      );
+    } finally {
+      setIsCancellingOrder(false);
     }
   };
 
@@ -1001,10 +1043,24 @@ const TraderPanel: React.FC = () => {
                 >
                   {isLoadingOrderStatus ? "Loading" : "Load Status"}
                 </IonButton>
+                <IonButton
+                  expand="block"
+                  fill="outline"
+                  onClick={handleCancelOrder}
+                  disabled={isCancellingOrder}
+                >
+                  {isCancellingOrder ? "Cancelling" : "Cancel Order"}
+                </IonButton>
                 {orderStatus && (
                   <p className="trader-panel-message approved">
                     {orderStatus.symbol} {orderStatus.side.toLowerCase()} order
                     is {orderStatus.status.replaceAll("_", " ").toLowerCase()}.
+                  </p>
+                )}
+                {cancelledOrder && (
+                  <p className="trader-panel-message approved">
+                    Order {cancelledOrder.orderReference} was cancelled.
+                    Released {moneyFormatter.format(cancelledOrder.releasedAmount)}.
                   </p>
                 )}
                 {orderStatusHistory.length > 0 && (
