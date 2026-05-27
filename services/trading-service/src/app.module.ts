@@ -11,6 +11,7 @@ import { MarketValidationModule } from './market-validation/market-validation.mo
 import { OrderCancellationModule } from './order-cancellation/order-cancellation.module';
 import { OrderStatusModule } from './order-status/order-status.module';
 import { OrdersModule } from './orders/orders.module';
+import { PendingOrdersModule } from './pending-orders/pending-orders.module';
 import { SettlementsModule } from './settlements/settlements.module';
 
 const databaseImports = process.env.NODE_ENV === 'test' ? [] : [DatabaseModule];
@@ -27,6 +28,7 @@ const databaseImports = process.env.NODE_ENV === 'test' ? [] : [DatabaseModule];
     OrderCancellationModule,
     OrderStatusModule,
     OrdersModule,
+    PendingOrdersModule,
     SettlementsModule,
   ],
   controllers: [AppController],
