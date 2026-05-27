@@ -13,6 +13,7 @@ import {
   checkmarkCircleOutline,
   informationCircleOutline,
   layersOutline,
+  listOutline,
   paperPlaneOutline,
   pulseOutline,
   shieldCheckmarkOutline,
@@ -55,6 +56,7 @@ import "./TraderPanel.css";
 
 type BuyOrderMode = "MARKET" | "LIMIT" | "STOP_LOSS" | "TAKE_PROFIT";
 type OrderSide = "BUY" | "SELL";
+type WorkflowStepStatus = "ready" | "active" | "done";
 
 const moneyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -125,6 +127,7 @@ const TraderPanel: React.FC = () => {
   const [brokerExecutionError, setBrokerExecutionError] = useState("");
   const [isSendingToBroker, setIsSendingToBroker] = useState(false);
   const [isCancellingOrder, setIsCancellingOrder] = useState(false);
+  const [activeWorkflowStep, setActiveWorkflowStep] = useState(1);
 
   const quantity = Number(orderQuantity);
   const activePrice =
@@ -135,6 +138,61 @@ const TraderPanel: React.FC = () => {
       : 0;
   const nextStatus =
     orderMode === "MARKET" ? "Pending execution" : "Pending condition";
+  const currentOrderStatus =
+    brokerExecution?.status ?? orderStatus?.status ?? createdOrder?.status;
+  const currentOrderReference =
+    brokerExecution?.orderReference ??
+    orderStatus?.orderReference ??
+    createdOrder?.orderReference ??
+    orderReference;
+  const hasValidationEvidence = Boolean(
+    validation ||
+      holdingsValidation ||
+      marketValidation ||
+      commissionCalculation ||
+      commissionDistribution,
+  );
+  const isBrokerApproved = brokerValidation?.decision === "APPROVE";
+  const isOrderSentToBroker = brokerExecution?.status === "SENT_TO_BROKER";
+  const hasTrackingEvidence = Boolean(
+    orderStatus || orderStatusHistory.length > 0 || cancelledOrder,
+  );
+  const workflowSteps = [
+    ["1", "Order", "Create a pending order"],
+    ["2", "Evidence", "Validate funds, market and fees"],
+    ["3", "Broker", "Approve or reject"],
+    ["4", "Alpaca", "Submit externally"],
+    ["5", "Track", "Review state history"],
+  ];
+
+  const getWorkflowStepStatus = (step: number): WorkflowStepStatus => {
+    if (activeWorkflowStep === step) {
+      return "active";
+    }
+    if (step === 1) {
+      return createdOrder ? "done" : "ready";
+    }
+    if (step === 2) {
+      return hasValidationEvidence ? "done" : "ready";
+    }
+    if (step === 3) {
+      return isBrokerApproved ? "done" : "ready";
+    }
+    if (step === 4) {
+      return isOrderSentToBroker ? "done" : "ready";
+    }
+    return hasTrackingEvidence ? "done" : "ready";
+  };
+
+  const getWorkflowStepLabel = (status: WorkflowStepStatus): string => {
+    if (status === "done") {
+      return "Done";
+    }
+    if (status === "active") {
+      return "Current";
+    }
+    return "Ready";
+  };
 
   const handleOrderSideChange = (nextSide: OrderSide) => {
     setOrderSide(nextSide);
@@ -172,6 +230,7 @@ const TraderPanel: React.FC = () => {
         grossAmount: amount,
       });
       setValidation(result);
+      setActiveWorkflowStep(2);
     } catch (error) {
       setValidationError(
         error instanceof Error
@@ -198,6 +257,7 @@ const TraderPanel: React.FC = () => {
         exchangeId: exchangeId.trim(),
       });
       setMarketValidation(result);
+      setActiveWorkflowStep(2);
     } catch (error) {
       setMarketValidationError(
         error instanceof Error
@@ -234,6 +294,7 @@ const TraderPanel: React.FC = () => {
         quantity,
       });
       setHoldingsValidation(result);
+      setActiveWorkflowStep(2);
     } catch (error) {
       setHoldingsValidationError(
         error instanceof Error
@@ -269,6 +330,7 @@ const TraderPanel: React.FC = () => {
         grossAmount: estimatedGrossAmount,
       });
       setCommissionCalculation(result);
+      setActiveWorkflowStep(2);
     } catch (error) {
       setCommissionError(
         error instanceof Error
@@ -301,6 +363,7 @@ const TraderPanel: React.FC = () => {
         commissionAmount: commissionCalculation.commissionAmount,
       });
       setCommissionDistribution(result);
+      setActiveWorkflowStep(2);
     } catch (error) {
       setCommissionDistributionError(
         error instanceof Error
@@ -333,6 +396,7 @@ const TraderPanel: React.FC = () => {
       ]);
       setOrderStatus(status);
       setOrderStatusHistory(history);
+      setActiveWorkflowStep(5);
     } catch (error) {
       setOrderStatusError(
         error instanceof Error ? error.message : "Unable to load order status.",
@@ -365,6 +429,7 @@ const TraderPanel: React.FC = () => {
       setOrderStatus(null);
       setOrderStatusHistory([]);
       setBrokerExecution(null);
+      setActiveWorkflowStep(decision === "APPROVE" ? 4 : 5);
     } catch (error) {
       setBrokerValidationError(
         error instanceof Error
@@ -402,6 +467,7 @@ const TraderPanel: React.FC = () => {
           ? { ...current, status: result.status }
           : current,
       );
+      setActiveWorkflowStep(5);
     } catch (error) {
       setBrokerExecutionError(
         error instanceof Error
@@ -429,6 +495,7 @@ const TraderPanel: React.FC = () => {
         actorId: traderId.trim(),
       });
       setCancelledOrder(result);
+      setActiveWorkflowStep(5);
       setOrderStatus((current) =>
         current
           ? {
@@ -519,6 +586,7 @@ const TraderPanel: React.FC = () => {
       setOrderStatus(null);
       setOrderStatusHistory([]);
       setBrokerValidation(null);
+      setActiveWorkflowStep(2);
     } catch (error) {
       setOrderError(
         error instanceof Error
@@ -542,19 +610,28 @@ const TraderPanel: React.FC = () => {
           <header className="trader-panel-header">
             <div>
               <span className="trader-panel-eyebrow">Trading</span>
-              <h1>Order ticket</h1>
+              <h1>Trading desk</h1>
               <p>
-                Create buy and sell orders with the validations required before
-                execution.
+                Prepare, review and route equity orders through the Nexus
+                trading flow.
               </p>
             </div>
-            <button
-              type="button"
-              className="trader-panel-secondary-action"
-              onClick={() => history.push("/markets")}
-            >
-              Market
-            </button>
+            <div className="trader-panel-actions">
+              <button
+                type="button"
+                className="trader-panel-secondary-action"
+                onClick={() => history.push("/markets")}
+              >
+                Market
+              </button>
+              <button
+                type="button"
+                className="trader-panel-secondary-action"
+                onClick={() => history.push("/portfolio")}
+              >
+                Portfolio
+              </button>
+            </div>
           </header>
 
           <section className="trader-session-strip">
@@ -572,15 +649,44 @@ const TraderPanel: React.FC = () => {
             </div>
           </section>
 
-          <section className="trader-panel-grid">
-            <article className="trader-order-ticket">
+          <section className="trader-workflow-rail" aria-label="Trading steps">
+            {workflowSteps.map(([step, title, detail]) => {
+              const status = getWorkflowStepStatus(Number(step));
+              return (
+                <button
+                  className={`trader-workflow-step ${status}`}
+                  key={step}
+                  onClick={() => setActiveWorkflowStep(Number(step))}
+                  type="button"
+                >
+                  <span>{step}</span>
+                  <div>
+                    <strong>{title}</strong>
+                    <small>{detail}</small>
+                  </div>
+                  <em>{getWorkflowStepLabel(status)}</em>
+                </button>
+              );
+            })}
+          </section>
+
+          <section
+            className={`trader-panel-grid ${
+              activeWorkflowStep === 1 ? "" : "single"
+            }`}
+          >
+            {activeWorkflowStep === 1 && (
+              <article className="trader-order-ticket">
               <div className="trader-panel-section-heading">
                 <span>
                   <IonIcon icon={ticketOutline} />
                 </span>
                 <div>
-                  <h2>{orderSide === "BUY" ? "Buy order" : "Sell order"}</h2>
-                  <p>Market orders wait for execution; limits wait for price.</p>
+                  <h2>Step 1 · Create order</h2>
+                  <p>
+                    {orderSide === "BUY" ? "Buy order" : "Sell order"} ·{" "}
+                    {nextStatus}
+                  </p>
                 </div>
               </div>
 
@@ -754,6 +860,16 @@ const TraderPanel: React.FC = () => {
                 </div>
               </div>
 
+              <div className="trader-current-order">
+                <span>Working reference</span>
+                <strong>{currentOrderReference || "No order selected"}</strong>
+                <small>
+                  {currentOrderStatus
+                    ? currentOrderStatus.replaceAll("_", " ").toLowerCase()
+                    : "Create or load an order to continue"}
+                </small>
+              </div>
+
               <IonButton
                 expand="block"
                 className="trader-primary-button"
@@ -783,23 +899,71 @@ const TraderPanel: React.FC = () => {
               {orderError && (
                 <p className="trader-panel-message rejected">{orderError}</p>
               )}
-            </article>
+              </article>
+            )}
 
             <aside className="trader-precheck-panel">
               <div className="trader-panel-section-heading">
                 <span>
-                  <IonIcon icon={checkmarkCircleOutline} />
+                  <IonIcon icon={listOutline} />
                 </span>
                 <div>
-                  <h2>Pre-checks</h2>
-                  <p>Run validations independently when you need evidence.</p>
+                  <h2>Order dashboard</h2>
+                  <p>Current reference, state and journey navigation.</p>
                 </div>
               </div>
 
               <section className="trader-precheck-section">
                 <div className="trader-precheck-title">
+                  <IonIcon icon={checkmarkCircleOutline} />
+                  <h3>Current order</h3>
+                </div>
+                <div className="trader-precheck-fields">
+                  <IonItem>
+                    <IonLabel position="stacked">Order reference</IonLabel>
+                    <IonInput
+                      value={orderReference}
+                      onIonInput={(event) =>
+                        setOrderReference(String(event.detail.value ?? ""))
+                      }
+                    />
+                  </IonItem>
+                </div>
+                <p className="trader-panel-note">
+                  {currentOrderStatus
+                    ? `Status: ${currentOrderStatus.replaceAll("_", " ").toLowerCase()}`
+                    : "Create an order or paste a reference to continue."}
+                </p>
+                <div className="trader-dashboard-metrics">
+                  <div>
+                    <span>Active step</span>
+                    <strong>{activeWorkflowStep}</strong>
+                  </div>
+                  <div>
+                    <span>Order state</span>
+                    <strong>
+                      {currentOrderStatus
+                        ? currentOrderStatus.replaceAll("_", " ")
+                        : "NOT STARTED"}
+                    </strong>
+                  </div>
+                  <div>
+                    <span>Broker</span>
+                    <strong>
+                      {brokerExecution?.brokerName ??
+                        brokerValidation?.brokerId ??
+                        "Pending"}
+                    </strong>
+                  </div>
+                </div>
+              </section>
+
+              {activeWorkflowStep === 2 && (
+                <>
+              <section className="trader-precheck-section">
+                <div className="trader-precheck-title">
                   <IonIcon icon={cashOutline} />
-                  <h3>Funds</h3>
+                  <h3>Step 2 · Funds</h3>
                 </div>
                 <div className="trader-precheck-fields">
                   <IonItem>
@@ -845,7 +1009,7 @@ const TraderPanel: React.FC = () => {
               <section className="trader-precheck-section">
                 <div className="trader-precheck-title">
                   <IonIcon icon={pulseOutline} />
-                  <h3>Market</h3>
+                  <h3>Step 2 · Market</h3>
                 </div>
                 <IonButton
                   expand="block"
@@ -878,7 +1042,7 @@ const TraderPanel: React.FC = () => {
               <section className="trader-precheck-section">
                 <div className="trader-precheck-title">
                   <IonIcon icon={layersOutline} />
-                  <h3>Holdings</h3>
+                  <h3>Step 2 · Holdings</h3>
                 </div>
                 <div className="trader-precheck-fields compact">
                   <IonItem>
@@ -935,7 +1099,7 @@ const TraderPanel: React.FC = () => {
               <section className="trader-precheck-section">
                 <div className="trader-precheck-title">
                   <IonIcon icon={cashOutline} />
-                  <h3>Commission</h3>
+                  <h3>Step 2 · Commission</h3>
                 </div>
                 <div className="trader-precheck-fields">
                   <IonItem>
@@ -1002,22 +1166,16 @@ const TraderPanel: React.FC = () => {
                   </p>
                 )}
               </section>
+                </>
+              )}
 
-              <section className="trader-precheck-section">
+              {activeWorkflowStep === 3 && (
+                <section className="trader-precheck-section">
                 <div className="trader-precheck-title">
                   <IonIcon icon={shieldCheckmarkOutline} />
-                  <h3>Broker validation</h3>
+                  <h3>Step 3 · Broker validation</h3>
                 </div>
                 <div className="trader-precheck-fields compact">
-                  <IonItem>
-                    <IonLabel position="stacked">Order reference</IonLabel>
-                    <IonInput
-                      value={orderReference}
-                      onIonInput={(event) =>
-                        setOrderReference(String(event.detail.value ?? ""))
-                      }
-                    />
-                  </IonItem>
                   <IonItem>
                     <IonLabel position="stacked">Broker</IonLabel>
                     <IonInput
@@ -1071,22 +1229,13 @@ const TraderPanel: React.FC = () => {
                   </p>
                 )}
               </section>
+              )}
 
-              <section className="trader-precheck-section">
+              {activeWorkflowStep === 4 && (
+                <section className="trader-precheck-section">
                 <div className="trader-precheck-title">
                   <IonIcon icon={paperPlaneOutline} />
-                  <h3>Broker execution</h3>
-                </div>
-                <div className="trader-precheck-fields">
-                  <IonItem>
-                    <IonLabel position="stacked">Order reference</IonLabel>
-                    <IonInput
-                      value={orderReference}
-                      onIonInput={(event) =>
-                        setOrderReference(String(event.detail.value ?? ""))
-                      }
-                    />
-                  </IonItem>
+                  <h3>Step 4 · Alpaca execution</h3>
                 </div>
                 <IonButton
                   expand="block"
@@ -1125,22 +1274,13 @@ const TraderPanel: React.FC = () => {
                   </p>
                 )}
               </section>
+              )}
 
-              <section className="trader-precheck-section">
+              {activeWorkflowStep === 5 && (
+                <section className="trader-precheck-section">
                 <div className="trader-precheck-title">
                   <IonIcon icon={informationCircleOutline} />
-                  <h3>Status</h3>
-                </div>
-                <div className="trader-precheck-fields">
-                  <IonItem>
-                    <IonLabel position="stacked">Order reference</IonLabel>
-                    <IonInput
-                      value={orderReference}
-                      onIonInput={(event) =>
-                        setOrderReference(String(event.detail.value ?? ""))
-                      }
-                    />
-                  </IonItem>
+                  <h3>Step 5 · Track order</h3>
                 </div>
                 <IonButton
                   expand="block"
@@ -1188,6 +1328,27 @@ const TraderPanel: React.FC = () => {
                   </p>
                 )}
               </section>
+              )}
+
+              <div className="trader-step-navigation">
+                <IonButton
+                  fill="outline"
+                  onClick={() =>
+                    setActiveWorkflowStep((current) => Math.max(current - 1, 1))
+                  }
+                  disabled={activeWorkflowStep === 1}
+                >
+                  Previous
+                </IonButton>
+                <IonButton
+                  onClick={() =>
+                    setActiveWorkflowStep((current) => Math.min(current + 1, 5))
+                  }
+                  disabled={activeWorkflowStep === 5}
+                >
+                  Next
+                </IonButton>
+              </div>
             </aside>
           </section>
         </main>
