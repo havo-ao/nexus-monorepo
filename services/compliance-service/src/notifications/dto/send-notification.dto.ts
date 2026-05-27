@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsEnum, IsISO8601, IsNotEmpty, IsString } from 'class-validator';
+import {
+  IsEmail,
+  IsEnum,
+  IsISO8601,
+  IsNotEmpty,
+  IsString,
+} from 'class-validator';
 
 export const notificationTemplateNames = [
   'LOGIN_SUCCESS',
@@ -26,7 +32,10 @@ export const notificationTemplateDescriptions: Record<
 };
 
 export const notificationTemplateDescription = notificationTemplateNames
-  .map((templateName) => `${templateName}: ${notificationTemplateDescriptions[templateName]}`)
+  .map(
+    (templateName) =>
+      `${templateName}: ${notificationTemplateDescriptions[templateName]}`,
+  )
   .join(' ');
 
 export class SendNotificationDto {

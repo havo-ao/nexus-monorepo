@@ -3,12 +3,15 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/adapters/handlebars.adapter';
 import { join } from 'node:path';
+import { AuditModule } from '../audit/audit.module';
 import { NotificationsController } from './controllers/notifications.controller';
+import { NotificationAttemptsRepository } from './repositories/notification-attempts.repository';
 import { NotificationsService } from './services/notifications.service';
 
 @Module({
   imports: [
     ConfigModule,
+    AuditModule,
     MailerModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
@@ -40,6 +43,7 @@ import { NotificationsService } from './services/notifications.service';
     }),
   ],
   controllers: [NotificationsController],
-  providers: [NotificationsService],
+  providers: [NotificationAttemptsRepository, NotificationsService],
+  exports: [NotificationsService],
 })
 export class NotificationsModule {}
