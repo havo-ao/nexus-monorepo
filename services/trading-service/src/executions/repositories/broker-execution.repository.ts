@@ -28,10 +28,22 @@ export type SaveBrokerExecutionCommand = {
   brokerResponse: BrokerOrderResponse;
 };
 
+export type SaveBrokerExecutionFailureCommand = {
+  order: ExecutableOrder;
+  brokerName: string;
+  brokerStatus: string;
+  requestSummary: string;
+  failureReason: string;
+};
+
 export interface BrokerExecutionRepository {
   findExecutableOrder(orderReference: string): Promise<ExecutableOrder | null>;
 
   markOrderSentToBroker(
     command: SaveBrokerExecutionCommand,
+  ): Promise<BrokerOrderExecution>;
+
+  markOrderFailedByBroker(
+    command: SaveBrokerExecutionFailureCommand,
   ): Promise<BrokerOrderExecution>;
 }

@@ -36,4 +36,31 @@ describe('InMemoryBrokerExecutionRepository', () => {
       null,
     );
   });
+
+  it('marks an order as failed by broker', async () => {
+    const repository = new InMemoryBrokerExecutionRepository();
+    const order = await repository.findExecutableOrder(
+      'broker-failure-order-reference',
+    );
+
+    await expect(
+      repository.markOrderFailedByBroker({
+        order: order!,
+        brokerName: 'ALPACA',
+        brokerStatus: 'FAILED',
+        requestSummary: 'BUY 1 FAIL MARKET',
+        failureReason: 'Broker rejected the order submission',
+      }),
+    ).resolves.toMatchObject({
+      orderReference: 'broker-failure-order-reference',
+      status: 'FAILED',
+      externalOrderId: 'unavailable',
+      brokerStatus: 'FAILED',
+    });
+    await expect(
+      repository.findExecutableOrder('broker-failure-order-reference'),
+    ).resolves.toMatchObject({
+      status: 'FAILED',
+    });
+  });
 });

@@ -8,6 +8,7 @@ import type {
   BrokerExecutionRepository,
   ExecutableOrder,
   SaveBrokerExecutionCommand,
+  SaveBrokerExecutionFailureCommand,
 } from './broker-execution.repository';
 
 @Injectable()
@@ -47,6 +48,14 @@ export class TypeOrmBrokerExecutionRepository implements BrokerExecutionReposito
     );
   }
 
+  markOrderFailedByBroker(
+    command: SaveBrokerExecutionFailureCommand,
+  ): Promise<BrokerOrderExecution> {
+    return this.dataSource.transaction((manager) =>
+      this.markFailedInTransaction(manager, command),
+    );
+  }
+
   private async markSentInTransaction(
     manager: EntityManager,
     command: SaveBrokerExecutionCommand,
@@ -81,6 +90,59 @@ export class TypeOrmBrokerExecutionRepository implements BrokerExecutionReposito
     statusEvent.actorType = 'BROKER';
     statusEvent.actorId = command.brokerResponse.brokerName;
     statusEvent.reason = `Order sent to broker ${command.brokerResponse.brokerName}`;
+    await statusEventRepository.save(statusEvent);
+
+    return new BrokerOrderExecution(
+      savedOrder.id,
+      savedOrder.orderReference,
+      savedOrder.traderId,
+      savedOrder.side,
+      savedOrder.orderType,
+      savedOrder.status,
+      savedOrder.symbol,
+      Number(savedOrder.quantity),
+      savedEvent.externalOrderId,
+      savedEvent.brokerStatus,
+      savedEvent.brokerName,
+      savedEvent.createdAt.toISOString(),
+    );
+  }
+
+  private async markFailedInTransaction(
+    manager: EntityManager,
+    command: SaveBrokerExecutionFailureCommand,
+  ): Promise<BrokerOrderExecution> {
+    const orderRepository = manager.getRepository(TradingOrderEntity);
+    const eventRepository = manager.getRepository(BrokerExecutionEvent);
+    const statusEventRepository = manager.getRepository(OrderStatusEventEntity);
+
+    const order = await orderRepository.findOneOrFail({
+      where: { orderReference: command.order.orderReference },
+      lock: { mode: 'pessimistic_write' },
+    });
+    const previousStatus = order.status;
+    order.status = 'FAILED';
+    order.rejectionReason = command.failureReason;
+    const savedOrder = await orderRepository.save(order);
+
+    const brokerEvent = new BrokerExecutionEvent();
+    brokerEvent.orderId = savedOrder.id;
+    brokerEvent.orderReference = savedOrder.orderReference;
+    brokerEvent.brokerName = command.brokerName;
+    brokerEvent.externalOrderId = 'unavailable';
+    brokerEvent.brokerStatus = command.brokerStatus;
+    brokerEvent.requestSummary = command.requestSummary;
+    brokerEvent.responseSummary = command.failureReason;
+    const savedEvent = await eventRepository.save(brokerEvent);
+
+    const statusEvent = new OrderStatusEventEntity();
+    statusEvent.orderId = savedOrder.id;
+    statusEvent.orderReference = savedOrder.orderReference;
+    statusEvent.fromStatus = previousStatus;
+    statusEvent.toStatus = savedOrder.status;
+    statusEvent.actorType = 'BROKER';
+    statusEvent.actorId = command.brokerName;
+    statusEvent.reason = command.failureReason;
     await statusEventRepository.save(statusEvent);
 
     return new BrokerOrderExecution(
