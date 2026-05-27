@@ -22,7 +22,11 @@ export class InMemoryOrderRepository implements OrderRepository {
   createMarketBuyOrder(
     command: CreateMarketBuyOrderCommand,
   ): Promise<OrderCreationResult> {
-    return this.createBuyOrder(command, 'MARKET', 'PENDING_EXECUTION');
+    return this.createBuyOrder(
+      command,
+      'MARKET',
+      command.initialStatus ?? 'PENDING_EXECUTION',
+    );
   }
 
   createLimitBuyOrder(
@@ -34,7 +38,11 @@ export class InMemoryOrderRepository implements OrderRepository {
   createMarketSellOrder(
     command: CreateMarketSellOrderCommand,
   ): Promise<OrderCreationResult> {
-    return this.createSellOrder(command, 'MARKET', 'PENDING_EXECUTION');
+    return this.createSellOrder(
+      command,
+      'MARKET',
+      command.initialStatus ?? 'PENDING_EXECUTION',
+    );
   }
 
   createLimitSellOrder(
@@ -62,7 +70,7 @@ export class InMemoryOrderRepository implements OrderRepository {
       | CreateStopLossOrderCommand
       | CreateTakeProfitOrderCommand,
     orderType: 'MARKET' | 'LIMIT' | 'STOP_LOSS' | 'TAKE_PROFIT',
-    status: 'PENDING_EXECUTION' | 'PENDING_CONDITION',
+    status: 'PENDING_EXECUTION' | 'PENDING_CONDITION' | 'PENDING_MARKET_OPEN',
   ): Promise<OrderCreationResult> {
     const order = this.createOrder(
       command,
@@ -85,7 +93,7 @@ export class InMemoryOrderRepository implements OrderRepository {
   private createBuyOrder(
     command: CreateMarketBuyOrderCommand | CreateLimitBuyOrderCommand,
     orderType: 'MARKET' | 'LIMIT',
-    status: 'PENDING_EXECUTION' | 'PENDING_CONDITION',
+    status: 'PENDING_EXECUTION' | 'PENDING_CONDITION' | 'PENDING_MARKET_OPEN',
   ): Promise<OrderCreationResult> {
     const availableAmount = roundMoney(this.availableAmount);
 
@@ -130,7 +138,7 @@ export class InMemoryOrderRepository implements OrderRepository {
       | CreateTakeProfitOrderCommand,
     side: 'BUY' | 'SELL',
     orderType: 'MARKET' | 'LIMIT' | 'STOP_LOSS' | 'TAKE_PROFIT',
-    status: 'PENDING_EXECUTION' | 'PENDING_CONDITION',
+    status: 'PENDING_EXECUTION' | 'PENDING_CONDITION' | 'PENDING_MARKET_OPEN',
     reservedAmount: number,
     limitPrice?: number,
     stockId?: string,
