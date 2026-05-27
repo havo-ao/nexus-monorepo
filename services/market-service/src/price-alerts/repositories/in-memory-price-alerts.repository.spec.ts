@@ -65,4 +65,18 @@ describe('InMemoryPriceAlertsRepository', () => {
 
     expect(repository.findActiveAlerts()).toEqual([]);
   });
+
+  it('ignores triggered alerts that do not have an assigned id', () => {
+    const repository = new InMemoryPriceAlertsRepository();
+    const unsavedAlert = PriceAlert.create({
+      traderId: 'trader-123',
+      symbol: 'AAPL',
+      targetPrice: 190,
+      condition: 'ABOVE_OR_EQUAL',
+    });
+
+    repository.markTriggered(unsavedAlert.markTriggered(new Date()));
+
+    expect(repository.findActiveAlerts()).toEqual([]);
+  });
 });

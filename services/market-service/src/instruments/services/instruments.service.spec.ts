@@ -115,6 +115,23 @@ describe('InstrumentsService', () => {
     await expect(service.getAvailableInstruments()).resolves.toHaveLength(1);
   });
 
+  it('uses the default catalog limit when the configured limit is invalid', async () => {
+    process.env.ALPHA_VANTAGE_INSTRUMENT_LIMIT = 'invalid';
+    repository.findAvailable.mockResolvedValue([
+      Instrument.restore({
+        symbol: 'AAPL',
+        name: 'Apple Inc.',
+        marketCode: 'NASDAQ',
+        currency: 'USD',
+        sector: 'Technology',
+        status: 'ACTIVE',
+        assetType: 'Stock',
+      }),
+    ]);
+
+    await expect(service.getAvailableInstruments()).resolves.toHaveLength(1);
+  });
+
   it('filters listings outside the backend curated Alpha Vantage symbol set', async () => {
     repository.findAvailable.mockResolvedValue([
       Instrument.restore({

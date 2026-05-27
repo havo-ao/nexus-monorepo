@@ -224,6 +224,92 @@ describe('InstrumentDetailSyncService', () => {
     ).not.toHaveBeenCalled();
   });
 
+  it('reports current quote provider rejections and skips history sync', async () => {
+    detailService.getInstrumentDetail
+      .mockResolvedValueOnce({
+        ...detail,
+        metadataUpdatedAt: null,
+        quote: null,
+      })
+      .mockResolvedValueOnce(detail);
+    quoteHistoryService.getPriceHistory.mockResolvedValue({
+      symbol: 'AAPL',
+      prices: [],
+    });
+    metadataSyncService.synchronizeMetadata.mockResolvedValue({
+      status: 'SUCCESS',
+      provider: 'alpha-vantage-overview-compatible',
+      symbol: 'AAPL',
+      preservedLastKnownMetadata: false,
+      message: 'Synchronized metadata for AAPL',
+      instrument: detail,
+    });
+    marketDataSyncService.synchronizeMarketData.mockRejectedValue(
+      new Error('quote timeout'),
+    );
+
+    const result = await service.synchronizeInstrumentDetail('AAPL');
+
+    expect(result.status).toBe('PARTIAL_FAILURE');
+    expect(result.quote).toEqual({
+      status: 'FAILED',
+      provider: 'market-data-provider',
+      message: 'Current quote synchronization failed: quote timeout',
+    });
+    expect(result.history.message).toContain('skipped because current quote');
+    expect(
+      quoteHistorySyncService.synchronizePriceHistory,
+    ).not.toHaveBeenCalled();
+  });
+
+  it('reports history provider rejections while preserving metadata and quote', async () => {
+    detailService.getInstrumentDetail
+      .mockResolvedValueOnce(detail)
+      .mockResolvedValueOnce(detail);
+    quoteHistoryService.getPriceHistory.mockResolvedValue({
+      symbol: 'AAPL',
+      prices: [],
+    });
+    quoteHistorySyncService.synchronizePriceHistory.mockRejectedValue(
+      new Error('history timeout'),
+    );
+
+    const result = await service.synchronizeInstrumentDetail('AAPL');
+
+    expect(result.status).toBe('PARTIAL_FAILURE');
+    expect(result.metadata.status).toBe('SUCCESS');
+    expect(result.quote.status).toBe('SUCCESS');
+    expect(result.history).toEqual({
+      status: 'FAILED',
+      provider: 'market-history-provider',
+      message: 'Historical prices synchronization failed: history timeout',
+    });
+    expect(metadataSyncService.synchronizeMetadata).not.toHaveBeenCalled();
+    expect(marketDataSyncService.synchronizeMarketData).not.toHaveBeenCalled();
+  });
+
+  it('uses local-cache provider labels when cached detail has no provider names', async () => {
+    const cachedDetail = {
+      ...detail,
+      metadataProvider: null,
+      quote: {
+        ...detail.quote,
+        provider: null,
+      },
+    };
+    detailService.getInstrumentDetail.mockResolvedValue(cachedDetail);
+    quoteHistoryService.getPriceHistory.mockResolvedValue({
+      symbol: 'AAPL',
+      prices: Array.from({ length: 10 }, () => detail.quote),
+    });
+
+    const result = await service.synchronizeInstrumentDetail('AAPL');
+
+    expect(result.status).toBe('SUCCESS');
+    expect(result.metadata.provider).toBe('local-cache');
+    expect(result.quote.provider).toBe('local-cache');
+  });
+
   it('returns failed and skips later provider steps when metadata rejects', async () => {
     const incompleteDetail = {
       ...detail,
@@ -265,6 +351,67 @@ describe('InstrumentDetailSyncService', () => {
     ).not.toHaveBeenCalled();
     expect(result.message).toContain('failed for AAPL');
     expect(result.instrument).toBe(incompleteDetail);
+  });
+
+  it('keeps a generic failure message when provider rejection is not an error', async () => {
+    const incompleteDetail = {
+      ...detail,
+      metadataUpdatedAt: null,
+      quote: null,
+    };
+    detailService.getInstrumentDetail.mockResolvedValue(incompleteDetail);
+    quoteHistoryService.getPriceHistory.mockResolvedValue({
+      symbol: 'AAPL',
+      prices: [],
+    });
+    metadataSyncService.synchronizeMetadata.mockRejectedValue('timeout');
+
+    const result = await service.synchronizeInstrumentDetail('AAPL');
+
+    expect(result.status).toBe('FAILED');
+    expect(result.metadata).toEqual({
+      status: 'FAILED',
+      provider: 'instrument-metadata-provider',
+      message: 'Instrument metadata synchronization failed',
+    });
+  });
+
+  it('waits between provider calls when a positive delay is configured', async () => {
+    process.env.ALPHA_VANTAGE_DETAIL_SYNC_DELAY_MS = '1';
+    detailService.getInstrumentDetail
+      .mockResolvedValueOnce({
+        ...detail,
+        metadataUpdatedAt: null,
+        quote: null,
+      })
+      .mockResolvedValueOnce(detail);
+    quoteHistoryService.getPriceHistory.mockResolvedValue({
+      symbol: 'AAPL',
+      prices: Array.from({ length: 10 }, () => detail.quote),
+    });
+    metadataSyncService.synchronizeMetadata.mockResolvedValue({
+      status: 'SUCCESS',
+      provider: 'alpha-vantage-overview-compatible',
+      symbol: 'AAPL',
+      preservedLastKnownMetadata: false,
+      message: 'Synchronized metadata for AAPL',
+      instrument: detail,
+    });
+    marketDataSyncService.synchronizeMarketData.mockResolvedValue({
+      status: 'SUCCESS',
+      provider: 'alpha-vantage-compatible',
+      updatedQuotes: [detail.quote],
+      failedSymbols: [],
+      preservedLastKnownData: false,
+      message: 'Synchronized 1 of 1 market quotes',
+    });
+
+    const result = await service.synchronizeInstrumentDetail('AAPL');
+
+    expect(result.status).toBe('SUCCESS');
+    expect(marketDataSyncService.synchronizeMarketData).toHaveBeenCalledTimes(
+      1,
+    );
   });
 
   it('returns local cached detail without calling providers when data is complete', async () => {
