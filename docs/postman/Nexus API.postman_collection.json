@@ -455,6 +455,48 @@
           ]
         },
         {
+          "name": "Commissions",
+          "item": [
+            {
+              "name": "Calculate Operation Commission",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 201', function () { pm.response.to.have.status(201); });",
+                      "pm.test('commission is calculated', function () { const body = pm.response.json(); pm.expect(body.rateBps).to.eql(35); pm.expect(body.commissionAmount).to.exist; pm.expect(body.netAmount).to.exist; });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"traderId\": \"{{traderId}}\",\n  \"side\": \"BUY\",\n  \"orderType\": \"MARKET\",\n  \"grossAmount\": 750\n}"
+                },
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/commissions/calculate",
+                  "host": ["{{tradingBaseUrl}}"],
+                  "path": ["api", "v1", "commissions", "calculate"]
+                }
+              }
+            }
+          ]
+        },
+        {
           "name": "Orders",
           "item": [
             {

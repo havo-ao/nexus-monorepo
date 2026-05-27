@@ -66,6 +66,7 @@ export const API_PATHS = {
   tradingCreateStopLossOrder: "/api/v1/orders/sell/stop-loss",
   tradingCreateTakeProfitOrder: "/api/v1/orders/sell/take-profit",
   tradingOrderStatus: "/api/v1/orders",
+  tradingCalculateCommission: "/api/v1/commissions/calculate",
   marketDashboard: "/api/v1/dashboard",
   marketMarkets: "/api/v1/markets",
   marketInstruments: "/api/v1/instruments",

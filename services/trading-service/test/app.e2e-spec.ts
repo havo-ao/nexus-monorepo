@@ -74,6 +74,32 @@ describe('AppController (e2e)', () => {
       });
   });
 
+  it('/api/v1/commissions/calculate (POST)', () => {
+    return request(app.getHttpServer())
+      .post('/api/v1/commissions/calculate')
+      .send({
+        traderId: '101',
+        side: 'BUY',
+        orderType: 'MARKET',
+        grossAmount: 750,
+      })
+      .expect(201)
+      .expect((response) => {
+        const body = response.body as Record<string, unknown>;
+        expect(body).toMatchObject({
+          traderId: '101',
+          side: 'BUY',
+          orderType: 'MARKET',
+          grossAmount: 750,
+          rateBps: 35,
+          commissionAmount: 2.63,
+          netAmount: 752.63,
+          currency: 'USD',
+        });
+        expect(body.calculatedAt).toEqual(expect.any(String));
+      });
+  });
+
   it('/api/v1/orders/buy/market (POST)', () => {
     return request(app.getHttpServer())
       .post('/api/v1/orders/buy/market')
