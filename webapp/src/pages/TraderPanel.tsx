@@ -67,6 +67,7 @@ const TraderPanel: React.FC = () => {
   const [orderQuantity, setOrderQuantity] = useState("1");
   const [estimatedUnitPrice, setEstimatedUnitPrice] = useState("250");
   const [limitPrice, setLimitPrice] = useState("240");
+  const [marketEvaluatedAt, setMarketEvaluatedAt] = useState("");
   const [grossAmount, setGrossAmount] = useState("750");
   const [createdOrder, setCreatedOrder] = useState<TradingOrderResponse | null>(
     null,
@@ -354,6 +355,7 @@ const TraderPanel: React.FC = () => {
               ...commonPayload,
               stockId: stockId.trim(),
               estimatedUnitPrice: activePrice,
+              marketEvaluatedAt: marketEvaluatedAt.trim() || undefined,
             })
           : orderSide === "SELL" && orderMode === "LIMIT"
             ? await createLimitSellOrder({
@@ -377,6 +379,7 @@ const TraderPanel: React.FC = () => {
           ? await createMarketBuyOrder({
               ...commonPayload,
               estimatedUnitPrice: activePrice,
+              marketEvaluatedAt: marketEvaluatedAt.trim() || undefined,
             })
           : await createLimitBuyOrder({
               ...commonPayload,
@@ -520,6 +523,18 @@ const TraderPanel: React.FC = () => {
                     }
                   />
                 </IonItem>
+                {orderMode === "MARKET" && (
+                  <IonItem>
+                    <IonLabel position="stacked">Market evaluation time</IonLabel>
+                    <IonInput
+                      placeholder="Optional ISO timestamp"
+                      value={marketEvaluatedAt}
+                      onIonInput={(event) =>
+                        setMarketEvaluatedAt(String(event.detail.value ?? ""))
+                      }
+                    />
+                  </IonItem>
+                )}
                 <IonItem>
                   <IonLabel position="stacked">Symbol</IonLabel>
                   <IonInput
