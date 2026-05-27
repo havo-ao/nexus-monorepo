@@ -1204,11 +1204,12 @@ const TraderPanel: React.FC = () => {
                 </div>
                 {commissionCalculation && (
                   <p className="trader-panel-message approved">
-                    Commission{" "}
+                    Commission:{" "}
                     {moneyFormatter.format(
                       commissionCalculation.commissionAmount,
                     )}{" "}
-                    at {commissionCalculation.rateBps} bps. Net{" "}
+                    ({(commissionCalculation.rateBps / 100).toFixed(2)}%). Net
+                    amount:{" "}
                     {moneyFormatter.format(commissionCalculation.netAmount)}.
                   </p>
                 )}
