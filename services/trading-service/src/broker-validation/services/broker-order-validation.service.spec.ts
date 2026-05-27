@@ -1,4 +1,8 @@
-import { BadRequestException, ConflictException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   type BrokerOrderValidationRepository,
   type BrokerValidatableOrder,
@@ -93,12 +97,70 @@ describe('BrokerOrderValidationService', () => {
     ).rejects.toBeInstanceOf(ConflictException);
   });
 
-  it('rejects invalid input', async () => {
+  it('fails when the order does not exist', async () => {
+    repository.findOrderByReference.mockResolvedValue(null);
+
+    await expect(
+      service.validateOrder({
+        orderReference: 'missing-order',
+        brokerId: '201',
+        decision: 'APPROVE',
+      }),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('uses default reasons when none is provided', async () => {
+    const order = validatableOrder('PENDING_EXECUTION');
+    repository.findOrderByReference.mockResolvedValue(order);
+    repository.saveValidation.mockResolvedValue({
+      orderId: '1',
+      orderReference: 'order-reference',
+      brokerId: '201',
+      decision: 'REJECT',
+      status: 'REJECTED',
+      reason: 'Order rejected by broker',
+      validatedAt: '2026-05-26T14:30:00.000Z',
+    });
+
+    await service.validateOrder({
+      orderReference: 'order-reference',
+      brokerId: '201',
+      decision: 'REJECT',
+    });
+
+    expect(repository.saveValidation.mock.calls[0][0]).toMatchObject({
+      decision: 'REJECT',
+      nextStatus: 'REJECTED',
+      reason: 'Order rejected by broker',
+    });
+  });
+
+  it('rejects an empty order reference', async () => {
     await expect(
       service.validateOrder({
         orderReference: '',
         brokerId: '201',
         decision: 'APPROVE',
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('rejects an empty broker id', async () => {
+    await expect(
+      service.validateOrder({
+        orderReference: 'order-reference',
+        brokerId: ' ',
+        decision: 'APPROVE',
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('rejects unsupported broker decisions', async () => {
+    await expect(
+      service.validateOrder({
+        orderReference: 'order-reference',
+        brokerId: '201',
+        decision: 'HOLD' as 'APPROVE',
       }),
     ).rejects.toBeInstanceOf(BadRequestException);
   });
