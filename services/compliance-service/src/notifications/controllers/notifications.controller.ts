@@ -1,17 +1,26 @@
-import { Body, Controller, Post, Logger } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, Logger } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBody,
   ApiCreatedResponse,
+  ApiOkResponse,
   ApiInternalServerErrorResponse,
   ApiOperation,
+  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
+import { NotificationAttemptResponseDto } from '../dto/notification-attempt-response.dto';
+import { NotificationEventDto } from '../dto/notification-event.dto';
 import { NotificationResponseDto } from '../dto/notification-response.dto';
 import {
   notificationTemplateDescriptions,
   SendNotificationDto,
 } from '../dto/send-notification.dto';
+import {
+  NotificationAttemptFilters,
+  NotificationCategory,
+  NotificationDeliveryStatus,
+} from '../entities/notification-attempt.entity';
 import { NotificationsService } from '../services/notifications.service';
 
 @ApiTags('notifications')
@@ -82,7 +91,39 @@ export class NotificationsController {
   sendEmailNotification(
     @Body() dto: SendNotificationDto,
   ): Promise<NotificationResponseDto> {
-    this.logger.log(`Incoming email notification request: ${JSON.stringify(dto)}`);
+    this.logger.log(
+      `Incoming email notification request: ${JSON.stringify(dto)}`,
+    );
     return this.notificationsService.sendEmailNotification(dto);
+  }
+
+  @Post('events')
+  @ApiOperation({
+    summary: 'Process a compliance notification event',
+    description:
+      'Records notification evidence and sends an email when recipient data is provided.',
+  })
+  @ApiCreatedResponse({ type: NotificationAttemptResponseDto })
+  processEvent(@Body() dto: NotificationEventDto) {
+    return this.notificationsService.processNotificationEvent(dto);
+  }
+
+  @Get('attempts')
+  @ApiOperation({ summary: 'Query notification delivery attempts' })
+  @ApiOkResponse({ type: NotificationAttemptResponseDto, isArray: true })
+  @ApiQuery({ name: 'category', required: false })
+  @ApiQuery({ name: 'deliveryStatus', required: false })
+  @ApiQuery({ name: 'recipientEmail', required: false })
+  @ApiQuery({ name: 'entityId', required: false })
+  findAttempts(@Query() query: Record<string, string>) {
+    const filters: NotificationAttemptFilters = {
+      category: query.category as NotificationCategory | undefined,
+      deliveryStatus: query.deliveryStatus as
+        | NotificationDeliveryStatus
+        | undefined,
+      recipientEmail: query.recipientEmail,
+      entityId: query.entityId,
+    };
+    return this.notificationsService.findAttempts(filters);
   }
 }
