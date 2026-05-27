@@ -232,6 +232,20 @@ export type BrokerOrderValidationResponse = {
   validatedAt: string;
 };
 
+export type CancelOrderRequest = {
+  actorId: string;
+  reason?: string;
+};
+
+export type CancelOrderResponse = {
+  orderId: string;
+  orderReference: string;
+  previousStatus: TradingOrderResponse["status"];
+  currentStatus: TradingOrderResponse["status"];
+  releasedAmount: number;
+  reason: string;
+};
+
 async function readJsonSafe(response: Response): Promise<unknown> {
   const text = await response.text();
   if (!text) {
@@ -567,6 +581,37 @@ export async function validateOrderByBroker(
   }
 
   return body as BrokerOrderValidationResponse;
+}
+
+export async function cancelOrder(
+  orderReference: string,
+  request: CancelOrderRequest,
+): Promise<CancelOrderResponse> {
+  const response = await fetch(
+    tradingApiUrl(
+      `${API_PATHS.tradingOrderStatus}/${encodeURIComponent(orderReference)}/cancel`,
+    ),
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(request),
+    },
+  );
+
+  const body = await readJsonSafe(response);
+
+  if (!response.ok) {
+    const maybeMessage =
+      body && typeof body === "object" && "message" in body
+        ? String((body as { message?: unknown }).message)
+        : "Unable to cancel order.";
+    throw new Error(maybeMessage);
+  }
+
+  return body as CancelOrderResponse;
 }
 
 export async function calculateCommission(

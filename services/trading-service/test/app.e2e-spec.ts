@@ -321,6 +321,23 @@ describe('AppController (e2e)', () => {
       ]);
   });
 
+  it('/api/v1/orders/:orderReference/cancel (POST)', () => {
+    return request(app.getHttpServer())
+      .post('/api/v1/orders/order-reference/cancel')
+      .send({
+        actorId: '101',
+      })
+      .expect(201)
+      .expect({
+        orderId: '1',
+        orderReference: 'order-reference',
+        previousStatus: 'PENDING_EXECUTION',
+        currentStatus: 'CANCELLED',
+        releasedAmount: 250,
+        reason: 'Trader requested cancellation before execution',
+      });
+  });
+
   it('/api/v1/orders/buy/limit (POST)', () => {
     return request(app.getHttpServer())
       .post('/api/v1/orders/buy/limit')
