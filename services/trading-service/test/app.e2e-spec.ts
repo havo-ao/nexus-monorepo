@@ -125,6 +125,29 @@ describe('AppController (e2e)', () => {
       });
   });
 
+  it('/api/v1/executions/broker/orders/:orderReference/send (POST)', () => {
+    return request(app.getHttpServer())
+      .post('/api/v1/executions/broker/orders/order-reference/send')
+      .expect(201)
+      .expect((response) => {
+        const body = response.body as Record<string, unknown>;
+        expect(body).toMatchObject({
+          orderId: '1',
+          orderReference: 'order-reference',
+          traderId: '101',
+          side: 'BUY',
+          orderType: 'MARKET',
+          status: 'SENT_TO_BROKER',
+          symbol: 'AAPL',
+          quantity: 1,
+          externalOrderId: 'alpaca-order-reference',
+          brokerStatus: 'ACCEPTED',
+          brokerName: 'ALPACA',
+        });
+        expect(body.sentAt).toEqual(expect.any(String));
+      });
+  });
+
   it('/api/v1/orders/buy/market (POST)', () => {
     return request(app.getHttpServer())
       .post('/api/v1/orders/buy/market')
