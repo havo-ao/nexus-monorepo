@@ -30,8 +30,9 @@ export class TypeOrmOrderRepository implements OrderRepository {
         manager,
         command,
         'MARKET',
-        'PENDING_EXECUTION',
-        'Market buy order created after funds reservation',
+        command.initialStatus ?? 'PENDING_EXECUTION',
+        command.statusReason ??
+          'Market buy order created after funds reservation',
       ),
     );
   }
@@ -58,8 +59,9 @@ export class TypeOrmOrderRepository implements OrderRepository {
         manager,
         command,
         'MARKET',
-        'PENDING_EXECUTION',
-        'Market sell order created after holdings validation',
+        command.initialStatus ?? 'PENDING_EXECUTION',
+        command.statusReason ??
+          'Market sell order created after holdings validation',
       ),
     );
   }
@@ -110,7 +112,7 @@ export class TypeOrmOrderRepository implements OrderRepository {
     manager: EntityManager,
     command: CreateMarketBuyOrderCommand | CreateLimitBuyOrderCommand,
     orderType: 'MARKET' | 'LIMIT',
-    status: 'PENDING_EXECUTION' | 'PENDING_CONDITION',
+    status: 'PENDING_EXECUTION' | 'PENDING_CONDITION' | 'PENDING_MARKET_OPEN',
     statusReason: string,
   ): Promise<OrderCreationResult> {
     const walletRepository = manager.getRepository(Wallet);
@@ -216,7 +218,7 @@ export class TypeOrmOrderRepository implements OrderRepository {
       | CreateStopLossOrderCommand
       | CreateTakeProfitOrderCommand,
     orderType: 'MARKET' | 'LIMIT' | 'STOP_LOSS' | 'TAKE_PROFIT',
-    status: 'PENDING_EXECUTION' | 'PENDING_CONDITION',
+    status: 'PENDING_EXECUTION' | 'PENDING_CONDITION' | 'PENDING_MARKET_OPEN',
     statusReason: string,
   ): Promise<OrderCreationResult> {
     const orderRepository = manager.getRepository(TradingOrderEntity);

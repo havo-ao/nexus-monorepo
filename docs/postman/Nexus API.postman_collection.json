@@ -574,6 +574,43 @@
           "name": "Orders",
           "item": [
             {
+              "name": "Create Market Buy Order - Queued Closed Market",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 201', function () { pm.response.to.have.status(201); });",
+                      "pm.test('market buy order is queued', function () { const body = pm.response.json(); pm.expect(body.side).to.eql('BUY'); pm.expect(body.orderType).to.eql('MARKET'); pm.expect(body.status).to.eql('PENDING_MARKET_OPEN'); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"traderId\": \"{{traderId}}\",\n  \"symbol\": \"AAPL\",\n  \"exchangeId\": \"{{exchangeId}}\",\n  \"quantity\": 1,\n  \"estimatedUnitPrice\": 250,\n  \"marketEvaluatedAt\": \"2026-05-12T22:00:00.000Z\"\n}"
+                },
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/orders/buy/market",
+                  "host": ["{{tradingBaseUrl}}"],
+                  "path": ["api", "v1", "orders", "buy", "market"]
+                }
+              }
+            },
+            {
               "name": "Create Market Sell Order",
               "event": [
                 {

@@ -94,6 +94,46 @@ describe('TypeOrmOrderRepository', () => {
     });
   });
 
+  it('persists a market buy order queued for market open', async () => {
+    const repository = new TypeOrmOrderRepository(dataSource);
+    const wallet = walletEntity('101', '1000.00', '0.00');
+    walletRepository.findOne.mockResolvedValue(wallet);
+    orderRepository.save.mockImplementation((entity) => {
+      entity.id = '80';
+      entity.createdAt = new Date('2026-05-26T22:00:00.000Z');
+      entity.updatedAt = new Date('2026-05-26T22:00:00.000Z');
+      return Promise.resolve(entity);
+    });
+
+    const result = await repository.createMarketBuyOrder({
+      traderId: '101',
+      symbol: 'AAPL',
+      exchangeId: '1',
+      quantity: 1,
+      estimatedUnitPrice: 250,
+      grossAmount: 250,
+      currency: 'USD',
+      initialStatus: 'PENDING_MARKET_OPEN',
+      statusReason: 'Market buy order queued until market opens',
+    });
+
+    expect(result.order).toMatchObject({
+      id: '80',
+      status: 'PENDING_MARKET_OPEN',
+      grossAmount: 250,
+    });
+    expect(orderRepository.save.mock.calls[0][0]).toMatchObject({
+      status: 'PENDING_MARKET_OPEN',
+      grossAmount: '250.00',
+    });
+    expect(statusEventRepository.save.mock.calls[0][0]).toMatchObject({
+      toStatus: 'PENDING_MARKET_OPEN',
+      actorType: 'TRADER',
+      actorId: '101',
+      reason: 'Market buy order queued until market opens',
+    });
+  });
+
   it('records a rejected funds event without creating an order', async () => {
     const repository = new TypeOrmOrderRepository(dataSource);
     walletRepository.findOne.mockResolvedValue(
