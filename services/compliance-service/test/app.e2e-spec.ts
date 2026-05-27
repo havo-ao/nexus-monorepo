@@ -95,10 +95,10 @@ describe('AppController (e2e)', () => {
       expect.objectContaining({
         to: 'user@nexus.local',
         from: 'no-reply@nexus.local',
-        subject: 'Nexus: multiple failed sign-in attempts detected',
+        subject: 'Acciones ElBosque: multiple failed sign-in attempts detected',
         template: 'login-failed',
         context: expect.objectContaining({
-          appName: 'Nexus',
+          appName: 'Acciones ElBosque',
           username: 'jdoe',
           recipientEmail: 'user@nexus.local',
           occurredAt: '2026-05-23T20:20:00.000Z',
@@ -210,7 +210,7 @@ describe('AppController (e2e)', () => {
     expect(sendMailMock).toHaveBeenCalledWith(
       expect.objectContaining({
         to: 'trader@nexus.local',
-        subject: 'Nexus: Order status changed',
+        subject: 'Acciones ElBosque: Order status changed',
         template: 'compliance-event',
       }),
     );

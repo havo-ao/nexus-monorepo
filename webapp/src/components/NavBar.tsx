@@ -169,7 +169,7 @@ const NavBar: React.FC = () => {
           <span className="nexus-mobile-brand-mark">
             <IonIcon icon={sparklesOutline} />
           </span>
-          <span>Nexus</span>
+          <span>Acciones ElBosque</span>
         </button>
       </header>
 
@@ -197,7 +197,7 @@ const NavBar: React.FC = () => {
               <span className="nexus-sidebar-logo-mark">
                 <IonIcon icon={sparklesOutline} />
               </span>
-              <span className="nexus-sidebar-logo-text">Nexus</span>
+              <span className="nexus-sidebar-logo-text">Acciones ElBosque</span>
             </button>
             <button
               type="button"
@@ -215,7 +215,7 @@ const NavBar: React.FC = () => {
               <span>@{sessionUser.username}</span>
             </div>
           ) : (
-            <p className="nexus-sidebar-tagline">Smart trading tools and clearer decisions in one workspace.</p>
+            <p className="nexus-sidebar-tagline">Day trading tools for clearer decisions in one workspace.</p>
           )}
         </div>
 

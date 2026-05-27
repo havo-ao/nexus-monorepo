@@ -12,7 +12,7 @@ async function bootstrap() {
   });
 
   const swaggerConfig = new DocumentBuilder()
-    .setTitle('Nexus Portfolio Service API')
+    .setTitle('Acciones ElBosque Portfolio Service API')
     .setDescription('Portfolio holdings and consolidated position queries')
     .setVersion('1.0')
     .build();

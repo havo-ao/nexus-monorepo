@@ -37,7 +37,7 @@ export class NotificationsController {
   @ApiOperation({
     summary: 'Send email notification',
     description:
-      'Sends a personalized Nexus transactional email using a supported templateName value.',
+      'Sends a personalized Acciones ElBosque transactional email using a supported templateName value.',
   })
   @ApiBody({
     type: SendNotificationDto,

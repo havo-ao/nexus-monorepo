@@ -1,8 +1,8 @@
 {
   "info": {
     "_postman_id": "08c94549-1e4d-4e4f-99fd-c06432d8b0d3",
-    "name": "Nexus API",
-    "description": "Colección local de Nexus organizada por servicios y módulos. Importar junto con el ambiente `Nexus Local`.",
+    "name": "Acciones ElBosque API",
+    "description": "Colección local de Acciones ElBosque organizada por servicios y módulos. Importar junto con el ambiente `Acciones ElBosque Local`.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -1665,7 +1665,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"category\": \"ORDER_STATUS\",\n  \"sourceService\": \"trading-service\",\n  \"entityType\": \"ORDER\",\n  \"entityId\": \"{{orderReference}}\",\n  \"subject\": \"Order status changed\",\n  \"message\": \"Your order changed status in Nexus.\",\n  \"recipient\": {\n    \"email\": \"{{traderEmail}}\",\n    \"name\": \"{{traderName}}\",\n    \"surname\": \"{{traderSurname}}\",\n    \"username\": \"{{traderUsername}}\"\n  },\n  \"correlationId\": \"{{orderReference}}\",\n  \"occurredAt\": \"2026-05-27T15:30:00.000Z\"\n}"
+                  "raw": "{\n  \"category\": \"ORDER_STATUS\",\n  \"sourceService\": \"trading-service\",\n  \"entityType\": \"ORDER\",\n  \"entityId\": \"{{orderReference}}\",\n  \"subject\": \"Order status changed\",\n  \"message\": \"Your order changed status in Acciones ElBosque.\",\n  \"recipient\": {\n    \"email\": \"{{traderEmail}}\",\n    \"name\": \"{{traderName}}\",\n    \"surname\": \"{{traderSurname}}\",\n    \"username\": \"{{traderUsername}}\"\n  },\n  \"correlationId\": \"{{orderReference}}\",\n  \"occurredAt\": \"2026-05-27T15:30:00.000Z\"\n}"
                 },
                 "url": {
                   "raw": "{{complianceBaseUrl}}/notifications/events",

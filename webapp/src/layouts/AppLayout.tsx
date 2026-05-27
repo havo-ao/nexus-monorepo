@@ -65,7 +65,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           <span className="app-brand-mark">
             <IonIcon icon={trendingUpOutline} />
           </span>
-          <span>Nexus</span>
+          <span>Acciones ElBosque</span>
         </div>
 
         <nav className="app-navigation" aria-label="Application navigation">

@@ -47,7 +47,7 @@ const MarketsSection: React.FC = () => {
     <div className="markets-section">
       <div className="markets-header">
         <h2 className="markets-title">What Markets can you operate?</h2>
-        <p className="markets-subtitle">Access major global stock exchanges with Nexus</p>
+        <p className="markets-subtitle">Access major global stock exchanges with Acciones ElBosque</p>
       </div>
 
       <div className="markets-grid">

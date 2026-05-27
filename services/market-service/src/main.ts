@@ -12,7 +12,7 @@ async function bootstrap() {
   });
 
   const swaggerConfig = new DocumentBuilder()
-    .setTitle('Nexus Market Service API')
+    .setTitle('Acciones ElBosque Market Service API')
     .setDescription('Market status, trading hours, instruments and quotes APIs')
     .setVersion('1.0')
     .build();

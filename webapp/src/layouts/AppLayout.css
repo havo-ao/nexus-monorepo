@@ -24,9 +24,13 @@
   padding: 0 22px;
   border-bottom: 1px solid rgba(148, 163, 184, 0.15);
   color: #ffffff;
-  font-size: 1.25rem;
+  font-size: 1rem;
   font-weight: 900;
   letter-spacing: 0;
+}
+
+.app-brand > span:last-child {
+  line-height: 1.1;
 }
 
 .app-brand-mark {
