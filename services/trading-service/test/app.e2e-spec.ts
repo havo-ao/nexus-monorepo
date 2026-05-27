@@ -148,6 +148,31 @@ describe('AppController (e2e)', () => {
       });
   });
 
+  it('/api/v1/executions/broker/orders/:orderReference/send handles broker failure (POST)', () => {
+    return request(app.getHttpServer())
+      .post(
+        '/api/v1/executions/broker/orders/broker-failure-order-reference/send',
+      )
+      .expect(201)
+      .expect((response) => {
+        const body = response.body as Record<string, unknown>;
+        expect(body).toMatchObject({
+          orderId: '2',
+          orderReference: 'broker-failure-order-reference',
+          traderId: '101',
+          side: 'BUY',
+          orderType: 'MARKET',
+          status: 'FAILED',
+          symbol: 'FAIL',
+          quantity: 1,
+          externalOrderId: 'unavailable',
+          brokerStatus: 'FAILED',
+          brokerName: 'ALPACA',
+        });
+        expect(body.sentAt).toEqual(expect.any(String));
+      });
+  });
+
   it('/api/v1/orders/buy/market (POST)', () => {
     return request(app.getHttpServer())
       .post('/api/v1/orders/buy/market')

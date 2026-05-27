@@ -1,6 +1,7 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
+  BrokerOrderSubmissionError,
   EXTERNAL_BROKER_CLIENT,
   type ExternalBrokerClient,
 } from '../clients/external-broker.client';
@@ -34,6 +35,7 @@ describe('BrokerExecutionService', () => {
     repository = {
       findExecutableOrder: jest.fn(),
       markOrderSentToBroker: jest.fn(),
+      markOrderFailedByBroker: jest.fn(),
     };
     brokerClient = {
       sendOrder: jest.fn(),
@@ -127,5 +129,74 @@ describe('BrokerExecutionService', () => {
       ConflictException,
     );
     expect(brokerClient.sendOrder.mock.calls).toHaveLength(0);
+  });
+
+  it('marks the order as failed when the broker rejects it', async () => {
+    repository.findExecutableOrder.mockResolvedValue(executableOrder);
+    brokerClient.sendOrder.mockRejectedValue(
+      new BrokerOrderSubmissionError(
+        'ALPACA',
+        'FAILED',
+        'BUY 1 AAPL MARKET',
+        'Broker rejected the order submission',
+      ),
+    );
+    const failedExecution = new BrokerOrderExecution(
+      '1',
+      'order-reference',
+      '101',
+      'BUY',
+      'MARKET',
+      'FAILED',
+      'AAPL',
+      1,
+      'unavailable',
+      'FAILED',
+      'ALPACA',
+      '2026-05-26T14:30:00.000Z',
+    );
+    repository.markOrderFailedByBroker.mockResolvedValue(failedExecution);
+
+    await expect(service.sendOrderToBroker('order-reference')).resolves.toBe(
+      failedExecution,
+    );
+    expect(repository.markOrderFailedByBroker.mock.calls[0][0]).toMatchObject({
+      order: executableOrder,
+      brokerName: 'ALPACA',
+      brokerStatus: 'FAILED',
+      requestSummary: 'BUY 1 AAPL MARKET',
+      failureReason: 'Broker rejected the order submission',
+    });
+  });
+
+  it('marks the order as failed when the broker throws an unexpected error', async () => {
+    repository.findExecutableOrder.mockResolvedValue(executableOrder);
+    brokerClient.sendOrder.mockRejectedValue(new Error('Broker timeout'));
+    const failedExecution = new BrokerOrderExecution(
+      '1',
+      'order-reference',
+      '101',
+      'BUY',
+      'MARKET',
+      'FAILED',
+      'AAPL',
+      1,
+      'unavailable',
+      'FAILED',
+      'UNKNOWN',
+      '2026-05-26T14:30:00.000Z',
+    );
+    repository.markOrderFailedByBroker.mockResolvedValue(failedExecution);
+
+    await expect(service.sendOrderToBroker('order-reference')).resolves.toBe(
+      failedExecution,
+    );
+    expect(repository.markOrderFailedByBroker.mock.calls[0][0]).toMatchObject({
+      order: executableOrder,
+      brokerName: 'UNKNOWN',
+      brokerStatus: 'FAILED',
+      requestSummary: 'BUY 1 AAPL MARKET',
+      failureReason: 'Broker timeout',
+    });
   });
 });

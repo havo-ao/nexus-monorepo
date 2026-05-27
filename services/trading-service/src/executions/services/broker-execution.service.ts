@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import {
   EXTERNAL_BROKER_CLIENT,
+  BrokerOrderSubmissionError,
   type ExternalBrokerClient,
 } from '../clients/external-broker.client';
 import type { BrokerOrderExecution } from '../entities/broker-order-execution.entity';
@@ -42,19 +43,41 @@ export class BrokerExecutionService {
       );
     }
 
-    const brokerResponse = await this.brokerClient.sendOrder({
-      orderReference: order.orderReference,
-      side: order.side,
-      orderType: order.orderType,
-      symbol: order.symbol,
-      quantity: order.quantity,
-      estimatedUnitPrice: order.estimatedUnitPrice,
-      currency: order.currency,
-    });
+    try {
+      const brokerResponse = await this.brokerClient.sendOrder({
+        orderReference: order.orderReference,
+        side: order.side,
+        orderType: order.orderType,
+        symbol: order.symbol,
+        quantity: order.quantity,
+        estimatedUnitPrice: order.estimatedUnitPrice,
+        currency: order.currency,
+      });
 
-    return this.executionRepository.markOrderSentToBroker({
-      order,
-      brokerResponse,
-    });
+      return this.executionRepository.markOrderSentToBroker({
+        order,
+        brokerResponse,
+      });
+    } catch (error) {
+      return this.executionRepository.markOrderFailedByBroker({
+        order,
+        brokerName:
+          error instanceof BrokerOrderSubmissionError
+            ? error.brokerName
+            : 'UNKNOWN',
+        brokerStatus:
+          error instanceof BrokerOrderSubmissionError
+            ? error.brokerStatus
+            : 'FAILED',
+        requestSummary:
+          error instanceof BrokerOrderSubmissionError
+            ? error.requestSummary
+            : `${order.side} ${order.quantity} ${order.symbol} ${order.orderType}`,
+        failureReason:
+          error instanceof Error
+            ? error.message
+            : 'Broker execution failed unexpectedly',
+      });
+    }
   }
 }
