@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { roundMoney } from '../../common/money';
 import { HoldingsValidationService } from '../../holdings-validation/services/holdings-validation.service';
+import type { MarketValidation } from '../../market-validation/entities/market-validation.entity';
 import { MarketValidationService } from '../../market-validation/services/market-validation.service';
 import { TradingOrder } from '../entities/trading-order';
 import { ORDER_REPOSITORY } from '../repositories/order.repository';
@@ -93,16 +94,11 @@ export class OrdersService {
         input.marketEvaluatedAt,
       );
 
-    const queueForMarketOpen =
-      marketValidation.marketStatus === 'CLOSED' &&
-      input.queueWhenMarketClosed !== false;
-
-    if (!marketValidation.canOperate && !queueForMarketOpen) {
-      throw new ConflictException(
-        marketValidation.reason ??
-          `Market cannot operate with status ${marketValidation.marketStatus}`,
-      );
-    }
+    const queueForMarketOpen = this.shouldQueueClosedMarketOrder(
+      marketValidation,
+      input.queueWhenMarketClosed,
+    );
+    this.assertMarketCanOperate(marketValidation, queueForMarketOpen);
 
     const grossAmount = roundMoney(input.quantity * input.estimatedUnitPrice);
     const result = await this.orderRepository.createMarketBuyOrder({
@@ -179,16 +175,11 @@ export class OrdersService {
         input.marketEvaluatedAt,
       );
 
-    const queueForMarketOpen =
-      marketValidation.marketStatus === 'CLOSED' &&
-      input.queueWhenMarketClosed !== false;
-
-    if (!marketValidation.canOperate && !queueForMarketOpen) {
-      throw new ConflictException(
-        marketValidation.reason ??
-          `Market cannot operate with status ${marketValidation.marketStatus}`,
-      );
-    }
+    const queueForMarketOpen = this.shouldQueueClosedMarketOrder(
+      marketValidation,
+      input.queueWhenMarketClosed,
+    );
+    this.assertMarketCanOperate(marketValidation, queueForMarketOpen);
 
     const holdingsValidation =
       await this.holdingsValidationService.validateSellHoldings({
@@ -353,6 +344,28 @@ export class OrdersService {
     ) {
       throw new BadRequestException(
         'estimatedUnitPrice must be greater than zero',
+      );
+    }
+  }
+
+  private shouldQueueClosedMarketOrder(
+    marketValidation: MarketValidation,
+    queueWhenMarketClosed: boolean | undefined,
+  ): boolean {
+    return (
+      marketValidation.marketStatus === 'CLOSED' &&
+      queueWhenMarketClosed !== false
+    );
+  }
+
+  private assertMarketCanOperate(
+    marketValidation: MarketValidation,
+    queueForMarketOpen: boolean,
+  ): void {
+    if (!marketValidation.canOperate && !queueForMarketOpen) {
+      throw new ConflictException(
+        marketValidation.reason ??
+          `Market cannot operate with status ${marketValidation.marketStatus}`,
       );
     }
   }
