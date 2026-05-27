@@ -123,6 +123,61 @@ describe('TypeOrmBrokerExecutionRepository', () => {
       actorId: 'ALPACA',
     });
   });
+
+  it('marks an order as failed and records broker/status events', async () => {
+    const repository = new TypeOrmBrokerExecutionRepository(dataSource);
+    const order = tradingOrderEntity('PENDING_EXECUTION');
+    orderRepository.findOneOrFail.mockResolvedValue(order);
+    orderRepository.save.mockImplementation((entity) =>
+      Promise.resolve(entity),
+    );
+    eventRepository.save.mockImplementation((event) => {
+      event.createdAt = new Date('2026-05-26T14:30:00.000Z');
+      return Promise.resolve(event);
+    });
+
+    await expect(
+      repository.markOrderFailedByBroker({
+        order: {
+          id: '1',
+          orderReference: 'order-reference',
+          traderId: '101',
+          side: 'BUY',
+          orderType: 'MARKET',
+          status: 'PENDING_EXECUTION',
+          symbol: 'AAPL',
+          quantity: 1,
+          estimatedUnitPrice: 250,
+          currency: 'USD',
+        },
+        brokerName: 'ALPACA',
+        brokerStatus: 'FAILED',
+        requestSummary: 'BUY 1 AAPL MARKET',
+        failureReason: 'Broker rejected the order submission',
+      }),
+    ).resolves.toMatchObject({
+      orderReference: 'order-reference',
+      status: 'FAILED',
+      externalOrderId: 'unavailable',
+      brokerStatus: 'FAILED',
+    });
+    expect(order.status).toBe('FAILED');
+    expect(order.rejectionReason).toBe('Broker rejected the order submission');
+    expect(eventRepository.save.mock.calls[0][0]).toMatchObject({
+      orderReference: 'order-reference',
+      brokerName: 'ALPACA',
+      externalOrderId: 'unavailable',
+      brokerStatus: 'FAILED',
+      responseSummary: 'Broker rejected the order submission',
+    });
+    expect(statusEventRepository.save.mock.calls[0][0]).toMatchObject({
+      fromStatus: 'PENDING_EXECUTION',
+      toStatus: 'FAILED',
+      actorType: 'BROKER',
+      actorId: 'ALPACA',
+      reason: 'Broker rejected the order submission',
+    });
+  });
 });
 
 function tradingOrderEntity(status: TradingOrderEntity['status']) {

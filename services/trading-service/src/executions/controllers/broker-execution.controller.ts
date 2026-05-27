@@ -20,7 +20,8 @@ export class BrokerExecutionController {
   })
   @ApiResponse({
     status: 201,
-    description: 'Broker execution request accepted.',
+    description:
+      'Broker execution request accepted or recorded as a controlled failure.',
     schema: {
       example: {
         orderId: '1',

@@ -4,6 +4,7 @@ import type {
   BrokerExecutionRepository,
   ExecutableOrder,
   SaveBrokerExecutionCommand,
+  SaveBrokerExecutionFailureCommand,
 } from './broker-execution.repository';
 
 @Injectable()
@@ -19,6 +20,21 @@ export class InMemoryBrokerExecutionRepository implements BrokerExecutionReposit
         orderType: 'MARKET',
         status: 'PENDING_EXECUTION',
         symbol: 'AAPL',
+        quantity: 1,
+        estimatedUnitPrice: 250,
+        currency: 'USD',
+      },
+    ],
+    [
+      'broker-failure-order-reference',
+      {
+        id: '2',
+        orderReference: 'broker-failure-order-reference',
+        traderId: '101',
+        side: 'BUY',
+        orderType: 'MARKET',
+        status: 'PENDING_EXECUTION',
+        symbol: 'FAIL',
         quantity: 1,
         estimatedUnitPrice: 250,
         currency: 'USD',
@@ -52,6 +68,34 @@ export class InMemoryBrokerExecutionRepository implements BrokerExecutionReposit
       command.brokerResponse.externalOrderId,
       command.brokerResponse.brokerStatus,
       command.brokerResponse.brokerName,
+      new Date().toISOString(),
+    );
+    this.executions.push(execution);
+
+    return Promise.resolve(execution);
+  }
+
+  markOrderFailedByBroker(
+    command: SaveBrokerExecutionFailureCommand,
+  ): Promise<BrokerOrderExecution> {
+    const updatedOrder: ExecutableOrder = {
+      ...command.order,
+      status: 'FAILED',
+    };
+    this.orders.set(updatedOrder.orderReference, updatedOrder);
+
+    const execution = new BrokerOrderExecution(
+      updatedOrder.id,
+      updatedOrder.orderReference,
+      updatedOrder.traderId,
+      updatedOrder.side,
+      updatedOrder.orderType,
+      updatedOrder.status,
+      updatedOrder.symbol,
+      updatedOrder.quantity,
+      'unavailable',
+      command.brokerStatus,
+      command.brokerName,
       new Date().toISOString(),
     );
     this.executions.push(execution);
