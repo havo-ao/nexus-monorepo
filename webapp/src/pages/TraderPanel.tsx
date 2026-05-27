@@ -57,6 +57,8 @@ import "./TraderPanel.css";
 
 type BuyOrderMode = "MARKET" | "LIMIT" | "STOP_LOSS" | "TAKE_PROFIT";
 type OrderSide = "BUY" | "SELL";
+type WorkflowStepStatus = "ready" | "active" | "done";
+
 const moneyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD",
@@ -131,6 +133,7 @@ const TraderPanel: React.FC = () => {
   const [settlementError, setSettlementError] = useState("");
   const [isSyncingSettlement, setIsSyncingSettlement] = useState(false);
   const [isCancellingOrder, setIsCancellingOrder] = useState(false);
+  const [activeWorkflowStep, setActiveWorkflowStep] = useState(1);
 
   const quantity = Number(orderQuantity);
   const activePrice =
@@ -157,7 +160,11 @@ const TraderPanel: React.FC = () => {
   );
   const isBrokerApproved = brokerValidation?.decision === "APPROVE";
   const isOrderSentToBroker = brokerExecution?.status === "SENT_TO_BROKER";
+  const isSettlementSynced = Boolean(settlement);
   const isOrderExecuted = settlement?.status === "EXECUTED";
+  const hasTrackingEvidence = Boolean(
+    orderStatus || orderStatusHistory.length > 0 || cancelledOrder,
+  );
   const isTicketConfigured = Boolean(
     traderId.trim() &&
       exchangeId.trim() &&
@@ -167,7 +174,47 @@ const TraderPanel: React.FC = () => {
       Number.isFinite(activePrice) &&
       activePrice > 0,
   );
-  const showDashboard = true;
+  const workflowSteps = [
+    ["1", "Checks", "Funds, market and fees"],
+    ["2", "Order Details", "Configure ticket"],
+    ["3", "Create", "Submit order"],
+    ["4", "Review", "Broker decision"],
+    ["5", "Execute", "Alpaca and settlement"],
+    ["6", "Monitor", "Status and audit trail"],
+  ];
+
+  const getWorkflowStepStatus = (step: number): WorkflowStepStatus => {
+    if (activeWorkflowStep === step) {
+      return "active";
+    }
+    if (step === 1) {
+      return hasValidationEvidence ? "done" : "ready";
+    }
+    if (step === 2) {
+      return isTicketConfigured ? "done" : "ready";
+    }
+    if (step === 3) {
+      return createdOrder ? "done" : "ready";
+    }
+    if (step === 4) {
+      return isBrokerApproved ? "done" : "ready";
+    }
+    if (step === 5) {
+      return isOrderSentToBroker || isSettlementSynced ? "done" : "ready";
+    }
+    return isOrderExecuted || hasTrackingEvidence ? "done" : "ready";
+  };
+
+  const getWorkflowStepLabel = (status: WorkflowStepStatus): string => {
+    if (status === "done") {
+      return "Done";
+    }
+    if (status === "active") {
+      return "Current";
+    }
+    return "Ready";
+  };
+
   const handleOrderSideChange = (nextSide: OrderSide) => {
     setOrderSide(nextSide);
     if (
@@ -204,6 +251,7 @@ const TraderPanel: React.FC = () => {
         grossAmount: amount,
       });
       setValidation(result);
+      setActiveWorkflowStep(1);
     } catch (error) {
       setValidationError(
         error instanceof Error
@@ -230,6 +278,7 @@ const TraderPanel: React.FC = () => {
         exchangeId: exchangeId.trim(),
       });
       setMarketValidation(result);
+      setActiveWorkflowStep(1);
     } catch (error) {
       setMarketValidationError(
         error instanceof Error
@@ -266,6 +315,7 @@ const TraderPanel: React.FC = () => {
         quantity,
       });
       setHoldingsValidation(result);
+      setActiveWorkflowStep(1);
     } catch (error) {
       setHoldingsValidationError(
         error instanceof Error
@@ -301,6 +351,7 @@ const TraderPanel: React.FC = () => {
         grossAmount: estimatedGrossAmount,
       });
       setCommissionCalculation(result);
+      setActiveWorkflowStep(1);
     } catch (error) {
       setCommissionError(
         error instanceof Error
@@ -333,6 +384,7 @@ const TraderPanel: React.FC = () => {
         commissionAmount: commissionCalculation.commissionAmount,
       });
       setCommissionDistribution(result);
+      setActiveWorkflowStep(1);
     } catch (error) {
       setCommissionDistributionError(
         error instanceof Error
@@ -365,6 +417,7 @@ const TraderPanel: React.FC = () => {
       ]);
       setOrderStatus(status);
       setOrderStatusHistory(history);
+      setActiveWorkflowStep(6);
     } catch (error) {
       setOrderStatusError(
         error instanceof Error ? error.message : "Unable to load order status.",
@@ -397,6 +450,7 @@ const TraderPanel: React.FC = () => {
       setOrderStatus(null);
       setOrderStatusHistory([]);
       setBrokerExecution(null);
+      setActiveWorkflowStep(decision === "APPROVE" ? 5 : 6);
     } catch (error) {
       setBrokerValidationError(
         error instanceof Error
@@ -436,6 +490,7 @@ const TraderPanel: React.FC = () => {
           ? { ...current, status: result.status }
           : current,
       );
+      setActiveWorkflowStep(5);
     } catch (error) {
       setBrokerExecutionError(
         error instanceof Error
@@ -482,6 +537,7 @@ const TraderPanel: React.FC = () => {
           ? { ...current, status: result.status }
           : current,
       );
+      setActiveWorkflowStep(6);
     } catch (error) {
       setSettlementError(
         error instanceof Error
@@ -509,6 +565,7 @@ const TraderPanel: React.FC = () => {
         actorId: traderId.trim(),
       });
       setCancelledOrder(result);
+      setActiveWorkflowStep(6);
       setOrderStatus((current) =>
         current
           ? {
@@ -601,6 +658,7 @@ const TraderPanel: React.FC = () => {
       setOrderStatus(null);
       setOrderStatusHistory([]);
       setBrokerValidation(null);
+      setActiveWorkflowStep(4);
     } catch (error) {
       setOrderError(
         error instanceof Error
@@ -686,33 +744,31 @@ const TraderPanel: React.FC = () => {
             </div>
             <div className="trader-dashboard-metrics">
               <div>
-                <span>Ticket</span>
+                <span>Step</span>
                 <strong>
-                  {isTicketConfigured ? "READY" : "DRAFT"}
+                  {workflowSteps[activeWorkflowStep - 1]?.[1] ?? "Ticket"}
                 </strong>
               </div>
               <div>
-                <span>Checks</span>
+                <span>Order state</span>
                 <strong>
-                  {hasValidationEvidence ? "WITH EVIDENCE" : "PENDING"}
+                  {currentOrderStatus
+                    ? currentOrderStatus.replaceAll("_", " ")
+                    : "NOT STARTED"}
                 </strong>
               </div>
               <div>
                 <span>Broker</span>
                 <strong>
-                  {isOrderSentToBroker
-                    ? "SENT"
-                    : isBrokerApproved
-                      ? "APPROVED"
-                      : brokerValidation?.decision ?? "PENDING"}
+                  {brokerExecution?.brokerName ??
+                    brokerValidation?.brokerId ??
+                    "Pending"}
                 </strong>
               </div>
               <div>
                 <span>Settlement</span>
                 <strong>
-                  {isOrderExecuted
-                    ? "EXECUTED"
-                    : settlement
+                  {settlement
                     ? settlement.status.replaceAll("_", " ")
                     : "PENDING"}
                 </strong>
@@ -720,8 +776,29 @@ const TraderPanel: React.FC = () => {
             </div>
           </section>
 
+          <section className="trader-workflow-rail" aria-label="Trading steps">
+            {workflowSteps.map(([step, title, detail]) => {
+              const status = getWorkflowStepStatus(Number(step));
+              return (
+                <button
+                  className={`trader-workflow-step ${status}`}
+                  key={step}
+                  onClick={() => setActiveWorkflowStep(Number(step))}
+                  type="button"
+                >
+                  <span>{step}</span>
+                  <div>
+                    <strong>{title}</strong>
+                    <small>{detail}</small>
+                  </div>
+                  <em>{getWorkflowStepLabel(status)}</em>
+                </button>
+              );
+            })}
+          </section>
+
           <section className="trader-panel-grid single">
-            {showDashboard && (
+            {activeWorkflowStep === 2 && (
               <article className="trader-order-ticket">
               <div className="trader-panel-section-heading">
                 <span>
@@ -905,24 +982,48 @@ const TraderPanel: React.FC = () => {
                   <strong>{nextStatus}</strong>
                 </div>
               </div>
+
+              <div className="trader-step-navigation">
+                <IonButton
+                  fill="outline"
+                  onClick={() => setActiveWorkflowStep(1)}
+                >
+                  Previous
+                </IonButton>
+                <IonButton onClick={() => setActiveWorkflowStep(3)}>
+                  Next
+                </IonButton>
+              </div>
               </article>
             )}
 
-            {showDashboard && (
+            {activeWorkflowStep !== 2 && (
             <article
-              className="trader-precheck-panel trader-dashboard-workflow"
+              className={`trader-precheck-panel trader-step-panel step-${activeWorkflowStep}`}
             >
               <div className="trader-panel-section-heading">
                 <span>
-                  <IonIcon icon={checkmarkCircleOutline} />
+                  <IonIcon
+                    icon={
+                      activeWorkflowStep === 1
+                        ? checkmarkCircleOutline
+                        : activeWorkflowStep === 3
+                          ? ticketOutline
+                          : activeWorkflowStep === 4
+                            ? shieldCheckmarkOutline
+                            : activeWorkflowStep === 5
+                              ? paperPlaneOutline
+                              : informationCircleOutline
+                    }
+                  />
                 </span>
                 <div>
-                  <h2>Trading workflow</h2>
-                  <p>Validate, create, approve, execute and monitor from one dashboard.</p>
+                  <h2>{workflowSteps[activeWorkflowStep - 1]?.[1]}</h2>
+                  <p>{workflowSteps[activeWorkflowStep - 1]?.[2]}</p>
                 </div>
               </div>
 
-              {showDashboard && (
+              {activeWorkflowStep === 1 && (
                 <>
               <section className="trader-precheck-section">
                 <div className="trader-precheck-title">
@@ -1136,7 +1237,7 @@ const TraderPanel: React.FC = () => {
                 </>
               )}
 
-              {showDashboard && (
+              {activeWorkflowStep === 3 && (
                 <section className="trader-precheck-section wide">
                 <div className="trader-precheck-title">
                   <IonIcon icon={ticketOutline} />
@@ -1206,7 +1307,7 @@ const TraderPanel: React.FC = () => {
               </section>
               )}
 
-              {showDashboard && (
+              {activeWorkflowStep === 4 && (
                 <section className="trader-precheck-section">
                 <div className="trader-precheck-title">
                   <IonIcon icon={shieldCheckmarkOutline} />
@@ -1266,7 +1367,7 @@ const TraderPanel: React.FC = () => {
               </section>
               )}
 
-              {showDashboard && (
+              {activeWorkflowStep === 5 && (
                 <>
                 <section className="trader-precheck-section">
                 <div className="trader-precheck-title">
@@ -1367,7 +1468,7 @@ const TraderPanel: React.FC = () => {
                 </>
               )}
 
-              {showDashboard && (
+              {activeWorkflowStep === 6 && (
                 <section className="trader-precheck-section">
                 <div className="trader-precheck-title">
                   <IonIcon icon={informationCircleOutline} />
@@ -1420,6 +1521,26 @@ const TraderPanel: React.FC = () => {
                 )}
               </section>
               )}
+
+              <div className="trader-step-navigation">
+                <IonButton
+                  fill="outline"
+                  onClick={() =>
+                    setActiveWorkflowStep((current) => Math.max(current - 1, 1))
+                  }
+                  disabled={activeWorkflowStep === 1}
+                >
+                  Previous
+                </IonButton>
+                <IonButton
+                  onClick={() =>
+                    setActiveWorkflowStep((current) => Math.min(current + 1, 6))
+                  }
+                  disabled={activeWorkflowStep === 6}
+                >
+                  Next
+                </IonButton>
+              </div>
             </article>
             )}
           </section>
