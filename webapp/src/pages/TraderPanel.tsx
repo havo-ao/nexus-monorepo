@@ -34,6 +34,7 @@ import {
   getOrderStatus,
   getOrderStatusHistory,
   sendOrderToBroker,
+  syncOrderSettlement,
   validateOrderByBroker,
   validateBuyFunds,
   validateSellHoldings,
@@ -45,6 +46,7 @@ import {
   type FundsValidationResponse,
   type HoldingsValidationResponse,
   type MarketValidationResponse,
+  type OrderSettlementResponse,
   type OrderStatusHistoryEntryResponse,
   type OrderStatusResponse,
   type CancelOrderResponse,
@@ -126,6 +128,11 @@ const TraderPanel: React.FC = () => {
     useState<BrokerExecutionResponse | null>(null);
   const [brokerExecutionError, setBrokerExecutionError] = useState("");
   const [isSendingToBroker, setIsSendingToBroker] = useState(false);
+  const [settlement, setSettlement] = useState<OrderSettlementResponse | null>(
+    null,
+  );
+  const [settlementError, setSettlementError] = useState("");
+  const [isSyncingSettlement, setIsSyncingSettlement] = useState(false);
   const [isCancellingOrder, setIsCancellingOrder] = useState(false);
   const [activeWorkflowStep, setActiveWorkflowStep] = useState(1);
 
@@ -154,6 +161,7 @@ const TraderPanel: React.FC = () => {
   );
   const isBrokerApproved = brokerValidation?.decision === "APPROVE";
   const isOrderSentToBroker = brokerExecution?.status === "SENT_TO_BROKER";
+  const isOrderExecuted = settlement?.status === "EXECUTED";
   const hasTrackingEvidence = Boolean(
     orderStatus || orderStatusHistory.length > 0 || cancelledOrder,
   );
@@ -181,7 +189,7 @@ const TraderPanel: React.FC = () => {
     if (step === 4) {
       return isOrderSentToBroker ? "done" : "ready";
     }
-    return hasTrackingEvidence ? "done" : "ready";
+    return isOrderExecuted || hasTrackingEvidence ? "done" : "ready";
   };
 
   const getWorkflowStepLabel = (status: WorkflowStepStatus): string => {
@@ -444,6 +452,8 @@ const TraderPanel: React.FC = () => {
   const handleSendOrderToBroker = async () => {
     setBrokerExecution(null);
     setBrokerExecutionError("");
+    setSettlement(null);
+    setSettlementError("");
     setCancelledOrder(null);
 
     if (!orderReference.trim()) {
@@ -476,6 +486,52 @@ const TraderPanel: React.FC = () => {
       );
     } finally {
       setIsSendingToBroker(false);
+    }
+  };
+
+  const handleSyncSettlement = async () => {
+    setSettlement(null);
+    setSettlementError("");
+
+    if (!orderReference.trim()) {
+      setSettlementError("Enter an order reference.");
+      return;
+    }
+
+    setIsSyncingSettlement(true);
+    try {
+      const normalizedReference = orderReference.trim();
+      const result = await syncOrderSettlement(normalizedReference, {
+        actorId: brokerId.trim() || undefined,
+        notificationRecipient: user
+          ? {
+              email: user.email,
+              name: user.name,
+              surname: user.surname,
+              username: user.username,
+            }
+          : undefined,
+      });
+      const [status, history] = await Promise.all([
+        getOrderStatus(normalizedReference),
+        getOrderStatusHistory(normalizedReference),
+      ]);
+      setSettlement(result);
+      setOrderStatus(status);
+      setOrderStatusHistory(history);
+      setCreatedOrder((current) =>
+        current && current.orderReference === result.orderReference
+          ? { ...current, status: result.status }
+          : current,
+      );
+    } catch (error) {
+      setSettlementError(
+        error instanceof Error
+          ? error.message
+          : "Unable to synchronize settlement.",
+      );
+    } finally {
+      setIsSyncingSettlement(false);
     }
   };
 
@@ -574,11 +630,13 @@ const TraderPanel: React.FC = () => {
           : orderMode === "MARKET"
           ? await createMarketBuyOrder({
               ...commonPayload,
+              stockId: stockId.trim() || undefined,
               estimatedUnitPrice: activePrice,
               marketEvaluatedAt: marketEvaluatedAt.trim() || undefined,
             })
           : await createLimitBuyOrder({
               ...commonPayload,
+              stockId: stockId.trim() || undefined,
               limitPrice: activePrice,
             });
       setCreatedOrder(order);
@@ -1293,6 +1351,16 @@ const TraderPanel: React.FC = () => {
                 <IonButton
                   expand="block"
                   fill="outline"
+                  onClick={handleSyncSettlement}
+                  disabled={isSyncingSettlement}
+                >
+                  {isSyncingSettlement
+                    ? "Syncing Settlement"
+                    : "Sync Broker Settlement"}
+                </IonButton>
+                <IonButton
+                  expand="block"
+                  fill="outline"
                   onClick={handleCancelOrder}
                   disabled={isCancellingOrder}
                 >
@@ -1304,10 +1372,45 @@ const TraderPanel: React.FC = () => {
                     is {orderStatus.status.replaceAll("_", " ").toLowerCase()}.
                   </p>
                 )}
+                {settlement && (
+                  <div
+                    className={
+                      settlement.status === "EXECUTED"
+                        ? "trader-panel-message approved"
+                        : "trader-panel-message rejected"
+                    }
+                  >
+                    <strong>
+                      {settlement.brokerName}{" "}
+                      {settlement.brokerStatus.toLowerCase()}
+                    </strong>
+                    <span>
+                      {settlement.status === "EXECUTED"
+                        ? `Settled ${settlement.filledQuantity} ${settlement.symbol} share${settlement.filledQuantity === 1 ? "" : "s"}.`
+                        : `Internal status: ${settlement.status.replaceAll("_", " ").toLowerCase()}.`}
+                    </span>
+                    <span>
+                      Net amount {moneyFormatter.format(settlement.netAmount)} ·
+                      Commission{" "}
+                      {moneyFormatter.format(settlement.commissionAmount)}.
+                    </span>
+                    <span>
+                      Portfolio {settlement.portfolioUpdated ? "updated" : "not updated"} ·
+                      Funds {settlement.fundsUpdated ? "updated" : "not updated"} ·
+                      Notification{" "}
+                      {settlement.notificationDelivered ? "sent" : "not sent"}.
+                    </span>
+                  </div>
+                )}
                 {cancelledOrder && (
                   <p className="trader-panel-message approved">
                     Order {cancelledOrder.orderReference} was cancelled.
                     Released {moneyFormatter.format(cancelledOrder.releasedAmount)}.
+                  </p>
+                )}
+                {settlementError && (
+                  <p className="trader-panel-message rejected">
+                    {settlementError}
                   </p>
                 )}
                 {orderStatusHistory.length > 0 && (

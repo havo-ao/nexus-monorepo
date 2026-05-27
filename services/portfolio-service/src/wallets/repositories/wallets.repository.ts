@@ -55,10 +55,12 @@ export interface WalletReservation {
   availableBalance: number;
   reservedBalance: number;
   currency: string;
-  movementType: 'RESERVE' | 'RELEASE';
+  movementType: WalletReservationMovementType;
   sourceOrderId?: string;
   createdAt: Date;
 }
+
+export type WalletReservationMovementType = 'RESERVE' | 'RELEASE' | 'CAPTURE';
 
 export interface WalletHistoryMovement {
   movementId: string;
@@ -366,6 +368,55 @@ export class WalletsRepository {
     });
   }
 
+  async captureReservedBalance(
+    input: RecordReservationInput,
+  ): Promise<WalletReservation> {
+    if (!this.dataSource) {
+      const createdAt = input.occurredAt ?? new Date();
+      return {
+        movementId: '0',
+        traderId: input.traderId,
+        amount: input.amount,
+        availableBalance: 0,
+        reservedBalance: 0,
+        currency: input.currency,
+        movementType: 'CAPTURE',
+        sourceOrderId: input.sourceOrderId,
+        createdAt,
+      };
+    }
+
+    return this.dataSource.transaction(async (manager) => {
+      const walletRepository = manager.getRepository(Wallet);
+      const movementRepository = manager.getRepository(WalletMovement);
+      const createdAt = input.occurredAt ?? new Date();
+      const wallet = await walletRepository.findOne({
+        where: { traderId: input.traderId },
+      });
+
+      if (!wallet || Number(wallet.reservedBalance) < input.amount) {
+        throw new InsufficientReservedBalanceError();
+      }
+
+      wallet.reservedBalance = (
+        Number(wallet.reservedBalance) - input.amount
+      ).toFixed(2);
+      wallet.updatedAt = createdAt;
+
+      const savedWallet = await walletRepository.save(wallet);
+      await this.syncTotalBalance(manager, savedWallet);
+      const movement = await this.saveReservationMovement(
+        movementRepository,
+        input,
+        savedWallet.currency,
+        'CAPTURE',
+        createdAt,
+      );
+
+      return this.toReservationResult(movement, savedWallet, input.amount);
+    });
+  }
+
   private async syncTotalBalance(
     manager: {
       query: (query: string, parameters: unknown[]) => Promise<unknown>;
@@ -387,7 +438,7 @@ export class WalletsRepository {
     },
     input: RecordReservationInput,
     currency: string,
-    movementType: 'RESERVE' | 'RELEASE',
+    movementType: WalletReservationMovementType,
     createdAt: Date,
   ): Promise<WalletMovement> {
     return movementRepository.save(
@@ -414,7 +465,7 @@ export class WalletsRepository {
       availableBalance: Number(wallet.availableBalance),
       reservedBalance: Number(wallet.reservedBalance),
       currency: wallet.currency,
-      movementType: movement.movementType as 'RESERVE' | 'RELEASE',
+      movementType: movement.movementType as WalletReservationMovementType,
       sourceOrderId: movement.sourceOrderId ?? undefined,
       createdAt: movement.createdAt,
     };

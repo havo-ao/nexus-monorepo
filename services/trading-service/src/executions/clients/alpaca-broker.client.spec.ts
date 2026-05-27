@@ -308,4 +308,95 @@ describe('AlpacaBrokerClient', () => {
       message: 'request aborted',
     });
   });
+
+  it('reads a mock broker order status as filled', async () => {
+    process.env.ALPACA_BROKER_MODE = 'mock';
+    const client = new AlpacaBrokerClient();
+
+    await expect(client.getOrderStatus(' alpaca-id ')).resolves.toEqual({
+      brokerName: 'ALPACA',
+      externalOrderId: 'alpaca-id',
+      brokerStatus: 'filled',
+      filledQuantity: 1,
+      averageFilledPrice: undefined,
+      responseSummary: 'Broker order alpaca-id returned status filled',
+    });
+  });
+
+  it('reads a real Alpaca order status through the configured HTTP client', async () => {
+    process.env.ALPACA_BROKER_MODE = 'real';
+    process.env.ALPACA_API_BASE_URL = 'https://paper-api.alpaca.markets';
+    process.env.ALPACA_API_KEY = 'api-key';
+    process.env.ALPACA_SECRET_KEY = 'secret-key';
+    const fetchClient = jest.spyOn(global, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          id: 'alpaca-id',
+          status: 'filled',
+          filled_qty: '2',
+          filled_avg_price: '251.25',
+        }),
+        { status: 200 },
+      ),
+    );
+    const client = new AlpacaBrokerClient();
+
+    await expect(client.getOrderStatus('alpaca-id')).resolves.toEqual({
+      brokerName: 'ALPACA',
+      externalOrderId: 'alpaca-id',
+      brokerStatus: 'filled',
+      filledQuantity: 2,
+      averageFilledPrice: 251.25,
+      responseSummary: 'Alpaca order alpaca-id returned status filled',
+    });
+    const [, requestInit] = fetchClient.mock.calls[0] as [string, RequestInit];
+    const headers = requestInit.headers as Record<string, string>;
+    expect(fetchClient.mock.calls[0]?.[0]).toBe(
+      'https://paper-api.alpaca.markets/v2/orders/alpaca-id',
+    );
+    expect(headers['APCA-API-KEY-ID']).toBe('api-key');
+    expect(headers['APCA-API-SECRET-KEY']).toBe('secret-key');
+  });
+
+  it('requires credentials before reading a real Alpaca order status', async () => {
+    process.env.ALPACA_BROKER_MODE = 'real';
+    process.env.ALPACA_API_KEY = '';
+    process.env.ALPACA_SECRET_KEY = '';
+    const client = new AlpacaBrokerClient();
+
+    await expect(client.getOrderStatus('alpaca-id')).rejects.toMatchObject({
+      brokerName: 'ALPACA',
+      brokerStatus: 'CONFIGURATION_ERROR',
+    });
+  });
+
+  it('preserves Alpaca order status lookup failures', async () => {
+    process.env.ALPACA_BROKER_MODE = 'real';
+    process.env.ALPACA_API_KEY = 'api-key';
+    process.env.ALPACA_SECRET_KEY = 'secret-key';
+    jest
+      .spyOn(global, 'fetch')
+      .mockResolvedValue(new Response('status lookup failed', { status: 404 }));
+    const client = new AlpacaBrokerClient();
+
+    await expect(client.getOrderStatus('alpaca-id')).rejects.toMatchObject({
+      brokerName: 'ALPACA',
+      brokerStatus: '404',
+      message: 'status lookup failed',
+    });
+  });
+
+  it('wraps unexpected Alpaca order status lookup failures', async () => {
+    process.env.ALPACA_BROKER_MODE = 'real';
+    process.env.ALPACA_API_KEY = 'api-key';
+    process.env.ALPACA_SECRET_KEY = 'secret-key';
+    jest.spyOn(global, 'fetch').mockRejectedValue(new Error('network failed'));
+    const client = new AlpacaBrokerClient();
+
+    await expect(client.getOrderStatus('alpaca-id')).rejects.toMatchObject({
+      brokerName: 'ALPACA',
+      brokerStatus: 'FAILED',
+      message: 'network failed',
+    });
+  });
 });

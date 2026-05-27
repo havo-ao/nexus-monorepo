@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
+import { calculatePlatformCommission } from '../../common/commission';
 import { roundMoney } from '../../common/money';
 import { TradingOrder } from '../entities/trading-order';
 import type {
@@ -96,18 +97,21 @@ export class InMemoryOrderRepository implements OrderRepository {
     status: 'PENDING_EXECUTION' | 'PENDING_CONDITION' | 'PENDING_MARKET_OPEN',
   ): Promise<OrderCreationResult> {
     const availableAmount = roundMoney(this.availableAmount);
+    const requiredAmount = roundMoney(
+      command.grossAmount + calculatePlatformCommission(command.grossAmount),
+    );
 
-    if (availableAmount < command.grossAmount) {
+    if (availableAmount < requiredAmount) {
       return Promise.resolve({
         approved: false,
         reason: 'Insufficient available funds',
         availableAmount,
-        requiredAmount: command.grossAmount,
+        requiredAmount,
       });
     }
 
-    this.availableAmount = roundMoney(availableAmount - command.grossAmount);
-    this.reservedAmount = roundMoney(this.reservedAmount + command.grossAmount);
+    this.availableAmount = roundMoney(availableAmount - requiredAmount);
+    this.reservedAmount = roundMoney(this.reservedAmount + requiredAmount);
 
     const order = this.createOrder(
       command,
@@ -116,6 +120,7 @@ export class InMemoryOrderRepository implements OrderRepository {
       status,
       this.reservedAmount,
       'limitPrice' in command ? command.limitPrice : undefined,
+      command.stockId,
     );
 
     this.orders.push(order);
@@ -124,7 +129,7 @@ export class InMemoryOrderRepository implements OrderRepository {
       approved: true,
       order,
       availableAmount,
-      requiredAmount: command.grossAmount,
+      requiredAmount,
     });
   }
 

@@ -6,6 +6,7 @@ export type CreateMarketBuyOrderCommand = {
   traderId: string;
   symbol: string;
   exchangeId: string;
+  stockId?: string;
   quantity: number;
   estimatedUnitPrice: number;
   grossAmount: number;
@@ -18,6 +19,7 @@ export type CreateLimitBuyOrderCommand = {
   traderId: string;
   symbol: string;
   exchangeId: string;
+  stockId?: string;
   quantity: number;
   limitPrice: number;
   grossAmount: number;

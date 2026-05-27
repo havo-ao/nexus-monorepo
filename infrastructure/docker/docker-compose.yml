@@ -90,11 +90,15 @@ services:
       ALPACA_API_KEY: ${ALPACA_API_KEY:-}
       ALPACA_SECRET_KEY: ${ALPACA_SECRET_KEY:-}
       ALPACA_TIMEOUT_MS: ${ALPACA_TIMEOUT_MS:-5000}
+      PORTFOLIO_SERVICE_URL: http://portfolio-service:8883
+      NOTIFICATION_SERVICE_URL: http://compliance-service:8885
     volumes:
       - ../../services/trading-service:/app
       - /app/node_modules
     depends_on:
       - mysql
+      - portfolio-service
+      - compliance-service
     command: >
       sh -c "npm run db:migrate &&
       npm run start:dev"

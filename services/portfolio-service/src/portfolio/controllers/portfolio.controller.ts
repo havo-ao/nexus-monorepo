@@ -16,6 +16,7 @@ import {
 import { RecordExecutedBuyDto } from '../../positions/dto/record-executed-buy.dto';
 import { RecordExecutedSellDto } from '../../positions/dto/record-executed-sell.dto';
 import { JwtAuthGuard } from '../../auth/jwt-auth.guard';
+import { CaptureBalanceReservationDto } from '../../wallets/dto/capture-balance-reservation.dto';
 import { RecordBalanceReservationDto } from '../../wallets/dto/record-balance-reservation.dto';
 import { RecordDepositDto } from '../../wallets/dto/record-deposit.dto';
 import { RecordWithdrawalDto } from '../../wallets/dto/record-withdrawal.dto';
@@ -126,6 +127,18 @@ export class PortfolioController {
     @Body() dto: ReleaseBalanceReservationDto,
   ): Promise<WalletReservationResponseDto> {
     return this.portfolioService.releaseReservedBalance(String(traderId), dto);
+  }
+
+  @Post(':traderId/reservations/captures')
+  @ApiOperation({
+    summary: 'NEX-68 Capturar saldo reservado tras una orden ejecutada',
+  })
+  @ApiCreatedResponse({ type: WalletReservationResponseDto })
+  captureReservedBalance(
+    @Param('traderId', ParseIntPipe) traderId: number,
+    @Body() dto: CaptureBalanceReservationDto,
+  ): Promise<WalletReservationResponseDto> {
+    return this.portfolioService.captureReservedBalance(String(traderId), dto);
   }
 
   @Get(':traderId/positions/:positionId')

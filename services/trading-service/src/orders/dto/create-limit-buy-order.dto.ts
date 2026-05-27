@@ -20,6 +20,14 @@ export class CreateLimitBuyOrderDto {
   exchangeId!: string;
 
   @ApiProperty({
+    example: '1',
+    required: false,
+    description:
+      'Stock identifier used to update the portfolio when the order is executed.',
+  })
+  stockId?: string;
+
+  @ApiProperty({
     example: 3,
     description: 'Number of shares requested for the limit buy order.',
   })

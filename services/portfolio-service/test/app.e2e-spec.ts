@@ -180,6 +180,32 @@ describe('AppController (e2e)', () => {
     });
   });
 
+  it('/api/v1/portfolio/:traderId/reservations/captures (POST)', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/api/v1/portfolio/1/reservations/captures')
+      .set('Authorization', authHeader)
+      .send({
+        amount: 125,
+        currency: 'USD',
+        sourceOrderId: 'order_123456',
+        capturedAt: '2026-05-22T14:45:00.000Z',
+      })
+      .expect(201);
+
+    expect(response.body).toEqual({
+      movementId: '0',
+      traderId: '1',
+      amount: 125,
+      availableBalance: 0,
+      reservedBalance: 0,
+      totalBalance: 0,
+      currency: 'USD',
+      movementType: 'CAPTURE',
+      sourceOrderId: 'order_123456',
+      createdAt: '2026-05-22T14:45:00.000Z',
+    });
+  });
+
   it('/api/v1/portfolio/:traderId/positions/:positionId (GET)', async () => {
     const response = await request(app.getHttpServer())
       .get('/api/v1/portfolio/1/positions/99')
