@@ -1,5 +1,13 @@
-import { BadRequestException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { MailerService } from '@nestjs-modules/mailer';
+import { CreateAuditEventDto } from '../../audit/dto/create-audit-event.dto';
+import { AuditService } from '../../audit/services/audit.service';
+import { NotificationEventDto } from '../dto/notification-event.dto';
 import {
   notificationTemplateNames,
   notificationTemplateDescriptions,
@@ -7,6 +15,11 @@ import {
   SendNotificationDto,
 } from '../dto/send-notification.dto';
 import { NotificationResponseDto } from '../dto/notification-response.dto';
+import {
+  NotificationAttempt,
+  NotificationAttemptFilters,
+} from '../entities/notification-attempt.entity';
+import { NotificationAttemptsRepository } from '../repositories/notification-attempts.repository';
 
 interface MailTemplateDefinition {
   subject: string;
@@ -62,7 +75,11 @@ const mailTemplateDefinitions: Record<
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
 
-  constructor(private readonly mailerService: MailerService) {}
+  constructor(
+    private readonly mailerService: MailerService,
+    private readonly notificationAttemptsRepository: NotificationAttemptsRepository,
+    private readonly auditService: AuditService,
+  ) {}
 
   async sendEmailNotification(
     dto: SendNotificationDto,
@@ -89,11 +106,95 @@ export class NotificationsService {
       );
     }
 
+    this.notificationAttemptsRepository.save({
+      category: this.categoryForTemplate(normalizedDto.templateName),
+      channel: 'EMAIL',
+      recipientEmail: normalizedDto.email,
+      subject: mailTemplate.subject,
+      sourceService: 'compliance-service',
+      entityType: 'NOTIFICATION',
+      entityId: normalizedDto.templateName,
+      deliveryStatus: 'SENT',
+      occurredAt: normalizedDto.occurredAt,
+    });
+
     return {
       success: true,
       message: 'Email notification sent successfully.',
       templateName: normalizedDto.templateName,
     };
+  }
+
+  async processNotificationEvent(
+    dto: NotificationEventDto,
+  ): Promise<NotificationAttempt> {
+    const occurredAt = dto.occurredAt
+      ? new Date(dto.occurredAt).toISOString()
+      : new Date().toISOString();
+    let deliveryStatus: NotificationAttempt['deliveryStatus'] = 'SKIPPED';
+    let failureReason: string | undefined;
+
+    if (dto.recipient) {
+      try {
+        this.validateMailerConfiguration();
+        await this.mailerService.sendMail({
+          to: dto.recipient.email,
+          from: this.getMailFrom(),
+          subject: `Nexus: ${dto.subject}`,
+          template: 'compliance-event',
+          context: this.buildEventTemplateContext(dto, occurredAt),
+        });
+        deliveryStatus = 'SENT';
+      } catch (error) {
+        deliveryStatus = 'FAILED';
+        failureReason =
+          error instanceof Error ? error.message : 'unknown mailer error';
+      }
+    }
+
+    const attempt = this.notificationAttemptsRepository.save({
+      category: dto.category,
+      channel: 'EMAIL',
+      recipientEmail: dto.recipient?.email,
+      subject: dto.subject.trim(),
+      sourceService: dto.sourceService.trim(),
+      entityType: dto.entityType.trim(),
+      entityId: dto.entityId.trim(),
+      correlationId: dto.correlationId?.trim(),
+      deliveryStatus,
+      failureReason,
+      occurredAt,
+    });
+
+    const auditEvent: CreateAuditEventDto = {
+      eventType: 'NOTIFICATION_ATTEMPTED',
+      sourceService: dto.sourceService,
+      actorId: dto.recipient?.username ?? dto.sourceService,
+      actorRole: dto.recipient ? 'TRADER' : 'SYSTEM',
+      entityType: dto.entityType,
+      entityId: dto.entityId,
+      correlationId: dto.correlationId,
+      result: deliveryStatus === 'FAILED' ? 'FAILURE' : 'INFO',
+      critical: deliveryStatus === 'FAILED',
+      context: {
+        category: dto.category,
+        deliveryStatus,
+        failureReason,
+        ...dto.context,
+      },
+      occurredAt,
+    };
+    this.auditService.record(auditEvent);
+
+    return attempt;
+  }
+
+  findAttempts(filters: NotificationAttemptFilters): NotificationAttempt[] {
+    return this.notificationAttemptsRepository.find(filters);
+  }
+
+  countAttempts(filters: NotificationAttemptFilters = {}): number {
+    return this.notificationAttemptsRepository.count(filters);
   }
 
   private getMailTemplateDefinition(
@@ -126,6 +227,23 @@ export class NotificationsService {
       occurredAtDisplay: this.formatEventDate(dto.occurredAt),
       supportMessage: mailTemplate.supportMessage,
       year: new Date().getFullYear().toString(),
+    };
+  }
+
+  private buildEventTemplateContext(
+    dto: NotificationEventDto,
+    occurredAt: string,
+  ): Record<string, string> {
+    const fullName = dto.recipient
+      ? `${dto.recipient.name} ${dto.recipient.surname}`.trim()
+      : 'Nexus user';
+
+    return {
+      appName: 'Nexus',
+      subject: dto.subject,
+      message: dto.message,
+      fullName,
+      occurredAtDisplay: this.formatEventDate(occurredAt),
     };
   }
 
@@ -171,14 +289,18 @@ export class NotificationsService {
 
   private normalizeTemplateName(value: unknown): NotificationTemplateName {
     if (typeof value !== 'string') {
-      this.logger.error(`Validation failed: templateName must be a string, but got ${typeof value}`);
+      this.logger.error(
+        `Validation failed: templateName must be a string, but got ${typeof value}`,
+      );
       throw new BadRequestException('templateName must be a string');
     }
 
     const normalized = value.trim().toUpperCase() as NotificationTemplateName;
 
     if (!notificationTemplateNames.includes(normalized)) {
-      this.logger.error(`Validation failed: unsupported templateName '${normalized}'`);
+      this.logger.error(
+        `Validation failed: unsupported templateName '${normalized}'`,
+      );
       throw new BadRequestException(
         `templateName must be one of: ${notificationTemplateNames.join(', ')}`,
       );
@@ -189,7 +311,9 @@ export class NotificationsService {
 
   private normalizeNonEmptyString(value: unknown, field: string): string {
     if (typeof value !== 'string' || !value.trim()) {
-      this.logger.error(`Validation failed: ${field} must be a non-empty string, but got ${typeof value}`);
+      this.logger.error(
+        `Validation failed: ${field} must be a non-empty string, but got ${typeof value}`,
+      );
       throw new BadRequestException(`${field} must be a non-empty string`);
     }
 
@@ -198,7 +322,9 @@ export class NotificationsService {
 
   private normalizeIsoDateTime(value: unknown, field: string): string {
     if (typeof value !== 'string' || !value.trim()) {
-      this.logger.error(`Validation failed: ${field} must be a non-empty string, but got ${typeof value}`);
+      this.logger.error(
+        `Validation failed: ${field} must be a non-empty string, but got ${typeof value}`,
+      );
       throw new BadRequestException(`${field} must be a non-empty string`);
     }
 
@@ -206,7 +332,9 @@ export class NotificationsService {
     const parsedDate = new Date(normalized);
 
     if (Number.isNaN(parsedDate.getTime())) {
-      this.logger.error(`Validation failed: ${field} must be a valid ISO 8601 datetime string, but got '${normalized}'`);
+      this.logger.error(
+        `Validation failed: ${field} must be a valid ISO 8601 datetime string, but got '${normalized}'`,
+      );
       throw new BadRequestException(
         `${field} must be a valid ISO 8601 datetime string`,
       );
@@ -221,5 +349,15 @@ export class NotificationsService {
       timeStyle: 'short',
       timeZone: 'UTC',
     }).format(new Date(occurredAt));
+  }
+
+  private categoryForTemplate(
+    templateName: NotificationTemplateName,
+  ): NotificationAttempt['category'] {
+    if (templateName === 'ORDER_EXECUTED') return 'ORDER_STATUS';
+    if (templateName === 'LOGIN_SUCCESS' || templateName === 'LOGIN_FAILED') {
+      return 'SECURITY';
+    }
+    return 'ONBOARDING';
   }
 }
