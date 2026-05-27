@@ -9,6 +9,7 @@ import { HoldingsValidationEvent } from '../src/holdings-validation/entities/hol
 import { MarketExchange } from '../src/market/entities/market-exchange.entity';
 import { MarketValidationEvent } from '../src/market-validation/entities/market-validation-event.entity';
 import { OrderStatusEventEntity } from '../src/orders/entities/order-status-event.entity';
+import { PendingOrderProcessingEvent } from '../src/pending-orders/entities/pending-order-processing-event.entity';
 import { TradingOrderEntity } from '../src/orders/entities/trading-order.entity';
 import { PortfolioPosition } from '../src/portfolio/entities/portfolio-position.entity';
 import { OrderSettlementEvent } from '../src/settlements/entities/order-settlement-event.entity';
@@ -34,6 +35,7 @@ import { Wallet } from '../src/wallet/entities/wallet.entity';
         MarketExchange,
         MarketValidationEvent,
         OrderStatusEventEntity,
+        PendingOrderProcessingEvent,
         OrderSettlementEvent,
         PortfolioPosition,
         TradingNotificationEvent,

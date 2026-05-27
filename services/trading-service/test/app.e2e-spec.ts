@@ -56,6 +56,41 @@ describe('AppController (e2e)', () => {
       });
   });
 
+  it('/api/v1/orders/pending/process (POST)', () => {
+    return request(app.getHttpServer())
+      .post('/api/v1/orders/pending/process')
+      .send({
+        limit: 2,
+        evaluatedAt: '2026-05-12T14:30:00.000Z',
+      })
+      .expect(201)
+      .expect((response) => {
+        const body = response.body as Record<string, unknown>;
+        expect(body).toMatchObject({
+          evaluatedAt: '2026-05-12T14:30:00.000Z',
+          scanned: 2,
+          readyForExecution: 2,
+          waiting: 0,
+          failed: 0,
+        });
+        expect(body.evaluations).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              orderReference: 'queued-market-order-reference',
+              status: 'READY_FOR_EXECUTION',
+              marketStatus: 'OPEN',
+            }),
+            expect.objectContaining({
+              orderReference: 'pending-limit-order-reference',
+              status: 'READY_FOR_EXECUTION',
+              marketPrice: 250,
+              triggerPrice: 255,
+            }),
+          ]),
+        );
+      });
+  });
+
   it('/api/v1/validations/holdings/sell (POST)', () => {
     return request(app.getHttpServer())
       .post('/api/v1/validations/holdings/sell')

@@ -1149,6 +1149,48 @@
                   ]
                 }
               }
+            },
+            {
+              "name": "Process Pending Orders",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('pending orders were evaluated', function () { const body = pm.response.json(); pm.expect(body.scanned).to.be.a('number'); pm.expect(body.evaluations).to.be.an('array'); });",
+                      "pm.test('processor response is successful', function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"limit\": 25,\n  \"evaluatedAt\": \"2026-05-12T14:30:00.000Z\"\n}"
+                },
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/orders/pending/process",
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "orders",
+                    "pending",
+                    "process"
+                  ]
+                }
+              },
+              "response": []
             }
           ]
         },
