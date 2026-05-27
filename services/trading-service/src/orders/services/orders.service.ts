@@ -101,7 +101,37 @@ export class OrdersService {
     this.assertMarketCanOperate(marketValidation, queueForMarketOpen);
 
     const grossAmount = roundMoney(input.quantity * input.estimatedUnitPrice);
-    const result = await this.orderRepository.createMarketBuyOrder({
+    const result = await this.orderRepository.createMarketBuyOrder(
+      this.buildMarketOrderCommand(
+        input,
+        grossAmount,
+        queueForMarketOpen,
+        'Market buy order queued until market opens',
+      ),
+    );
+
+    if (!result.approved || !result.order) {
+      throw new ConflictException(result.reason ?? 'Unable to create order');
+    }
+
+    return result.order;
+  }
+
+  private buildMarketOrderCommand(
+    input: Pick<
+      CreateMarketBuyOrderInput,
+      | 'traderId'
+      | 'symbol'
+      | 'exchangeId'
+      | 'quantity'
+      | 'estimatedUnitPrice'
+      | 'currency'
+    >,
+    grossAmount: number,
+    queueForMarketOpen: boolean,
+    queuedReason: string,
+  ) {
+    return {
       traderId: input.traderId.trim(),
       symbol: input.symbol.trim().toUpperCase(),
       exchangeId: input.exchangeId.trim(),
@@ -112,16 +142,10 @@ export class OrdersService {
       ...(queueForMarketOpen
         ? {
             initialStatus: 'PENDING_MARKET_OPEN' as const,
-            statusReason: 'Market buy order queued until market opens',
+            statusReason: queuedReason,
           }
         : {}),
-    });
-
-    if (!result.approved || !result.order) {
-      throw new ConflictException(result.reason ?? 'Unable to create order');
-    }
-
-    return result.order;
+    };
   }
 
   private assertValidMarketBuyOrder(input: CreateMarketBuyOrderInput): void {
@@ -197,20 +221,13 @@ export class OrdersService {
 
     const grossAmount = roundMoney(input.quantity * input.estimatedUnitPrice);
     const result = await this.orderRepository.createMarketSellOrder({
-      traderId: input.traderId.trim(),
       stockId: input.stockId.trim(),
-      symbol: input.symbol.trim().toUpperCase(),
-      exchangeId: input.exchangeId.trim(),
-      quantity: input.quantity,
-      estimatedUnitPrice: input.estimatedUnitPrice,
-      grossAmount,
-      currency: input.currency?.trim().toUpperCase() || 'USD',
-      ...(queueForMarketOpen
-        ? {
-            initialStatus: 'PENDING_MARKET_OPEN' as const,
-            statusReason: 'Market sell order queued until market opens',
-          }
-        : {}),
+      ...this.buildMarketOrderCommand(
+        input,
+        grossAmount,
+        queueForMarketOpen,
+        'Market sell order queued until market opens',
+      ),
     });
 
     if (!result.approved || !result.order) {
