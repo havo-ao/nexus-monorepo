@@ -26,3 +26,14 @@ export type BrokerOrderResponse = {
 export interface ExternalBrokerClient {
   sendOrder(command: SendBrokerOrderCommand): Promise<BrokerOrderResponse>;
 }
+
+export class BrokerOrderSubmissionError extends Error {
+  constructor(
+    readonly brokerName: string,
+    readonly brokerStatus: string,
+    readonly requestSummary: string,
+    message: string,
+  ) {
+    super(message);
+  }
+}
