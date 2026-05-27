@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { stripTrailingSlashes } from '../../common/url';
 import type {
   BrokerOrderStatusResponse,
   BrokerOrderResponse,
@@ -253,19 +254,11 @@ export class AlpacaBrokerClient implements ExternalBrokerClient {
   }
 
   private getBaseUrl(): string {
-    const baseUrl = this.stripTrailingSlashes(
+    const baseUrl = stripTrailingSlashes(
       process.env.ALPACA_API_BASE_URL?.trim() ||
         'https://paper-api.alpaca.markets',
     );
     return baseUrl.endsWith('/v2') ? baseUrl.slice(0, -3) : baseUrl;
-  }
-
-  private stripTrailingSlashes(value: string): string {
-    let end = value.length;
-    while (end > 0 && value[end - 1] === '/') {
-      end -= 1;
-    }
-    return value.slice(0, end);
   }
 
   private getTimeoutMs(): number {

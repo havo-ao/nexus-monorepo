@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { stripTrailingSlashes } from '../../common/url';
 import type {
   SendTradingNotificationCommand,
   TradingNotificationClient,
@@ -28,7 +29,7 @@ export class ComplianceNotificationClient implements TradingNotificationClient {
 
     try {
       const response = await fetch(
-        `${baseUrl.replace(/\/+$/, '')}/api/v1/notifications/email`,
+        `${stripTrailingSlashes(baseUrl)}/api/v1/notifications/email`,
         {
           method: 'POST',
           headers: {

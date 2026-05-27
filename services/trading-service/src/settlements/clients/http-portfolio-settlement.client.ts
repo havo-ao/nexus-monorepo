@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { stripTrailingSlashes } from '../../common/url';
 import type {
   ApplyPortfolioSettlementCommand,
   PortfolioSettlementClient,
@@ -117,7 +118,7 @@ export class HttpPortfolioSettlementClient implements PortfolioSettlementClient 
     headers: Record<string, string>,
     body: Record<string, unknown>,
   ): Promise<void> {
-    const response = await fetch(`${baseUrl.replace(/\/+$/, '')}${path}`, {
+    const response = await fetch(`${stripTrailingSlashes(baseUrl)}${path}`, {
       method: 'POST',
       headers,
       body: JSON.stringify(body),
