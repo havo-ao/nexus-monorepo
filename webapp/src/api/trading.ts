@@ -187,6 +187,27 @@ export type CommissionCalculationResponse = {
   orderReference?: string;
 };
 
+export type DistributeCommissionRequest = {
+  traderId: string;
+  brokerId: string;
+  commissionAmount: number;
+  currency?: string;
+  orderReference?: string;
+};
+
+export type CommissionDistributionResponse = {
+  traderId: string;
+  brokerId: string;
+  commissionAmount: number;
+  platformAmount: number;
+  brokerAmount: number;
+  platformShareBps: number;
+  brokerShareBps: number;
+  currency: string;
+  distributedAt: string;
+  orderReference?: string;
+};
+
 async function readJsonSafe(response: Response): Promise<unknown> {
   const text = await response.text();
   if (!text) {
@@ -519,4 +540,32 @@ export async function calculateCommission(
   }
 
   return body as CommissionCalculationResponse;
+}
+
+export async function distributeCommission(
+  request: DistributeCommissionRequest,
+): Promise<CommissionDistributionResponse> {
+  const response = await fetch(
+    tradingApiUrl(API_PATHS.tradingDistributeCommission),
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(request),
+    },
+  );
+
+  const body = await readJsonSafe(response);
+
+  if (!response.ok) {
+    const maybeMessage =
+      body && typeof body === "object" && "message" in body
+        ? String((body as { message?: unknown }).message)
+        : "Unable to distribute operation commission.";
+    throw new Error(maybeMessage);
+  }
+
+  return body as CommissionDistributionResponse;
 }
