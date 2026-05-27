@@ -1563,6 +1563,450 @@
               }
             }
           ]
+        },
+        {
+          "name": "Audit",
+          "item": [
+            {
+              "name": "Record Audit Event",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('audit event recorded', function () { const body = pm.response.json(); pm.expect(body.eventType).to.eql('ORDER_STATUS_CHANGED'); pm.expect(body.entityId).to.eql(pm.environment.get('orderReference')); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"eventType\": \"ORDER_STATUS_CHANGED\",\n  \"sourceService\": \"trading-service\",\n  \"actorId\": \"{{traderId}}\",\n  \"actorRole\": \"TRADER\",\n  \"entityType\": \"ORDER\",\n  \"entityId\": \"{{orderReference}}\",\n  \"correlationId\": \"{{orderReference}}\",\n  \"result\": \"SUCCESS\",\n  \"critical\": true,\n  \"context\": {\n    \"toStatus\": \"SENT_TO_BROKER\"\n  },\n  \"occurredAt\": \"2026-05-27T15:30:00.000Z\"\n}"
+                },
+                "url": {
+                  "raw": "{{complianceBaseUrl}}/audit/events",
+                  "host": [
+                    "{{complianceBaseUrl}}"
+                  ],
+                  "path": [
+                    "audit",
+                    "events"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Query Audit Events",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('audit events returned', function () { pm.response.to.have.status(200); pm.expect(pm.response.json()).to.be.an('array'); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{complianceBaseUrl}}/audit/events?entityId={{orderReference}}",
+                  "host": [
+                    "{{complianceBaseUrl}}"
+                  ],
+                  "path": [
+                    "audit",
+                    "events?entityId={{orderReference}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Notifications",
+          "item": [
+            {
+              "name": "Process Order Notification Event",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('notification attempt recorded', function () { const body = pm.response.json(); pm.expect(body.category).to.eql('ORDER_STATUS'); pm.expect(body.entityId).to.eql(pm.environment.get('orderReference')); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"category\": \"ORDER_STATUS\",\n  \"sourceService\": \"trading-service\",\n  \"entityType\": \"ORDER\",\n  \"entityId\": \"{{orderReference}}\",\n  \"subject\": \"Order status changed\",\n  \"message\": \"Your order changed status in Nexus.\",\n  \"recipient\": {\n    \"email\": \"{{traderEmail}}\",\n    \"name\": \"{{traderName}}\",\n    \"surname\": \"{{traderSurname}}\",\n    \"username\": \"{{traderUsername}}\"\n  },\n  \"correlationId\": \"{{orderReference}}\",\n  \"occurredAt\": \"2026-05-27T15:30:00.000Z\"\n}"
+                },
+                "url": {
+                  "raw": "{{complianceBaseUrl}}/notifications/events",
+                  "host": [
+                    "{{complianceBaseUrl}}"
+                  ],
+                  "path": [
+                    "notifications",
+                    "events"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Query Notification Attempts",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 200', function () { pm.response.to.have.status(200); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{complianceBaseUrl}}/notifications/attempts?entityId={{orderReference}}",
+                  "host": [
+                    "{{complianceBaseUrl}}"
+                  ],
+                  "path": [
+                    "notifications",
+                    "attempts?entityId={{orderReference}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Order History",
+          "item": [
+            {
+              "name": "Record Order History Event",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 201', function () { pm.response.to.have.status(201); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"orderReference\": \"{{orderReference}}\",\n  \"fromStatus\": \"PENDING_EXECUTION\",\n  \"toStatus\": \"SENT_TO_BROKER\",\n  \"actorId\": \"{{brokerId}}\",\n  \"actorRole\": \"BROKER\",\n  \"reason\": \"Broker approved and sent the order to Alpaca.\",\n  \"sourceService\": \"trading-service\",\n  \"correlationId\": \"{{orderReference}}\",\n  \"occurredAt\": \"2026-05-27T15:30:00.000Z\"\n}"
+                },
+                "url": {
+                  "raw": "{{complianceBaseUrl}}/order-history/events",
+                  "host": [
+                    "{{complianceBaseUrl}}"
+                  ],
+                  "path": [
+                    "order-history",
+                    "events"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Order History",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 200', function () { pm.response.to.have.status(200); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{complianceBaseUrl}}/order-history/orders/{{orderReference}}",
+                  "host": [
+                    "{{complianceBaseUrl}}"
+                  ],
+                  "path": [
+                    "order-history",
+                    "orders",
+                    "{{orderReference}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Restrictions",
+          "item": [
+            {
+              "name": "Restrict Trader",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 201', function () { pm.response.to.have.status(201); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"RESTRICTED\",\n  \"reason\": \"Unusual trading activity under review.\",\n  \"updatedBy\": \"{{adminUserId}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{complianceBaseUrl}}/restrictions/traders/{{traderId}}",
+                  "host": [
+                    "{{complianceBaseUrl}}"
+                  ],
+                  "path": [
+                    "restrictions",
+                    "traders",
+                    "{{traderId}}"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Validate Trader Operation",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 201', function () { pm.response.to.have.status(201); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"traderId\": \"{{traderId}}\",\n  \"operation\": \"CREATE_ORDER\",\n  \"sourceService\": \"trading-service\"\n}"
+                },
+                "url": {
+                  "raw": "{{complianceBaseUrl}}/restrictions/validate-operation",
+                  "host": [
+                    "{{complianceBaseUrl}}"
+                  ],
+                  "path": [
+                    "restrictions",
+                    "validate-operation"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Trader Restriction Status",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 200', function () { pm.response.to.have.status(200); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{complianceBaseUrl}}/restrictions/traders/{{traderId}}",
+                  "host": [
+                    "{{complianceBaseUrl}}"
+                  ],
+                  "path": [
+                    "restrictions",
+                    "traders",
+                    "{{traderId}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reports",
+          "item": [
+            {
+              "name": "Operational Report",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 200', function () { pm.response.to.have.status(200); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{complianceBaseUrl}}/reports/operational",
+                  "host": [
+                    "{{complianceBaseUrl}}"
+                  ],
+                  "path": [
+                    "reports",
+                    "operational"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Regulatory Report",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 200', function () { pm.response.to.have.status(200); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{complianceBaseUrl}}/reports/regulatory",
+                  "host": [
+                    "{{complianceBaseUrl}}"
+                  ],
+                  "path": [
+                    "reports",
+                    "regulatory"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Executive Report",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 200', function () { pm.response.to.have.status(200); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{complianceBaseUrl}}/reports/executive",
+                  "host": [
+                    "{{complianceBaseUrl}}"
+                  ],
+                  "path": [
+                    "reports",
+                    "executive"
+                  ]
+                }
+              }
+            }
+          ]
         }
       ]
     }
