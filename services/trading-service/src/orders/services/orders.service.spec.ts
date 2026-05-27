@@ -1,5 +1,6 @@
 import { BadRequestException, ConflictException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { ComplianceValidationService } from '../../compliance-validation/services/compliance-validation.service';
 import { HoldingsValidation } from '../../holdings-validation/entities/holdings-validation.entity';
 import { HoldingsValidationService } from '../../holdings-validation/services/holdings-validation.service';
 import { MarketValidation } from '../../market-validation/entities/market-validation.entity';
@@ -11,11 +12,15 @@ import { OrdersService } from './orders.service';
 
 describe('OrdersService', () => {
   let service: OrdersService;
+  let complianceValidationService: jest.Mocked<ComplianceValidationService>;
   let marketValidationService: jest.Mocked<MarketValidationService>;
   let holdingsValidationService: jest.Mocked<HoldingsValidationService>;
   let orderRepository: jest.Mocked<OrderRepository>;
 
   beforeEach(async () => {
+    complianceValidationService = {
+      assertOperationAllowed: jest.fn().mockResolvedValue(undefined),
+    } as unknown as jest.Mocked<ComplianceValidationService>;
     marketValidationService = {
       validateMarketStatus: jest.fn(),
     } as unknown as jest.Mocked<MarketValidationService>;
@@ -35,6 +40,10 @@ describe('OrdersService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         OrdersService,
+        {
+          provide: ComplianceValidationService,
+          useValue: complianceValidationService,
+        },
         {
           provide: MarketValidationService,
           useValue: marketValidationService,
@@ -103,6 +112,9 @@ describe('OrdersService', () => {
       '1',
       '2026-05-26T14:30:00.000Z',
     ]);
+    expect(
+      complianceValidationService.assertOperationAllowed.mock.calls.at(-1),
+    ).toEqual([' 101 ', 'CREATE_MARKET_BUY_ORDER']);
     expect(orderRepository.createMarketBuyOrder.mock.calls[0][0]).toEqual({
       traderId: '101',
       symbol: 'AAPL',
@@ -218,6 +230,27 @@ describe('OrdersService', () => {
     ).rejects.toThrow(ConflictException);
   });
 
+  it('rejects market buy order creation when compliance blocks the operation', async () => {
+    complianceValidationService.assertOperationAllowed.mockRejectedValue(
+      new ConflictException('Trader is restricted'),
+    );
+
+    await expect(
+      service.createMarketBuyOrder({
+        traderId: '101',
+        symbol: 'AAPL',
+        exchangeId: '1',
+        quantity: 3,
+        estimatedUnitPrice: 250,
+      }),
+    ).rejects.toThrow(ConflictException);
+
+    expect(
+      marketValidationService.validateMarketStatus.mock.calls,
+    ).toHaveLength(0);
+    expect(orderRepository.createMarketBuyOrder.mock.calls).toHaveLength(0);
+  });
+
   it('creates a limit buy order pending price condition', async () => {
     const order = new TradingOrder(
       '2',
@@ -256,6 +289,9 @@ describe('OrdersService', () => {
     expect(
       marketValidationService.validateMarketStatus.mock.calls,
     ).toHaveLength(0);
+    expect(
+      complianceValidationService.assertOperationAllowed.mock.calls.at(-1),
+    ).toEqual([' 101 ', 'CREATE_LIMIT_BUY_ORDER']);
     expect(orderRepository.createLimitBuyOrder.mock.calls[0][0]).toEqual({
       traderId: '101',
       symbol: 'AAPL',
@@ -342,6 +378,9 @@ describe('OrdersService', () => {
       symbol: ' aapl ',
       quantity: 3,
     });
+    expect(
+      complianceValidationService.assertOperationAllowed.mock.calls.at(-1),
+    ).toEqual([' 101 ', 'CREATE_MARKET_SELL_ORDER']);
     expect(orderRepository.createMarketSellOrder.mock.calls[0][0]).toEqual({
       traderId: '101',
       stockId: '1',
@@ -565,6 +604,9 @@ describe('OrdersService', () => {
       grossAmount: 780,
       currency: 'USD',
     });
+    expect(
+      complianceValidationService.assertOperationAllowed.mock.calls.at(-1),
+    ).toEqual([' 101 ', 'CREATE_LIMIT_SELL_ORDER']);
   });
 
   it('rejects limit sell order creation when holdings are insufficient', async () => {
@@ -644,6 +686,9 @@ describe('OrdersService', () => {
       grossAmount: 660,
       currency: 'USD',
     });
+    expect(
+      complianceValidationService.assertOperationAllowed.mock.calls.at(-1),
+    ).toEqual([' 101 ', 'CREATE_STOP_LOSS_ORDER']);
   });
 
   it('rejects stop loss order creation when holdings are insufficient', async () => {
@@ -745,6 +790,9 @@ describe('OrdersService', () => {
       grossAmount: 870,
       currency: 'USD',
     });
+    expect(
+      complianceValidationService.assertOperationAllowed.mock.calls.at(-1),
+    ).toEqual([' 101 ', 'CREATE_TAKE_PROFIT_ORDER']);
   });
 
   it('rejects take profit order creation when holdings are insufficient', async () => {

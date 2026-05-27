@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { BrokerOrderValidationEvent } from '../src/broker-validation/entities/broker-order-validation-event.entity';
 import { CommissionCalculationEvent } from '../src/commissions/entities/commission-calculation-event.entity';
 import { CommissionDistributionEvent } from '../src/commissions/entities/commission-distribution-event.entity';
+import { ComplianceValidationEvent } from '../src/compliance-validation/entities/compliance-validation-event.entity';
 import { BrokerExecutionEvent } from '../src/executions/entities/broker-execution-event.entity';
 import { FundsValidationEvent } from '../src/funds-validation/entities/funds-validation-event.entity';
 import { HoldingsValidationEvent } from '../src/holdings-validation/entities/holdings-validation-event.entity';
@@ -30,6 +31,7 @@ import { Wallet } from '../src/wallet/entities/wallet.entity';
         BrokerOrderValidationEvent,
         CommissionCalculationEvent,
         CommissionDistributionEvent,
+        ComplianceValidationEvent,
         FundsValidationEvent,
         HoldingsValidationEvent,
         MarketExchange,
