@@ -242,7 +242,6 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
   align-items: stretch;
-  grid-auto-rows: minmax(0, 1fr);
 }
 
 .trader-panel-grid.single .trader-panel-section-heading,
@@ -404,6 +403,10 @@
 .trader-step-panel.step-4 .trader-precheck-section,
 .trader-step-panel.step-6 .trader-precheck-section {
   grid-column: 1 / -1;
+}
+
+.trader-step-panel.step-1 .trader-precheck-section {
+  min-height: 178px;
 }
 
 .trader-precheck-section:first-of-type {
