@@ -173,6 +173,52 @@ describe('AppController (e2e)', () => {
       });
   });
 
+  it('/api/v1/orders/:orderReference/broker-validation approves an order (POST)', () => {
+    return request(app.getHttpServer())
+      .post('/api/v1/orders/order-reference/broker-validation')
+      .send({
+        brokerId: '201',
+        decision: 'APPROVE',
+        reason: 'Order reviewed by assigned broker.',
+      })
+      .expect(201)
+      .expect((response) => {
+        const body = response.body as Record<string, unknown>;
+        expect(body).toMatchObject({
+          orderId: '1',
+          orderReference: 'order-reference',
+          brokerId: '201',
+          decision: 'APPROVE',
+          status: 'PENDING_EXECUTION',
+          reason: 'Order reviewed by assigned broker.',
+        });
+        expect(body.validatedAt).toEqual(expect.any(String));
+      });
+  });
+
+  it('/api/v1/orders/:orderReference/broker-validation rejects an order (POST)', () => {
+    return request(app.getHttpServer())
+      .post('/api/v1/orders/broker-rejected-order-reference/broker-validation')
+      .send({
+        brokerId: '201',
+        decision: 'REJECT',
+        reason: 'Risk policy did not approve this order.',
+      })
+      .expect(201)
+      .expect((response) => {
+        const body = response.body as Record<string, unknown>;
+        expect(body).toMatchObject({
+          orderId: '2',
+          orderReference: 'broker-rejected-order-reference',
+          brokerId: '201',
+          decision: 'REJECT',
+          status: 'REJECTED',
+          reason: 'Risk policy did not approve this order.',
+        });
+        expect(body.validatedAt).toEqual(expect.any(String));
+      });
+  });
+
   it('/api/v1/orders/buy/market (POST)', () => {
     return request(app.getHttpServer())
       .post('/api/v1/orders/buy/market')
