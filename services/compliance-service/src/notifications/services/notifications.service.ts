@@ -34,38 +34,38 @@ const mailTemplateDefinitions: Record<
   MailTemplateDefinition
 > = {
   LOGIN_SUCCESS: {
-    subject: 'Nexus: successful sign-in to your investment account',
+    subject: 'Acciones ElBosque: successful sign-in to your investment account',
     template: 'login-success',
     headline: 'Sign-in confirmed',
     intro:
-      'We detected a successful sign-in to your Nexus account. You can now monitor your portfolio, review the market, and continue buying stocks.',
+      'We detected a successful sign-in to your Acciones ElBosque account. You can now monitor your portfolio, review the market, and continue buying stocks.',
     supportMessage:
-      'If you do not recognize this sign-in, change your password and contact the Nexus security team immediately.',
+      'If you do not recognize this sign-in, change your password and contact the Acciones ElBosque security team immediately.',
   },
   LOGIN_FAILED: {
-    subject: 'Nexus: multiple failed sign-in attempts detected',
+    subject: 'Acciones ElBosque: multiple failed sign-in attempts detected',
     template: 'login-failed',
-    headline: 'Your Nexus access was protected',
+    headline: 'Your Acciones ElBosque access was protected',
     intro:
-      'We detected 5 failed sign-in attempts in less than 10 minutes on your Nexus account. For your security, you must wait 10 minutes before trying again.',
+      'We detected 5 failed sign-in attempts in less than 10 minutes on your Acciones ElBosque account. For your security, you must wait 10 minutes before trying again.',
     supportMessage:
-      'If you do not recognize this activity, change your password and contact the Nexus security team as soon as possible.',
+      'If you do not recognize this activity, change your password and contact the Acciones ElBosque security team as soon as possible.',
   },
   USER_REGISTERED: {
-    subject: 'Nexus: your account is ready to invest',
+    subject: 'Acciones ElBosque: your account is ready to invest',
     template: 'user-registered',
-    headline: 'Welcome to Nexus',
+    headline: 'Welcome to Acciones ElBosque',
     intro:
       'Your registration was completed successfully. You can now explore listed companies, follow the market, and get ready to buy stocks from one platform.',
     supportMessage:
-      'Our compliance team will support you so your investment experience on Nexus remains safe and transparent.',
+      'Our compliance team will support you so your investment experience on Acciones ElBosque remains safe and transparent.',
   },
   ORDER_EXECUTED: {
-    subject: 'Nexus: your trading order was executed',
+    subject: 'Acciones ElBosque: your trading order was executed',
     template: 'order-executed',
     headline: 'Order executed',
     intro:
-      'Your trading order was executed and recorded in Nexus. You can review the operation status, portfolio impact, and commission evidence from the Trading desk.',
+      'Your trading order was executed and recorded in Acciones ElBosque. You can review the operation status, portfolio impact, and commission evidence from the Trading desk.',
     supportMessage:
       'This notification is part of the audit trail for your trading operations.',
   },
@@ -140,7 +140,7 @@ export class NotificationsService {
         await this.mailerService.sendMail({
           to: dto.recipient.email,
           from: this.getMailFrom(),
-          subject: `Nexus: ${dto.subject}`,
+          subject: `Acciones ElBosque: ${dto.subject}`,
           template: 'compliance-event',
           context: this.buildEventTemplateContext(dto, occurredAt),
         });
@@ -216,7 +216,7 @@ export class NotificationsService {
     const fullName = `${dto.name} ${dto.surname}`.trim();
 
     return {
-      appName: 'Nexus',
+      appName: 'Acciones ElBosque',
       previewText: notificationTemplateDescriptions[dto.templateName],
       headline: mailTemplate.headline,
       intro: mailTemplate.intro,
@@ -236,10 +236,10 @@ export class NotificationsService {
   ): Record<string, string> {
     const fullName = dto.recipient
       ? `${dto.recipient.name} ${dto.recipient.surname}`.trim()
-      : 'Nexus user';
+      : 'Acciones ElBosque user';
 
     return {
-      appName: 'Nexus',
+      appName: 'Acciones ElBosque',
       subject: dto.subject,
       message: dto.message,
       fullName,

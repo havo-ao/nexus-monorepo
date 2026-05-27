@@ -19,9 +19,9 @@ async function bootstrap() {
   });
 
   const swaggerConfig = new DocumentBuilder()
-    .setTitle('Nexus Compliance Service API')
+    .setTitle('Acciones ElBosque Compliance Service API')
     .setDescription(
-      'Compliance APIs for Nexus, including notification evidence, audit events, order history, operational reports, and trader restrictions.',
+      'Compliance APIs for Acciones ElBosque, including notification evidence, audit events, order history, operational reports, and trader restrictions.',
     )
     .setVersion('1.0')
     .build();

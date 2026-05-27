@@ -22,13 +22,13 @@ export const notificationTemplateDescriptions: Record<
   string
 > = {
   LOGIN_SUCCESS:
-    'Confirms a successful sign-in to Nexus after the user accesses the stock trading platform and reports when it happened.',
+    'Confirms a successful sign-in to Acciones ElBosque after the user accesses the stock trading platform and reports when it happened.',
   LOGIN_FAILED:
     'Alerts the user after 5 failed sign-in attempts in less than 10 minutes and reports when the lockout event happened.',
   USER_REGISTERED:
-    'Welcomes a new user after finishing registration in Nexus and reports when the account was created.',
+    'Welcomes a new user after finishing registration in Acciones ElBosque and reports when the account was created.',
   ORDER_EXECUTED:
-    'Confirms that a trading order was executed and recorded by Nexus.',
+    'Confirms that a trading order was executed and recorded by Acciones ElBosque.',
 };
 
 export const notificationTemplateDescription = notificationTemplateNames
@@ -40,7 +40,7 @@ export const notificationTemplateDescription = notificationTemplateNames
 
 export class SendNotificationDto {
   @ApiProperty({
-    description: `Template used to define the Nexus email notification type. Possible values: ${notificationTemplateDescription}`,
+    description: `Template used to define the Acciones ElBosque email notification type. Possible values: ${notificationTemplateDescription}`,
     enum: notificationTemplateNames,
     enumName: 'NotificationTemplateName',
     example: 'LOGIN_SUCCESS',

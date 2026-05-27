@@ -15,7 +15,7 @@ async function bootstrap() {
   });
 
   const swaggerConfig = new DocumentBuilder()
-    .setTitle('Nexus Trading Service API')
+    .setTitle('Acciones ElBosque Trading Service API')
     .setDescription(
       'Trading domain API for orders, validations, executions, and commissions.',
     )
