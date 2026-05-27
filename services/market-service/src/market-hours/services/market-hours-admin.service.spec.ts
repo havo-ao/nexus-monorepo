@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { MarketHours } from '../entities/market-hours.entity';
 import { MARKET_HOURS_REPOSITORY } from '../repositories/market-hours.repository';
@@ -77,6 +77,31 @@ describe('MarketHoursAdminService', () => {
     expect(response.openTime).toEqual({ hour: 10, minute: 0 });
     expect(response.closeTime).toEqual({ hour: 15, minute: 30 });
     expect(response.operatingDays).toEqual([1, 2, 3, 4]);
+  });
+
+  it('returns existing market-hours configuration for the admin panel', async () => {
+    repository.findByMarketCode.mockResolvedValue(
+      MarketHours.configure('NYSE', {
+        timezone: 'America/New_York',
+        openTime: { hour: 9, minute: 30 },
+        closeTime: { hour: 16, minute: 0 },
+        operatingDays: [1, 2, 3, 4, 5],
+      }),
+    );
+
+    const response = await service.getConfiguration('nyse');
+
+    expect(response.marketCode).toBe('NYSE');
+    expect(response.timezone).toBe('America/New_York');
+    expect(response.openTime).toEqual({ hour: 9, minute: 30 });
+  });
+
+  it('rejects admin configuration lookup when the market is not configured', async () => {
+    repository.findByMarketCode.mockResolvedValue(null);
+
+    await expect(service.getConfiguration('BVC')).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
   });
 
   it('adds a restriction to an existing market', async () => {

@@ -18,7 +18,8 @@ import {
   ribbonOutline,
   shieldCheckmarkOutline,
   sparklesOutline,
-  starOutline
+  starOutline,
+  timeOutline
 } from 'ionicons/icons';
 import { useHistory, useLocation } from 'react-router-dom';
 import type { UserProfile } from '../api/types';
@@ -96,6 +97,7 @@ const NavBar: React.FC = () => {
     () => [
       { label: 'Profile', icon: personCircleOutline, path: '/profile', action: () => goToRoute('/profile') },
       { label: 'Market', icon: analyticsOutline, path: '/markets', action: () => goToRoute('/markets') },
+      { label: 'Market Hours', icon: timeOutline, path: '/admin/market-hours', action: () => goToRoute('/admin/market-hours') },
       { label: 'Manage Admins', icon: ribbonOutline, path: '/manage-admins', action: () => goToRoute('/manage-admins') },
       { label: 'Manage Plans', icon: cardOutline, path: '/manage-plans', action: () => goToRoute('/manage-plans') }
     ],

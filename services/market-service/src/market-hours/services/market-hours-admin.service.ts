@@ -1,4 +1,9 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigureMarketHoursDto } from '../dto/configure-market-hours.dto';
 import { ConfigureMarketRestrictionDto } from '../dto/configure-market-restriction.dto';
 import { MarketHoursConfigurationResponseDto } from '../dto/market-hours-configuration-response.dto';
@@ -29,12 +34,14 @@ export class MarketHoursAdminService {
           openTime: dto.openTime,
           closeTime: dto.closeTime,
           operatingDays: dto.operatingDays,
+          weeklySchedule: dto.weeklySchedule,
         })
       : MarketHours.configure(marketCode, {
           timezone: dto.timezone,
           openTime: dto.openTime,
           closeTime: dto.closeTime,
           operatingDays: dto.operatingDays,
+          weeklySchedule: dto.weeklySchedule,
         });
 
     const saved = await this.marketHoursRepository.save(marketHours, {
@@ -45,6 +52,21 @@ export class MarketHoursAdminService {
     });
 
     return this.toConfigurationResponse(saved);
+  }
+
+  async getConfiguration(
+    marketCode: string,
+  ): Promise<MarketHoursConfigurationResponseDto> {
+    const marketHours =
+      await this.marketHoursRepository.findByMarketCode(marketCode);
+
+    if (!marketHours) {
+      throw new NotFoundException(
+        `Market ${marketCode.trim().toUpperCase()} has no hours configuration`,
+      );
+    }
+
+    return this.toConfigurationResponse(marketHours);
   }
 
   async configureRestriction(
@@ -107,6 +129,7 @@ export class MarketHoursAdminService {
       openTime: snapshot.openTime,
       closeTime: snapshot.closeTime,
       operatingDays: snapshot.operatingDays,
+      weeklySchedule: snapshot.weeklySchedule ?? [],
       restrictions: snapshot.restrictions,
       currentStatus: {
         marketCode: currentStatus.marketCode,

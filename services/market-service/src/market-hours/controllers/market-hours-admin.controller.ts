@@ -1,4 +1,12 @@
-import { Body, Controller, HttpCode, Param, Post, Put } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Param,
+  Post,
+  Put,
+} from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBody,
@@ -20,6 +28,20 @@ export class MarketHoursAdminController {
   constructor(
     private readonly marketHoursAdminService: MarketHoursAdminService,
   ) {}
+
+  @Get(':marketCode')
+  @ApiOperation({
+    summary: 'Get market operating hours configuration',
+    description:
+      'Subtarea NEX-100: permite al panel administrativo cargar la configuracion operativa actual antes de editar horarios o restricciones.',
+  })
+  @ApiOkResponse({ type: MarketHoursConfigurationResponseDto })
+  @ApiBadRequestResponse({ description: 'Invalid market code' })
+  getConfiguration(
+    @Param('marketCode') marketCode: string,
+  ): Promise<MarketHoursConfigurationResponseDto> {
+    return this.marketHoursAdminService.getConfiguration(marketCode);
+  }
 
   @Put(':marketCode')
   @ApiOperation({
