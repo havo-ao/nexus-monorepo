@@ -204,6 +204,36 @@ describe('AppController (e2e)', () => {
       });
   });
 
+  it('/api/v1/orders/buy/market queues when market is closed (POST)', () => {
+    return request(app.getHttpServer())
+      .post('/api/v1/orders/buy/market')
+      .send({
+        traderId: '101',
+        symbol: 'AAPL',
+        exchangeId: '1',
+        quantity: 1,
+        estimatedUnitPrice: 250,
+        marketEvaluatedAt: '2026-05-12T22:00:00.000Z',
+      })
+      .expect(201)
+      .expect((response) => {
+        const body = response.body as Record<string, unknown>;
+        expect(body).toMatchObject({
+          traderId: '101',
+          side: 'BUY',
+          orderType: 'MARKET',
+          status: 'PENDING_MARKET_OPEN',
+          symbol: 'AAPL',
+          exchangeId: '1',
+          quantity: 1,
+          estimatedUnitPrice: 250,
+          grossAmount: 250,
+          reservedAmount: 250,
+          currency: 'USD',
+        });
+      });
+  });
+
   it('/api/v1/orders/:orderReference/status (GET)', () => {
     return request(app.getHttpServer())
       .get('/api/v1/orders/order-reference/status')

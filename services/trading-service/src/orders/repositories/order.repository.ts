@@ -10,6 +10,8 @@ export type CreateMarketBuyOrderCommand = {
   estimatedUnitPrice: number;
   grossAmount: number;
   currency: string;
+  initialStatus?: 'PENDING_EXECUTION' | 'PENDING_MARKET_OPEN';
+  statusReason?: string;
 };
 
 export type CreateLimitBuyOrderCommand = {
@@ -31,6 +33,8 @@ export type CreateMarketSellOrderCommand = {
   estimatedUnitPrice: number;
   grossAmount: number;
   currency: string;
+  initialStatus?: 'PENDING_EXECUTION' | 'PENDING_MARKET_OPEN';
+  statusReason?: string;
 };
 
 export type CreateLimitSellOrderCommand = {

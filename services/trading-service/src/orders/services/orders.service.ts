@@ -19,6 +19,7 @@ export type CreateMarketBuyOrderInput = {
   estimatedUnitPrice: number;
   currency?: string;
   marketEvaluatedAt?: string;
+  queueWhenMarketClosed?: boolean;
 };
 
 export type CreateLimitBuyOrderInput = {
@@ -39,6 +40,7 @@ export type CreateMarketSellOrderInput = {
   estimatedUnitPrice: number;
   currency?: string;
   marketEvaluatedAt?: string;
+  queueWhenMarketClosed?: boolean;
 };
 
 export type CreateLimitSellOrderInput = {
@@ -91,7 +93,11 @@ export class OrdersService {
         input.marketEvaluatedAt,
       );
 
-    if (!marketValidation.canOperate) {
+    const queueForMarketOpen =
+      marketValidation.marketStatus === 'CLOSED' &&
+      input.queueWhenMarketClosed !== false;
+
+    if (!marketValidation.canOperate && !queueForMarketOpen) {
       throw new ConflictException(
         marketValidation.reason ??
           `Market cannot operate with status ${marketValidation.marketStatus}`,
@@ -107,6 +113,12 @@ export class OrdersService {
       estimatedUnitPrice: input.estimatedUnitPrice,
       grossAmount,
       currency: input.currency?.trim().toUpperCase() || 'USD',
+      ...(queueForMarketOpen
+        ? {
+            initialStatus: 'PENDING_MARKET_OPEN' as const,
+            statusReason: 'Market buy order queued until market opens',
+          }
+        : {}),
     });
 
     if (!result.approved || !result.order) {
@@ -167,7 +179,11 @@ export class OrdersService {
         input.marketEvaluatedAt,
       );
 
-    if (!marketValidation.canOperate) {
+    const queueForMarketOpen =
+      marketValidation.marketStatus === 'CLOSED' &&
+      input.queueWhenMarketClosed !== false;
+
+    if (!marketValidation.canOperate && !queueForMarketOpen) {
       throw new ConflictException(
         marketValidation.reason ??
           `Market cannot operate with status ${marketValidation.marketStatus}`,
@@ -198,6 +214,12 @@ export class OrdersService {
       estimatedUnitPrice: input.estimatedUnitPrice,
       grossAmount,
       currency: input.currency?.trim().toUpperCase() || 'USD',
+      ...(queueForMarketOpen
+        ? {
+            initialStatus: 'PENDING_MARKET_OPEN' as const,
+            statusReason: 'Market sell order queued until market opens',
+          }
+        : {}),
     });
 
     if (!result.approved || !result.order) {
