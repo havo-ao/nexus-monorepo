@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from '../database/database.module';
+import { BrokerValidationModule } from './broker-validation/broker-validation.module';
 import { CommissionsModule } from './commissions/commissions.module';
 import { ExecutionsModule } from './executions/executions.module';
 import { FundsValidationModule } from './funds-validation/funds-validation.module';
@@ -15,6 +16,7 @@ const databaseImports = process.env.NODE_ENV === 'test' ? [] : [DatabaseModule];
 @Module({
   imports: [
     ...databaseImports,
+    BrokerValidationModule,
     CommissionsModule,
     ExecutionsModule,
     FundsValidationModule,

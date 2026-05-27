@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { BrokerOrderValidationEvent } from '../src/broker-validation/entities/broker-order-validation-event.entity';
 import { CommissionCalculationEvent } from '../src/commissions/entities/commission-calculation-event.entity';
 import { CommissionDistributionEvent } from '../src/commissions/entities/commission-distribution-event.entity';
 import { BrokerExecutionEvent } from '../src/executions/entities/broker-execution-event.entity';
@@ -23,6 +24,7 @@ import { Wallet } from '../src/wallet/entities/wallet.entity';
       database: process.env.DB_DATABASE ?? 'nexus',
       entities: [
         BrokerExecutionEvent,
+        BrokerOrderValidationEvent,
         CommissionCalculationEvent,
         CommissionDistributionEvent,
         FundsValidationEvent,

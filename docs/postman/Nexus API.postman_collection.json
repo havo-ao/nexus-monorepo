@@ -759,6 +759,92 @@
               }
             },
             {
+              "name": "Validate Order By Broker - Approve",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 201', function () { pm.response.to.have.status(201); });",
+                      "pm.test('broker approves order', function () { const body = pm.response.json(); pm.expect(body.brokerId).to.eql(pm.environment.get('brokerId')); pm.expect(body.decision).to.eql('APPROVE'); pm.expect(body.status).to.exist; });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"brokerId\": \"{{brokerId}}\",\n  \"decision\": \"APPROVE\",\n  \"reason\": \"Order reviewed by assigned broker.\"\n}"
+                },
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/orders/{{orderReference}}/broker-validation",
+                  "host": ["{{tradingBaseUrl}}"],
+                  "path": [
+                    "api",
+                    "v1",
+                    "orders",
+                    "{{orderReference}}",
+                    "broker-validation"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Validate Order By Broker - Reject",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 201', function () { pm.response.to.have.status(201); });",
+                      "pm.test('broker rejects order', function () { const body = pm.response.json(); pm.expect(body.brokerId).to.eql(pm.environment.get('brokerId')); pm.expect(body.decision).to.eql('REJECT'); pm.expect(body.status).to.eql('REJECTED'); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"brokerId\": \"{{brokerId}}\",\n  \"decision\": \"REJECT\",\n  \"reason\": \"Risk policy did not approve this order.\"\n}"
+                },
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/orders/{{orderReference}}/broker-validation",
+                  "host": ["{{tradingBaseUrl}}"],
+                  "path": [
+                    "api",
+                    "v1",
+                    "orders",
+                    "{{orderReference}}",
+                    "broker-validation"
+                  ]
+                }
+              }
+            },
+            {
               "name": "Get Current Order Status",
               "event": [
                 {
