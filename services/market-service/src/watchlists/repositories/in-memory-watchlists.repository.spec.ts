@@ -44,6 +44,10 @@ describe('InMemoryWatchlistsRepository', () => {
     expect(repository.findByTraderId('trader-123')).toHaveLength(1);
   });
 
+  it('returns an empty list when the trader has no stored items', () => {
+    expect(repository.findByTraderId(' trader-999 ')).toEqual([]);
+  });
+
   it('removes items only from the requested trader watchlist', () => {
     repository.addItem(
       WatchlistItem.create({
