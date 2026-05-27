@@ -11,6 +11,8 @@ import {
   informationCircleOutline,
   logInOutline,
   logOutOutline,
+  closeOutline,
+  menuOutline,
   notificationsOutline,
   personAddOutline,
   personCircleOutline,
@@ -38,6 +40,7 @@ const NavBar: React.FC = () => {
   const history = useHistory();
   const location = useLocation();
   const [sessionUser, setSessionUser] = useState<UserProfile | null>(() => getStoredUser());
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const isAdmin = sessionUser?.userRol === 'ADMIN';
 
   useEffect(() => {
@@ -52,6 +55,26 @@ const NavBar: React.FC = () => {
       document.body.classList.remove('nexus-sidebar-layout');
     };
   }, []);
+
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname, location.hash]);
+
+  useEffect(() => {
+    document.body.classList.toggle('nexus-mobile-menu-open', isMobileMenuOpen);
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleEscape);
+    return () => {
+      document.body.classList.remove('nexus-mobile-menu-open');
+      window.removeEventListener('keydown', handleEscape);
+    };
+  }, [isMobileMenuOpen]);
 
   const goToHomeSection = useCallback((sectionId: string) => {
     history.push({ pathname: '/', hash: `#${sectionId}` });
@@ -127,65 +150,113 @@ const NavBar: React.FC = () => {
   };
 
   return (
-    <aside className="nexus-sidebar" aria-label="Primary navigation">
-      <div className="nexus-sidebar-top">
+    <>
+      <header className="nexus-mobile-header">
         <button
           type="button"
-          className="nexus-sidebar-logo"
+          className="nexus-mobile-menu-button"
+          onClick={() => setIsMobileMenuOpen(true)}
+          aria-label="Open navigation"
+          aria-expanded={isMobileMenuOpen}
+          aria-controls="nexus-primary-navigation"
+        >
+          <IonIcon icon={menuOutline} />
+        </button>
+        <button
+          type="button"
+          className="nexus-mobile-brand"
           onClick={() => history.push('/')}
           aria-label="Go to home"
         >
-          <span className="nexus-sidebar-logo-mark">
+          <span className="nexus-mobile-brand-mark">
             <IonIcon icon={sparklesOutline} />
           </span>
-          <span className="nexus-sidebar-logo-text">Nexus</span>
+          <span>Nexus</span>
         </button>
+      </header>
 
-        {sessionUser ? (
-          <div className="nexus-sidebar-user" aria-live="polite">
-            <strong>{formatUserDisplayName(sessionUser)}</strong>
-            <span>@{sessionUser.username}</span>
+      <button
+        type="button"
+        className={`nexus-sidebar-backdrop ${isMobileMenuOpen ? 'open' : ''}`}
+        onClick={() => setIsMobileMenuOpen(false)}
+        aria-label="Close navigation"
+        tabIndex={isMobileMenuOpen ? 0 : -1}
+      />
+
+      <aside
+        id="nexus-primary-navigation"
+        className={`nexus-sidebar ${isMobileMenuOpen ? 'open' : ''}`}
+        aria-label="Primary navigation"
+      >
+        <div className="nexus-sidebar-top">
+          <div className="nexus-sidebar-brand-row">
+            <button
+              type="button"
+              className="nexus-sidebar-logo"
+              onClick={() => history.push('/')}
+              aria-label="Go to home"
+            >
+              <span className="nexus-sidebar-logo-mark">
+                <IonIcon icon={sparklesOutline} />
+              </span>
+              <span className="nexus-sidebar-logo-text">Nexus</span>
+            </button>
+            <button
+              type="button"
+              className="nexus-sidebar-close"
+              onClick={() => setIsMobileMenuOpen(false)}
+              aria-label="Close navigation"
+            >
+              <IonIcon icon={closeOutline} />
+            </button>
           </div>
-        ) : (
-          <p className="nexus-sidebar-tagline">Smart trading tools and clearer decisions in one workspace.</p>
-        )}
-      </div>
 
-      <nav className="nexus-sidebar-nav">
-        {navItems.map((item) => (
-          <button
-            type="button"
-            key={item.label}
-            className={`nexus-sidebar-link ${isItemActive(item) ? 'active' : ''}`}
-            onClick={item.action}
-            aria-current={isItemActive(item) ? 'page' : undefined}
-          >
-            <IonIcon icon={item.icon} />
-            <span>{item.label}</span>
-          </button>
-        ))}
-      </nav>
+          {sessionUser ? (
+            <div className="nexus-sidebar-user" aria-live="polite">
+              <strong>{formatUserDisplayName(sessionUser)}</strong>
+              <span>@{sessionUser.username}</span>
+            </div>
+          ) : (
+            <p className="nexus-sidebar-tagline">Smart trading tools and clearer decisions in one workspace.</p>
+          )}
+        </div>
 
-      <div className="nexus-sidebar-footer">
-        {sessionUser ? (
-          <button type="button" className="nexus-sidebar-action nexus-sidebar-action--ghost" onClick={handleLogout}>
-            <IonIcon icon={logOutOutline} />
-            <span>Log Out</span>
-          </button>
-        ) : (
-          <>
-            <button type="button" className="nexus-sidebar-action nexus-sidebar-action--ghost" onClick={() => goToRoute('/login')}>
-              <IonIcon icon={logInOutline} />
-              <span>Log In</span>
+        <nav className="nexus-sidebar-nav">
+          {navItems.map((item) => (
+            <button
+              type="button"
+              key={item.label}
+              className={`nexus-sidebar-link ${isItemActive(item) ? 'active' : ''}`}
+              onClick={item.action}
+              aria-current={isItemActive(item) ? 'page' : undefined}
+            >
+              <IonIcon icon={item.icon} />
+              <span>{item.label}</span>
             </button>
-            <button type="button" className="nexus-sidebar-action nexus-sidebar-action--solid" onClick={() => goToRoute('/signup')}>
-              <IonIcon icon={personAddOutline} />
-              <span>Sign Up</span>
+          ))}
+        </nav>
+
+        <div className="nexus-sidebar-footer">
+          {sessionUser ? (
+            <button type="button" className="nexus-sidebar-action nexus-sidebar-action--ghost" onClick={handleLogout}>
+              <IonIcon icon={logOutOutline} />
+              <span>Log Out</span>
             </button>
-          </>
-        )}
-      </div>
-    </aside>
+          ) : (
+            <>
+              <button type="button" className="nexus-sidebar-action nexus-sidebar-action--ghost" onClick={() => goToRoute('/login')}>
+                <IonIcon icon={logInOutline} />
+                <span>Log In</span>
+              </button>
+              <button type="button" className="nexus-sidebar-action nexus-sidebar-action--solid" onClick={() => goToRoute('/signup')}>
+                <IonIcon icon={personAddOutline} />
+                <span>Sign Up</span>
+              </button>
+            </>
+          )}
+        </div>
+      </aside>
+    </>
   );
 };
 
