@@ -46,8 +46,14 @@
                 },
                 "url": {
                   "raw": "{{identityBaseUrl}}/api/auth/login",
-                  "host": ["{{identityBaseUrl}}"],
-                  "path": ["api", "auth", "login"]
+                  "host": [
+                    "{{identityBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "login"
+                  ]
                 }
               }
             },
@@ -82,8 +88,15 @@
                 },
                 "url": {
                   "raw": "{{identityBaseUrl}}/api/auth/register/trader",
-                  "host": ["{{identityBaseUrl}}"],
-                  "path": ["api", "auth", "register", "trader"]
+                  "host": [
+                    "{{identityBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "register",
+                    "trader"
+                  ]
                 }
               }
             },
@@ -128,81 +141,14 @@
                 },
                 "url": {
                   "raw": "{{identityBaseUrl}}/api/auth/register/admin",
-                  "host": ["{{identityBaseUrl}}"],
-                  "path": ["api", "auth", "register", "admin"]
-                }
-              }
-            },
-            {
-              "name": "Distribute Operation Commission",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "exec": [
-                      "pm.test('status is 201', function () { pm.response.to.have.status(201); });",
-                      "pm.test('commission is distributed', function () { const body = pm.response.json(); pm.expect(body.platformShareBps).to.eql(7000); pm.expect(body.brokerShareBps).to.eql(3000); pm.expect(body.platformAmount + body.brokerAmount).to.be.closeTo(body.commissionAmount, 0.01); });"
-                    ],
-                    "type": "text/javascript"
-                  }
-                }
-              ],
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  },
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"traderId\": \"{{traderId}}\",\n  \"brokerId\": \"{{brokerId}}\",\n  \"commissionAmount\": 2.63\n}"
-                },
-                "url": {
-                  "raw": "{{tradingBaseUrl}}/api/v1/commissions/distribute",
-                  "host": ["{{tradingBaseUrl}}"],
-                  "path": ["api", "v1", "commissions", "distribute"]
-                }
-              }
-            },
-            {
-              "name": "Send Order To Broker - Failure",
-              "event": [
-                {
-                  "listen": "test",
-                  "script": {
-                    "exec": [
-                      "pm.test('status is 201', function () { pm.response.to.have.status(201); });",
-                      "pm.test('broker failure is controlled', function () { const body = pm.response.json(); pm.expect(body.status).to.eql('FAILED'); pm.expect(body.externalOrderId).to.eql('unavailable'); pm.expect(body.brokerStatus).to.eql('FAILED'); });"
-                    ],
-                    "type": "text/javascript"
-                  }
-                }
-              ],
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Accept",
-                    "value": "application/json"
-                  }
-                ],
-                "url": {
-                  "raw": "{{tradingBaseUrl}}/api/v1/executions/broker/orders/broker-failure-order-reference/send",
-                  "host": ["{{tradingBaseUrl}}"],
+                  "host": [
+                    "{{identityBaseUrl}}"
+                  ],
                   "path": [
                     "api",
-                    "v1",
-                    "executions",
-                    "broker",
-                    "orders",
-                    "broker-failure-order-reference",
-                    "send"
+                    "auth",
+                    "register",
+                    "admin"
                   ]
                 }
               }
@@ -245,8 +191,14 @@
                 ],
                 "url": {
                   "raw": "{{identityBaseUrl}}/api/admin/count",
-                  "host": ["{{identityBaseUrl}}"],
-                  "path": ["api", "admin", "count"]
+                  "host": [
+                    "{{identityBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "admin",
+                    "count"
+                  ]
                 }
               }
             },
@@ -283,8 +235,15 @@
                 ],
                 "url": {
                   "raw": "{{identityBaseUrl}}/api/admin/traders/count",
-                  "host": ["{{identityBaseUrl}}"],
-                  "path": ["api", "admin", "traders", "count"]
+                  "host": [
+                    "{{identityBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "admin",
+                    "traders",
+                    "count"
+                  ]
                 }
               }
             }
@@ -324,8 +283,13 @@
                 },
                 "url": {
                   "raw": "{{identityBaseUrl}}/api/traders",
-                  "host": ["{{identityBaseUrl}}"],
-                  "path": ["api", "traders"]
+                  "host": [
+                    "{{identityBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "traders"
+                  ]
                 }
               }
             }
@@ -363,8 +327,14 @@
                 ],
                 "url": {
                   "raw": "{{tradingBaseUrl}}/api/v1/health",
-                  "host": ["{{tradingBaseUrl}}"],
-                  "path": ["api", "v1", "health"]
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "health"
+                  ]
                 }
               }
             }
@@ -405,8 +375,16 @@
                 },
                 "url": {
                   "raw": "{{tradingBaseUrl}}/api/v1/validations/funds/buy",
-                  "host": ["{{tradingBaseUrl}}"],
-                  "path": ["api", "v1", "validations", "funds", "buy"]
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "validations",
+                    "funds",
+                    "buy"
+                  ]
                 }
               }
             },
@@ -442,8 +420,16 @@
                 },
                 "url": {
                   "raw": "{{tradingBaseUrl}}/api/v1/validations/funds/buy",
-                  "host": ["{{tradingBaseUrl}}"],
-                  "path": ["api", "v1", "validations", "funds", "buy"]
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "validations",
+                    "funds",
+                    "buy"
+                  ]
                 }
               }
             }
@@ -484,8 +470,16 @@
                 },
                 "url": {
                   "raw": "{{tradingBaseUrl}}/api/v1/validations/holdings/sell",
-                  "host": ["{{tradingBaseUrl}}"],
-                  "path": ["api", "v1", "validations", "holdings", "sell"]
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "validations",
+                    "holdings",
+                    "sell"
+                  ]
                 }
               }
             },
@@ -521,8 +515,16 @@
                 },
                 "url": {
                   "raw": "{{tradingBaseUrl}}/api/v1/validations/holdings/sell",
-                  "host": ["{{tradingBaseUrl}}"],
-                  "path": ["api", "v1", "validations", "holdings", "sell"]
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "validations",
+                    "holdings",
+                    "sell"
+                  ]
                 }
               }
             }
@@ -563,8 +565,59 @@
                 },
                 "url": {
                   "raw": "{{tradingBaseUrl}}/api/v1/commissions/calculate",
-                  "host": ["{{tradingBaseUrl}}"],
-                  "path": ["api", "v1", "commissions", "calculate"]
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "commissions",
+                    "calculate"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Distribute Operation Commission",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"status is 201\", function () { pm.response.to.have.status(201); });",
+                      "pm.test(\"commission is distributed\", function () { const body = pm.response.json(); pm.expect(body.platformShareBps).to.eql(7000); pm.expect(body.brokerShareBps).to.eql(3000); pm.expect(body.platformAmount + body.brokerAmount).to.be.closeTo(body.commissionAmount, 0.01); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"traderId\": \"{{traderId}}\",\n  \"brokerId\": \"{{brokerId}}\",\n  \"commissionAmount\": 2.63\n}"
+                },
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/commissions/distribute",
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "commissions",
+                    "distribute"
+                  ]
                 }
               }
             }
@@ -573,6 +626,96 @@
         {
           "name": "Orders",
           "item": [
+            {
+              "name": "Create Market Buy Order",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"status is 201\", function () { pm.response.to.have.status(201); });",
+                      "pm.test(\"market buy order is pending execution\", function () { const body = pm.response.json(); pm.expect(body.side).to.eql(\"BUY\"); pm.expect(body.orderType).to.eql(\"MARKET\"); pm.expect(body.status).to.eql(\"PENDING_EXECUTION\"); pm.environment.set(\"orderReference\", body.orderReference); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"traderId\": \"{{traderId}}\",\n  \"stockId\": \"{{stockId}}\",\n  \"symbol\": \"AAPL\",\n  \"exchangeId\": \"{{exchangeId}}\",\n  \"quantity\": 1,\n  \"estimatedUnitPrice\": 250,\n  \"marketEvaluatedAt\": \"2026-05-12T14:30:00.000Z\"\n}"
+                },
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/orders/buy/market",
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "orders",
+                    "buy",
+                    "market"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Create Limit Buy Order",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"status is 201\", function () { pm.response.to.have.status(201); });",
+                      "pm.test(\"limit buy order is pending condition\", function () { const body = pm.response.json(); pm.expect(body.side).to.eql(\"BUY\"); pm.expect(body.orderType).to.eql(\"LIMIT\"); pm.expect(body.status).to.eql(\"PENDING_CONDITION\"); pm.environment.set(\"orderReference\", body.orderReference); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"traderId\": \"{{traderId}}\",\n  \"stockId\": \"{{stockId}}\",\n  \"symbol\": \"AAPL\",\n  \"exchangeId\": \"{{exchangeId}}\",\n  \"quantity\": 1,\n  \"limitPrice\": 240\n}"
+                },
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/orders/buy/limit",
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "orders",
+                    "buy",
+                    "limit"
+                  ]
+                }
+              }
+            },
             {
               "name": "Create Market Buy Order - Queued Closed Market",
               "event": [
@@ -605,8 +748,16 @@
                 },
                 "url": {
                   "raw": "{{tradingBaseUrl}}/api/v1/orders/buy/market",
-                  "host": ["{{tradingBaseUrl}}"],
-                  "path": ["api", "v1", "orders", "buy", "market"]
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "orders",
+                    "buy",
+                    "market"
+                  ]
                 }
               }
             },
@@ -642,8 +793,16 @@
                 },
                 "url": {
                   "raw": "{{tradingBaseUrl}}/api/v1/orders/sell/market",
-                  "host": ["{{tradingBaseUrl}}"],
-                  "path": ["api", "v1", "orders", "sell", "market"]
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "orders",
+                    "sell",
+                    "market"
+                  ]
                 }
               }
             },
@@ -679,8 +838,16 @@
                 },
                 "url": {
                   "raw": "{{tradingBaseUrl}}/api/v1/orders/sell/limit",
-                  "host": ["{{tradingBaseUrl}}"],
-                  "path": ["api", "v1", "orders", "sell", "limit"]
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "orders",
+                    "sell",
+                    "limit"
+                  ]
                 }
               }
             },
@@ -716,8 +883,16 @@
                 },
                 "url": {
                   "raw": "{{tradingBaseUrl}}/api/v1/orders/sell/stop-loss",
-                  "host": ["{{tradingBaseUrl}}"],
-                  "path": ["api", "v1", "orders", "sell", "stop-loss"]
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "orders",
+                    "sell",
+                    "stop-loss"
+                  ]
                 }
               }
             },
@@ -753,8 +928,16 @@
                 },
                 "url": {
                   "raw": "{{tradingBaseUrl}}/api/v1/orders/sell/take-profit",
-                  "host": ["{{tradingBaseUrl}}"],
-                  "path": ["api", "v1", "orders", "sell", "take-profit"]
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "orders",
+                    "sell",
+                    "take-profit"
+                  ]
                 }
               }
             },
@@ -790,7 +973,9 @@
                 },
                 "url": {
                   "raw": "{{tradingBaseUrl}}/api/v1/orders/{{orderReference}}/broker-validation",
-                  "host": ["{{tradingBaseUrl}}"],
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
                   "path": [
                     "api",
                     "v1",
@@ -833,7 +1018,9 @@
                 },
                 "url": {
                   "raw": "{{tradingBaseUrl}}/api/v1/orders/{{orderReference}}/broker-validation",
-                  "host": ["{{tradingBaseUrl}}"],
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
                   "path": [
                     "api",
                     "v1",
@@ -868,7 +1055,9 @@
                 ],
                 "url": {
                   "raw": "{{tradingBaseUrl}}/api/v1/orders/{{orderReference}}/status",
-                  "host": ["{{tradingBaseUrl}}"],
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
                   "path": [
                     "api",
                     "v1",
@@ -903,7 +1092,9 @@
                 ],
                 "url": {
                   "raw": "{{tradingBaseUrl}}/api/v1/orders/{{orderReference}}/status-history",
-                  "host": ["{{tradingBaseUrl}}"],
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
                   "path": [
                     "api",
                     "v1",
@@ -946,7 +1137,9 @@
                 },
                 "url": {
                   "raw": "{{tradingBaseUrl}}/api/v1/orders/{{orderReference}}/cancel",
-                  "host": ["{{tradingBaseUrl}}"],
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
                   "path": [
                     "api",
                     "v1",
@@ -986,7 +1179,9 @@
                 ],
                 "url": {
                   "raw": "{{tradingBaseUrl}}/api/v1/executions/broker/orders/{{orderReference}}/send",
-                  "host": ["{{tradingBaseUrl}}"],
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
                   "path": [
                     "api",
                     "v1",
@@ -995,6 +1190,108 @@
                     "orders",
                     "{{orderReference}}",
                     "send"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Send Order To Broker - Failure",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"status is 201\", function () { pm.response.to.have.status(201); });",
+                      "pm.test(\"broker failure is controlled\", function () { const body = pm.response.json(); pm.expect(body.status).to.eql(\"FAILED\"); pm.expect(body.externalOrderId).to.eql(\"unavailable\"); pm.expect(body.brokerStatus).to.eql(\"FAILED\"); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}"
+                },
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/executions/broker/orders/broker-failure-order-reference/send",
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "executions",
+                    "broker",
+                    "orders",
+                    "broker-failure-order-reference",
+                    "send"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Settlements",
+          "item": [
+            {
+              "name": "Sync Order Settlement",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"status is 200\", function () { pm.response.to.have.status(200); });",
+                      "pm.test(\"settlement is synchronized\", function () { const body = pm.response.json(); pm.expect(body.orderReference).to.eql(pm.environment.get(\"orderReference\")); pm.expect(body.brokerName).to.exist; pm.expect(body.status).to.exist; });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{authToken}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"actorId\": \"{{brokerId}}\",\n  \"notificationRecipient\": {\n    \"email\": \"{{traderEmail}}\",\n    \"name\": \"{{traderName}}\",\n    \"surname\": \"{{traderSurname}}\",\n    \"username\": \"{{traderUsername}}\"\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/orders/{{orderReference}}/settlement/sync",
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "orders",
+                    "{{orderReference}}",
+                    "settlement",
+                    "sync"
                   ]
                 }
               }
@@ -1036,8 +1333,16 @@
                 },
                 "url": {
                   "raw": "{{tradingBaseUrl}}/api/v1/validations/market/status",
-                  "host": ["{{tradingBaseUrl}}"],
-                  "path": ["api", "v1", "validations", "market", "status"]
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "validations",
+                    "market",
+                    "status"
+                  ]
                 }
               }
             },
@@ -1073,8 +1378,16 @@
                 },
                 "url": {
                   "raw": "{{tradingBaseUrl}}/api/v1/validations/market/status",
-                  "host": ["{{tradingBaseUrl}}"],
-                  "path": ["api", "v1", "validations", "market", "status"]
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "validations",
+                    "market",
+                    "status"
+                  ]
                 }
               }
             },
@@ -1110,8 +1423,16 @@
                 },
                 "url": {
                   "raw": "{{tradingBaseUrl}}/api/v1/validations/market/status",
-                  "host": ["{{tradingBaseUrl}}"],
-                  "path": ["api", "v1", "validations", "market", "status"]
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "validations",
+                    "market",
+                    "status"
+                  ]
                 }
               }
             }
@@ -1148,8 +1469,12 @@
                 ],
                 "url": {
                   "raw": "{{portfolioBaseUrl}}/health",
-                  "host": ["{{portfolioBaseUrl}}"],
-                  "path": ["health"]
+                  "host": [
+                    "{{portfolioBaseUrl}}"
+                  ],
+                  "path": [
+                    "health"
+                  ]
                 }
               }
             }
@@ -1186,8 +1511,12 @@
                 ],
                 "url": {
                   "raw": "{{marketBaseUrl}}/health",
-                  "host": ["{{marketBaseUrl}}"],
-                  "path": ["health"]
+                  "host": [
+                    "{{marketBaseUrl}}"
+                  ],
+                  "path": [
+                    "health"
+                  ]
                 }
               }
             }
@@ -1224,8 +1553,12 @@
                 ],
                 "url": {
                   "raw": "{{complianceBaseUrl}}/health",
-                  "host": ["{{complianceBaseUrl}}"],
-                  "path": ["health"]
+                  "host": [
+                    "{{complianceBaseUrl}}"
+                  ],
+                  "path": [
+                    "health"
+                  ]
                 }
               }
             }
