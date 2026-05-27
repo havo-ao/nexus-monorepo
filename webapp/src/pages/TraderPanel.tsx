@@ -19,6 +19,7 @@ import {
 import { useHistory, useLocation } from "react-router-dom";
 import NavBar from "../components/NavBar";
 import {
+  calculateCommission,
   createLimitBuyOrder,
   createLimitSellOrder,
   createMarketBuyOrder,
@@ -30,6 +31,7 @@ import {
   validateBuyFunds,
   validateSellHoldings,
   validateMarketStatus,
+  type CommissionCalculationResponse,
   type FundsValidationResponse,
   type HoldingsValidationResponse,
   type MarketValidationResponse,
@@ -81,6 +83,10 @@ const TraderPanel: React.FC = () => {
     useState<MarketValidationResponse | null>(null);
   const [marketValidationError, setMarketValidationError] = useState("");
   const [isValidatingMarket, setIsValidatingMarket] = useState(false);
+  const [commissionCalculation, setCommissionCalculation] =
+    useState<CommissionCalculationResponse | null>(null);
+  const [commissionError, setCommissionError] = useState("");
+  const [isCalculatingCommission, setIsCalculatingCommission] = useState(false);
   const [orderReference, setOrderReference] = useState("order-reference");
   const [orderStatus, setOrderStatus] = useState<OrderStatusResponse | null>(
     null,
@@ -209,6 +215,39 @@ const TraderPanel: React.FC = () => {
       );
     } finally {
       setIsValidatingHoldings(false);
+    }
+  };
+
+  const handleCalculateCommission = async () => {
+    setCommissionCalculation(null);
+    setCommissionError("");
+
+    if (
+      !traderId.trim() ||
+      !Number.isFinite(estimatedGrossAmount) ||
+      estimatedGrossAmount <= 0
+    ) {
+      setCommissionError("Enter a valid trader, quantity and price.");
+      return;
+    }
+
+    setIsCalculatingCommission(true);
+    try {
+      const result = await calculateCommission({
+        traderId: traderId.trim(),
+        side: orderSide,
+        orderType: orderMode,
+        grossAmount: estimatedGrossAmount,
+      });
+      setCommissionCalculation(result);
+    } catch (error) {
+      setCommissionError(
+        error instanceof Error
+          ? error.message
+          : "Unable to calculate operation commission.",
+      );
+    } finally {
+      setIsCalculatingCommission(false);
     }
   };
 
@@ -696,6 +735,38 @@ const TraderPanel: React.FC = () => {
                 {holdingsValidationError && (
                   <p className="trader-panel-message rejected">
                     {holdingsValidationError}
+                  </p>
+                )}
+              </section>
+
+              <section className="trader-precheck-section">
+                <div className="trader-precheck-title">
+                  <IonIcon icon={cashOutline} />
+                  <h3>Commission</h3>
+                </div>
+                <IonButton
+                  expand="block"
+                  fill="outline"
+                  onClick={handleCalculateCommission}
+                  disabled={isCalculatingCommission}
+                >
+                  {isCalculatingCommission
+                    ? "Calculating"
+                    : "Calculate Commission"}
+                </IonButton>
+                {commissionCalculation && (
+                  <p className="trader-panel-message approved">
+                    Commission{" "}
+                    {moneyFormatter.format(
+                      commissionCalculation.commissionAmount,
+                    )}{" "}
+                    at {commissionCalculation.rateBps} bps. Net{" "}
+                    {moneyFormatter.format(commissionCalculation.netAmount)}.
+                  </p>
+                )}
+                {commissionError && (
+                  <p className="trader-panel-message rejected">
+                    {commissionError}
                   </p>
                 )}
               </section>

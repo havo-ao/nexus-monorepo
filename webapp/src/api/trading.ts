@@ -165,6 +165,28 @@ export type OrderStatusHistoryEntryResponse = {
   createdAt: string;
 };
 
+export type CalculateCommissionRequest = {
+  traderId: string;
+  side: "BUY" | "SELL";
+  orderType: TradingOrderResponse["orderType"];
+  grossAmount: number;
+  currency?: string;
+  orderReference?: string;
+};
+
+export type CommissionCalculationResponse = {
+  traderId: string;
+  side: "BUY" | "SELL";
+  orderType: TradingOrderResponse["orderType"];
+  grossAmount: number;
+  rateBps: number;
+  commissionAmount: number;
+  netAmount: number;
+  currency: string;
+  calculatedAt: string;
+  orderReference?: string;
+};
+
 async function readJsonSafe(response: Response): Promise<unknown> {
   const text = await response.text();
   if (!text) {
@@ -469,4 +491,32 @@ export async function getOrderStatusHistory(
   }
 
   return body as OrderStatusHistoryEntryResponse[];
+}
+
+export async function calculateCommission(
+  request: CalculateCommissionRequest,
+): Promise<CommissionCalculationResponse> {
+  const response = await fetch(
+    tradingApiUrl(API_PATHS.tradingCalculateCommission),
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(request),
+    },
+  );
+
+  const body = await readJsonSafe(response);
+
+  if (!response.ok) {
+    const maybeMessage =
+      body && typeof body === "object" && "message" in body
+        ? String((body as { message?: unknown }).message)
+        : "Unable to calculate operation commission.";
+    throw new Error(maybeMessage);
+  }
+
+  return body as CommissionCalculationResponse;
 }
