@@ -169,6 +169,43 @@
                   "path": ["api", "v1", "commissions", "distribute"]
                 }
               }
+            },
+            {
+              "name": "Send Order To Broker - Failure",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 201', function () { pm.response.to.have.status(201); });",
+                      "pm.test('broker failure is controlled', function () { const body = pm.response.json(); pm.expect(body.status).to.eql('FAILED'); pm.expect(body.externalOrderId).to.eql('unavailable'); pm.expect(body.brokerStatus).to.eql('FAILED'); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/executions/broker/orders/broker-failure-order-reference/send",
+                  "host": ["{{tradingBaseUrl}}"],
+                  "path": [
+                    "api",
+                    "v1",
+                    "executions",
+                    "broker",
+                    "orders",
+                    "broker-failure-order-reference",
+                    "send"
+                  ]
+                }
+              }
             }
           ]
         },
