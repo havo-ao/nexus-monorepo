@@ -92,6 +92,48 @@ export type MarketStatus = {
   reason: string;
 };
 
+export type TimeOfDay = {
+  hour: number;
+  minute: number;
+};
+
+export type MarketRestriction = {
+  date: string;
+  status: "CLOSED" | "RESTRICTED";
+  reason: string;
+};
+
+export type MarketDaySchedule = {
+  dayOfWeek: number;
+  isOpen: boolean;
+  openTime: TimeOfDay;
+  closeTime: TimeOfDay;
+};
+
+export type MarketHoursConfiguration = {
+  marketCode: string;
+  timezone: string;
+  openTime: TimeOfDay;
+  closeTime: TimeOfDay;
+  operatingDays: number[];
+  weeklySchedule: MarketDaySchedule[];
+  restrictions: MarketRestriction[];
+  currentStatus: MarketStatus;
+};
+
+export type ConfigureMarketHoursPayload = {
+  timezone: string;
+  openTime: TimeOfDay;
+  closeTime: TimeOfDay;
+  operatingDays: number[];
+  weeklySchedule?: MarketDaySchedule[];
+  actor: string;
+};
+
+export type ConfigureMarketRestrictionPayload = MarketRestriction & {
+  actor: string;
+};
+
 export type QuoteHistoryResponse = {
   symbol: string;
   prices: Quote[];
@@ -193,7 +235,7 @@ async function getJson<T>(path: string, errorMessage: string): Promise<T> {
 
 async function sendJson<T>(
   path: string,
-  method: "POST" | "DELETE",
+  method: "POST" | "PUT" | "DELETE",
   errorMessage: string,
   body?: unknown,
 ): Promise<T> {
@@ -238,6 +280,39 @@ export async function getMarketStatus(
   return getJson<MarketStatus>(
     `${API_PATHS.marketHours}/${encodeURIComponent(marketCode)}/status`,
     "Unable to load market operating status.",
+  );
+}
+
+export async function getMarketHoursConfiguration(
+  marketCode: string,
+): Promise<MarketHoursConfiguration> {
+  return getJson<MarketHoursConfiguration>(
+    `${API_PATHS.marketAdminHours}/${encodeURIComponent(marketCode)}`,
+    "Unable to load market hours configuration.",
+  );
+}
+
+export async function configureMarketHours(
+  marketCode: string,
+  payload: ConfigureMarketHoursPayload,
+): Promise<MarketHoursConfiguration> {
+  return sendJson<MarketHoursConfiguration>(
+    `${API_PATHS.marketAdminHours}/${encodeURIComponent(marketCode)}`,
+    "PUT",
+    "Unable to save market hours configuration.",
+    payload,
+  );
+}
+
+export async function configureMarketRestriction(
+  marketCode: string,
+  payload: ConfigureMarketRestrictionPayload,
+): Promise<MarketHoursConfiguration> {
+  return sendJson<MarketHoursConfiguration>(
+    `${API_PATHS.marketAdminHours}/${encodeURIComponent(marketCode)}/restrictions`,
+    "POST",
+    "Unable to save market restriction.",
+    payload,
   );
 }
 

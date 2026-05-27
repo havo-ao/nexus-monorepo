@@ -60,6 +60,7 @@ describe('MysqlMarketHoursRepository', () => {
           },
         ],
       ])
+      .mockResolvedValueOnce([[]])
       .mockResolvedValueOnce([[]]);
 
     const marketHours = await repository.findByMarketCode('BVC');
@@ -144,24 +145,49 @@ describe('MysqlMarketHoursRepository', () => {
             reason: 'Holiday',
           },
         ],
+      ])
+      .mockResolvedValueOnce([
+        [
+          {
+            day_of_week: 6,
+            is_open: 1,
+            open_hour: 10,
+            open_minute: 0,
+            close_hour: 13,
+            close_minute: 0,
+          },
+        ],
       ]);
 
     const marketHours = await repository.findByMarketCode('bvc');
+    const snapshot = marketHours?.toSnapshot();
 
-    expect(marketHours?.toSnapshot()).toEqual({
-      marketCode: 'BVC',
-      timezone: 'America/Bogota',
-      openTime: { hour: 9, minute: 0 },
-      closeTime: { hour: 15, minute: 0 },
-      operatingDays: [1, 2, 3, 4, 5],
-      restrictions: [
+    expect(snapshot).toEqual(
+      expect.objectContaining({
+        marketCode: 'BVC',
+        timezone: 'America/Bogota',
+        openTime: { hour: 9, minute: 0 },
+        closeTime: { hour: 15, minute: 0 },
+        operatingDays: [1, 2, 3, 4, 5, 6],
+        restrictions: [
+          {
+            date: '2026-06-19',
+            status: 'CLOSED',
+            reason: 'Holiday',
+          },
+        ],
+      }),
+    );
+    expect(snapshot?.weeklySchedule).toEqual(
+      expect.arrayContaining([
         {
-          date: '2026-06-19',
-          status: 'CLOSED',
-          reason: 'Holiday',
+          dayOfWeek: 6,
+          isOpen: true,
+          openTime: { hour: 10, minute: 0 },
+          closeTime: { hour: 13, minute: 0 },
         },
-      ],
-    });
+      ]),
+    );
   });
 
   it('saves schedule, restrictions and audit event in one transaction', async () => {
@@ -191,6 +217,10 @@ describe('MysqlMarketHoursRepository', () => {
     expect(connection.execute).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO market_restrictions'),
       ['BVC', '2026-06-19', 'CLOSED', 'Holiday'],
+    );
+    expect(connection.execute).toHaveBeenCalledWith(
+      expect.stringContaining('INSERT INTO market_weekly_schedules'),
+      ['BVC', 1, true, 9, 0, 15, 0],
     );
     expect(connection.execute).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO market_configuration_events'),

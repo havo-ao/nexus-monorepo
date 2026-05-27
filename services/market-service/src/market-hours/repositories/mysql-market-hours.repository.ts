@@ -5,7 +5,10 @@ import {
 } from '@nestjs/common';
 import type { Pool, RowDataPacket } from 'mysql2/promise';
 import { MYSQL_POOL } from '../../../database/database.module';
-import { MarketHours } from '../entities/market-hours.entity';
+import {
+  MarketDaySchedule,
+  MarketHours,
+} from '../entities/market-hours.entity';
 import type {
   MarketConfigurationChange,
   MarketHoursRepository,
@@ -25,6 +28,15 @@ interface MarketRestrictionRow extends RowDataPacket {
   restriction_date: string;
   status: 'CLOSED' | 'RESTRICTED';
   reason: string;
+}
+
+interface MarketWeeklyScheduleRow extends RowDataPacket {
+  day_of_week: number;
+  is_open: number;
+  open_hour: number;
+  open_minute: number;
+  close_hour: number;
+  close_minute: number;
 }
 
 @Injectable()
@@ -54,6 +66,16 @@ export class MysqlMarketHoursRepository implements MarketHoursRepository {
       [normalizedMarketCode],
     );
 
+    const [weeklyScheduleRows] = await this.pool.query<
+      MarketWeeklyScheduleRow[]
+    >(
+      `SELECT day_of_week, is_open, open_hour, open_minute, close_hour, close_minute
+       FROM market_weekly_schedules
+       WHERE market_code = ?
+       ORDER BY day_of_week ASC`,
+      [normalizedMarketCode],
+    );
+
     return MarketHours.restore({
       marketCode: config.market_code,
       timezone: config.timezone,
@@ -66,6 +88,7 @@ export class MysqlMarketHoursRepository implements MarketHoursRepository {
         minute: config.close_minute,
       },
       operatingDays: this.parseOperatingDays(config.operating_days),
+      weeklySchedule: this.toWeeklySchedule(weeklyScheduleRows),
       restrictions: restrictionRows.map((row) => ({
         date: row.restriction_date,
         status: row.status,
@@ -106,6 +129,28 @@ export class MysqlMarketHoursRepository implements MarketHoursRepository {
       );
 
       await connection.execute(
+        'DELETE FROM market_weekly_schedules WHERE market_code = ?',
+        [snapshot.marketCode],
+      );
+
+      for (const daySchedule of snapshot.weeklySchedule ?? []) {
+        await connection.execute(
+          `INSERT INTO market_weekly_schedules
+            (market_code, day_of_week, is_open, open_hour, open_minute, close_hour, close_minute)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [
+            snapshot.marketCode,
+            daySchedule.dayOfWeek,
+            daySchedule.isOpen,
+            daySchedule.openTime.hour,
+            daySchedule.openTime.minute,
+            daySchedule.closeTime.hour,
+            daySchedule.closeTime.minute,
+          ],
+        );
+      }
+
+      await connection.execute(
         'DELETE FROM market_restrictions WHERE market_code = ?',
         [snapshot.marketCode],
       );
@@ -140,6 +185,23 @@ export class MysqlMarketHoursRepository implements MarketHoursRepository {
     }
 
     return marketHours;
+  }
+
+  private toWeeklySchedule(
+    rows: MarketWeeklyScheduleRow[],
+  ): MarketDaySchedule[] {
+    return rows.map((row) => ({
+      dayOfWeek: row.day_of_week,
+      isOpen: Boolean(row.is_open),
+      openTime: {
+        hour: row.open_hour,
+        minute: row.open_minute,
+      },
+      closeTime: {
+        hour: row.close_hour,
+        minute: row.close_minute,
+      },
+    }));
   }
 
   private parseOperatingDays(value: string | number[]): number[] {

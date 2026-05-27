@@ -455,6 +455,19 @@ describe('AppController (e2e)', () => {
           }),
         );
       });
+
+    await request(app.getHttpServer())
+      .get('/api/v1/admin/market-hours/BVC')
+      .expect(200)
+      .expect((response) => {
+        expect(response.body).toEqual(
+          expect.objectContaining({
+            marketCode: 'BVC',
+            timezone: 'America/Bogota',
+            operatingDays: [1, 2, 3, 4, 5],
+          }),
+        );
+      });
   });
 
   it('/api/v1/admin/market-hours/:marketCode/restrictions (POST) configures restriction', async () => {

@@ -16,6 +16,14 @@ export interface MarketHoursSchedule {
   openTime: TimeOfDay;
   closeTime: TimeOfDay;
   operatingDays: number[];
+  weeklySchedule?: MarketDaySchedule[];
+}
+
+export interface MarketDaySchedule {
+  dayOfWeek: number;
+  isOpen: boolean;
+  openTime: TimeOfDay;
+  closeTime: TimeOfDay;
 }
 
 export interface MarketHoursSnapshot {
@@ -24,6 +32,7 @@ export interface MarketHoursSnapshot {
   openTime: TimeOfDay;
   closeTime: TimeOfDay;
   operatingDays: number[];
+  weeklySchedule?: MarketDaySchedule[];
   restrictions: MarketRestriction[];
 }
 
@@ -57,19 +66,6 @@ export class MarketHours {
       throw new Error('Market timezone is required');
     }
 
-    if (
-      !Array.isArray(snapshot.operatingDays) ||
-      snapshot.operatingDays.length === 0
-    ) {
-      throw new Error('Market must define at least one operating day');
-    }
-
-    for (const day of snapshot.operatingDays) {
-      if (!Number.isInteger(day) || day < 0 || day > 6) {
-        throw new Error('Operating days must be integers between 0 and 6');
-      }
-    }
-
     const openMinutes = this.toMinutes(snapshot.openTime);
     const closeMinutes = this.toMinutes(snapshot.closeTime);
 
@@ -77,13 +73,26 @@ export class MarketHours {
       throw new Error('Market open time must be before close time');
     }
 
+    const weeklySchedule = this.normalizeWeeklySchedule(
+      snapshot.weeklySchedule,
+      snapshot.operatingDays,
+      snapshot.openTime,
+      snapshot.closeTime,
+    );
+    const operatingDays = weeklySchedule
+      .filter((daySchedule) => daySchedule.isOpen)
+      .map((daySchedule) => daySchedule.dayOfWeek);
+
+    if (operatingDays.length === 0) {
+      throw new Error('Market must define at least one operating day');
+    }
+
     return new MarketHours({
       ...snapshot,
       marketCode: snapshot.marketCode.trim().toUpperCase(),
       timezone: snapshot.timezone.trim(),
-      operatingDays: [...new Set(snapshot.operatingDays)].sort(
-        (left, right) => left - right,
-      ),
+      operatingDays,
+      weeklySchedule,
       restrictions: [...snapshot.restrictions],
     });
   }
@@ -96,6 +105,7 @@ export class MarketHours {
     return MarketHours.restore({
       marketCode,
       ...schedule,
+      weeklySchedule: schedule.weeklySchedule ?? [],
       restrictions,
     });
   }
@@ -114,12 +124,16 @@ export class MarketHours {
       return this.buildEvaluation(restriction.status, at, restriction.reason);
     }
 
-    if (!this.snapshot.operatingDays.includes(zonedParts.dayOfWeek)) {
+    const daySchedule = (this.snapshot.weeklySchedule ?? []).find(
+      (item) => item.dayOfWeek === zonedParts.dayOfWeek,
+    );
+
+    if (!daySchedule?.isOpen) {
       return this.buildEvaluation('CLOSED', at, 'Market is closed today');
     }
 
-    const openMinutes = MarketHours.toMinutes(this.snapshot.openTime);
-    const closeMinutes = MarketHours.toMinutes(this.snapshot.closeTime);
+    const openMinutes = MarketHours.toMinutes(daySchedule.openTime);
+    const closeMinutes = MarketHours.toMinutes(daySchedule.closeTime);
     const isOpen =
       zonedParts.minutesFromMidnight >= openMinutes &&
       zonedParts.minutesFromMidnight < closeMinutes;
@@ -141,6 +155,13 @@ export class MarketHours {
       openTime: { ...this.snapshot.openTime },
       closeTime: { ...this.snapshot.closeTime },
       operatingDays: [...this.snapshot.operatingDays],
+      weeklySchedule: (this.snapshot.weeklySchedule ?? []).map(
+        (daySchedule) => ({
+          ...daySchedule,
+          openTime: { ...daySchedule.openTime },
+          closeTime: { ...daySchedule.closeTime },
+        }),
+      ),
       restrictions: [...this.snapshot.restrictions],
     };
   }
@@ -194,6 +215,62 @@ export class MarketHours {
     }
 
     return time.hour * 60 + time.minute;
+  }
+
+  private static normalizeWeeklySchedule(
+    weeklySchedule: MarketDaySchedule[] = [],
+    operatingDays: number[],
+    openTime: TimeOfDay,
+    closeTime: TimeOfDay,
+  ): MarketDaySchedule[] {
+    const schedulesByDay = new Map<number, MarketDaySchedule>();
+
+    for (const daySchedule of weeklySchedule) {
+      this.validateDayOfWeek(daySchedule.dayOfWeek);
+      this.validateDaySchedule(daySchedule);
+      schedulesByDay.set(daySchedule.dayOfWeek, {
+        dayOfWeek: daySchedule.dayOfWeek,
+        isOpen: daySchedule.isOpen,
+        openTime: { ...daySchedule.openTime },
+        closeTime: { ...daySchedule.closeTime },
+      });
+    }
+
+    for (let dayOfWeek = 0; dayOfWeek <= 6; dayOfWeek += 1) {
+      if (schedulesByDay.has(dayOfWeek)) {
+        continue;
+      }
+
+      schedulesByDay.set(dayOfWeek, {
+        dayOfWeek,
+        isOpen: operatingDays.includes(dayOfWeek),
+        openTime: { ...openTime },
+        closeTime: { ...closeTime },
+      });
+    }
+
+    return [...schedulesByDay.values()].sort(
+      (left, right) => left.dayOfWeek - right.dayOfWeek,
+    );
+  }
+
+  private static validateDaySchedule(daySchedule: MarketDaySchedule): void {
+    if (typeof daySchedule.isOpen !== 'boolean') {
+      throw new Error('Market day schedule must define whether it is open');
+    }
+
+    const openMinutes = this.toMinutes(daySchedule.openTime);
+    const closeMinutes = this.toMinutes(daySchedule.closeTime);
+
+    if (openMinutes >= closeMinutes) {
+      throw new Error('Market day open time must be before close time');
+    }
+  }
+
+  private static validateDayOfWeek(dayOfWeek: number): void {
+    if (!Number.isInteger(dayOfWeek) || dayOfWeek < 0 || dayOfWeek > 6) {
+      throw new Error('Operating days must be integers between 0 and 6');
+    }
   }
 
   private getZonedParts(at: Date, timezone: string): ZonedDateParts {

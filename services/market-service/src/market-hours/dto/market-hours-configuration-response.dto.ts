@@ -12,6 +12,20 @@ export class MarketRestrictionResponseDto {
   reason: string;
 }
 
+export class MarketDayScheduleResponseDto {
+  @ApiProperty({ example: 1 })
+  dayOfWeek: number;
+
+  @ApiProperty({ example: true })
+  isOpen: boolean;
+
+  @ApiProperty({ example: { hour: 9, minute: 30 } })
+  openTime: { hour: number; minute: number };
+
+  @ApiProperty({ example: { hour: 16, minute: 0 } })
+  closeTime: { hour: number; minute: number };
+}
+
 export class MarketHoursConfigurationResponseDto {
   @ApiProperty({ example: 'NYSE' })
   marketCode: string;
@@ -27,6 +41,9 @@ export class MarketHoursConfigurationResponseDto {
 
   @ApiProperty({ example: [1, 2, 3, 4, 5] })
   operatingDays: number[];
+
+  @ApiProperty({ type: MarketDayScheduleResponseDto, isArray: true })
+  weeklySchedule: MarketDayScheduleResponseDto[];
 
   @ApiProperty({ type: MarketRestrictionResponseDto, isArray: true })
   restrictions: MarketRestrictionResponseDto[];

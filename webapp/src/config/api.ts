@@ -74,6 +74,7 @@ export const API_PATHS = {
   marketInstruments: "/api/v1/instruments",
   marketQuotes: "/api/v1/quotes",
   marketHours: "/api/v1/market-hours",
+  marketAdminHours: "/api/v1/admin/market-hours",
   marketWatchlists: "/api/v1/watchlists",
   authRegisterAdmin: "/api/auth/register/admin",
   subscriptionCheckout: "/api/subscriptions/checkout",
