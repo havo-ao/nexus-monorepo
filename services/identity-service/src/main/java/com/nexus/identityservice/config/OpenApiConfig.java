@@ -27,7 +27,7 @@ public class OpenApiConfig {
     public OpenAPI customOpenAPI() {
         // Create the main description with correctly formatted HTML
         String mainDescription =
-                "<h2>Use guide for nexus API </h2>";
+                "<h2>Use guide for Acciones ElBosque API</h2>";
 
         // Create the security scheme description with correctly formatted HTML
         String securityDescription =
