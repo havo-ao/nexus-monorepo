@@ -26,12 +26,14 @@ import {
   createMarketSellOrder,
   createStopLossOrder,
   createTakeProfitOrder,
+  distributeCommission,
   getOrderStatus,
   getOrderStatusHistory,
   validateBuyFunds,
   validateSellHoldings,
   validateMarketStatus,
   type CommissionCalculationResponse,
+  type CommissionDistributionResponse,
   type FundsValidationResponse,
   type HoldingsValidationResponse,
   type MarketValidationResponse,
@@ -56,6 +58,7 @@ const TraderPanel: React.FC = () => {
   const location = useLocation();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [traderId, setTraderId] = useState("101");
+  const [brokerId, setBrokerId] = useState("201");
   const [exchangeId, setExchangeId] = useState("1");
   const [orderSide, setOrderSide] = useState<OrderSide>("BUY");
   const [orderMode, setOrderMode] = useState<BuyOrderMode>("MARKET");
@@ -87,6 +90,12 @@ const TraderPanel: React.FC = () => {
     useState<CommissionCalculationResponse | null>(null);
   const [commissionError, setCommissionError] = useState("");
   const [isCalculatingCommission, setIsCalculatingCommission] = useState(false);
+  const [commissionDistribution, setCommissionDistribution] =
+    useState<CommissionDistributionResponse | null>(null);
+  const [commissionDistributionError, setCommissionDistributionError] =
+    useState("");
+  const [isDistributingCommission, setIsDistributingCommission] =
+    useState(false);
   const [orderReference, setOrderReference] = useState("order-reference");
   const [orderStatus, setOrderStatus] = useState<OrderStatusResponse | null>(
     null,
@@ -221,6 +230,8 @@ const TraderPanel: React.FC = () => {
   const handleCalculateCommission = async () => {
     setCommissionCalculation(null);
     setCommissionError("");
+    setCommissionDistribution(null);
+    setCommissionDistributionError("");
 
     if (
       !traderId.trim() ||
@@ -248,6 +259,38 @@ const TraderPanel: React.FC = () => {
       );
     } finally {
       setIsCalculatingCommission(false);
+    }
+  };
+
+  const handleDistributeCommission = async () => {
+    setCommissionDistribution(null);
+    setCommissionDistributionError("");
+
+    if (!traderId.trim() || !brokerId.trim()) {
+      setCommissionDistributionError("Enter a valid trader and broker.");
+      return;
+    }
+    if (!commissionCalculation) {
+      setCommissionDistributionError("Calculate the commission first.");
+      return;
+    }
+
+    setIsDistributingCommission(true);
+    try {
+      const result = await distributeCommission({
+        traderId: traderId.trim(),
+        brokerId: brokerId.trim(),
+        commissionAmount: commissionCalculation.commissionAmount,
+      });
+      setCommissionDistribution(result);
+    } catch (error) {
+      setCommissionDistributionError(
+        error instanceof Error
+          ? error.message
+          : "Unable to distribute operation commission.",
+      );
+    } finally {
+      setIsDistributingCommission(false);
     }
   };
 
@@ -744,6 +787,17 @@ const TraderPanel: React.FC = () => {
                   <IonIcon icon={cashOutline} />
                   <h3>Commission</h3>
                 </div>
+                <div className="trader-precheck-fields">
+                  <IonItem>
+                    <IonLabel position="stacked">Broker</IonLabel>
+                    <IonInput
+                      value={brokerId}
+                      onIonInput={(event) =>
+                        setBrokerId(String(event.detail.value ?? ""))
+                      }
+                    />
+                  </IonItem>
+                </div>
                 <IonButton
                   expand="block"
                   fill="outline"
@@ -767,6 +821,34 @@ const TraderPanel: React.FC = () => {
                 {commissionError && (
                   <p className="trader-panel-message rejected">
                     {commissionError}
+                  </p>
+                )}
+                <IonButton
+                  expand="block"
+                  fill="outline"
+                  onClick={handleDistributeCommission}
+                  disabled={
+                    isDistributingCommission || commissionCalculation === null
+                  }
+                >
+                  {isDistributingCommission
+                    ? "Distributing"
+                    : "Distribute Commission"}
+                </IonButton>
+                {commissionDistribution && (
+                  <p className="trader-panel-message approved">
+                    Platform{" "}
+                    {moneyFormatter.format(
+                      commissionDistribution.platformAmount,
+                    )}
+                    . Broker{" "}
+                    {moneyFormatter.format(commissionDistribution.brokerAmount)}
+                    .
+                  </p>
+                )}
+                {commissionDistributionError && (
+                  <p className="trader-panel-message rejected">
+                    {commissionDistributionError}
                   </p>
                 )}
               </section>
