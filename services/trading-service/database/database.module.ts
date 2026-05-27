@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommissionCalculationEvent } from '../src/commissions/entities/commission-calculation-event.entity';
 import { CommissionDistributionEvent } from '../src/commissions/entities/commission-distribution-event.entity';
+import { BrokerExecutionEvent } from '../src/executions/entities/broker-execution-event.entity';
 import { FundsValidationEvent } from '../src/funds-validation/entities/funds-validation-event.entity';
 import { HoldingsValidationEvent } from '../src/holdings-validation/entities/holdings-validation-event.entity';
 import { MarketExchange } from '../src/market/entities/market-exchange.entity';
@@ -21,6 +22,7 @@ import { Wallet } from '../src/wallet/entities/wallet.entity';
       password: process.env.DB_PASSWORD ?? '',
       database: process.env.DB_DATABASE ?? 'nexus',
       entities: [
+        BrokerExecutionEvent,
         CommissionCalculationEvent,
         CommissionDistributionEvent,
         FundsValidationEvent,

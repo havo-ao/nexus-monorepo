@@ -757,6 +757,48 @@
           ]
         },
         {
+          "name": "Executions",
+          "item": [
+            {
+              "name": "Send Order To Broker",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 201', function () { pm.response.to.have.status(201); });",
+                      "pm.test('order is sent to broker', function () { const body = pm.response.json(); pm.expect(body.status).to.eql('SENT_TO_BROKER'); pm.expect(body.externalOrderId).to.exist; pm.expect(body.brokerStatus).to.eql('ACCEPTED'); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/executions/broker/orders/{{orderReference}}/send",
+                  "host": ["{{tradingBaseUrl}}"],
+                  "path": [
+                    "api",
+                    "v1",
+                    "executions",
+                    "broker",
+                    "orders",
+                    "{{orderReference}}",
+                    "send"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
           "name": "Market Validation",
           "item": [
             {

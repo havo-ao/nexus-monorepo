@@ -12,6 +12,7 @@ export type OrderStatus =
   | 'CREATED'
   | 'PENDING_EXECUTION'
   | 'PENDING_CONDITION'
+  | 'SENT_TO_BROKER'
   | 'REJECTED'
   | 'CANCELLED'
   | 'EXECUTED'
