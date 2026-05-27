@@ -120,6 +120,7 @@ export type TradingOrderResponse = {
     | "PENDING_EXECUTION"
     | "PENDING_CONDITION"
     | "PENDING_MARKET_OPEN"
+    | "SENT_TO_BROKER"
     | "REJECTED"
     | "CANCELLED"
     | "EXECUTED"
@@ -211,6 +212,24 @@ export type CommissionDistributionResponse = {
   currency: string;
   distributedAt: string;
   orderReference?: string;
+};
+
+export type BrokerValidationDecision = "APPROVE" | "REJECT";
+
+export type ValidateOrderByBrokerRequest = {
+  brokerId: string;
+  decision: BrokerValidationDecision;
+  reason?: string;
+};
+
+export type BrokerOrderValidationResponse = {
+  orderId: string;
+  orderReference: string;
+  brokerId: string;
+  decision: BrokerValidationDecision;
+  status: TradingOrderResponse["status"];
+  reason: string;
+  validatedAt: string;
 };
 
 async function readJsonSafe(response: Response): Promise<unknown> {
@@ -517,6 +536,37 @@ export async function getOrderStatusHistory(
   }
 
   return body as OrderStatusHistoryEntryResponse[];
+}
+
+export async function validateOrderByBroker(
+  orderReference: string,
+  request: ValidateOrderByBrokerRequest,
+): Promise<BrokerOrderValidationResponse> {
+  const response = await fetch(
+    tradingApiUrl(
+      `${API_PATHS.tradingBrokerValidation}/${encodeURIComponent(orderReference)}/broker-validation`,
+    ),
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(request),
+    },
+  );
+
+  const body = await readJsonSafe(response);
+
+  if (!response.ok) {
+    const maybeMessage =
+      body && typeof body === "object" && "message" in body
+        ? String((body as { message?: unknown }).message)
+        : "Unable to validate order by broker.";
+    throw new Error(maybeMessage);
+  }
+
+  return body as BrokerOrderValidationResponse;
 }
 
 export async function calculateCommission(
