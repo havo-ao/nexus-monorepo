@@ -92,6 +92,8 @@ services:
       ALPACA_TIMEOUT_MS: ${ALPACA_TIMEOUT_MS:-5000}
       PORTFOLIO_SERVICE_URL: http://portfolio-service:8883
       NOTIFICATION_SERVICE_URL: http://compliance-service:8885
+      COMPLIANCE_SERVICE_URL: http://compliance-service:8885
+      COMPLIANCE_SERVICE_TIMEOUT_MS: ${COMPLIANCE_SERVICE_TIMEOUT_MS:-3000}
       MARKET_SERVICE_URL: http://market-service:8884
       MARKET_SERVICE_TIMEOUT_MS: ${MARKET_SERVICE_TIMEOUT_MS:-3000}
     volumes:

@@ -317,6 +317,25 @@ describe('AppController (e2e)', () => {
       });
   });
 
+  it('/api/v1/orders/buy/market blocks restricted traders (POST)', () => {
+    return request(app.getHttpServer())
+      .post('/api/v1/orders/buy/market')
+      .send({
+        traderId: 'restricted-trader',
+        symbol: 'AAPL',
+        exchangeId: '1',
+        quantity: 1,
+        estimatedUnitPrice: 250,
+        marketEvaluatedAt: '2026-05-12T14:30:00.000Z',
+      })
+      .expect(409)
+      .expect((response) => {
+        expect(response.body).toMatchObject({
+          message: 'Trader is restricted by compliance',
+        });
+      });
+  });
+
   it('/api/v1/orders/buy/market queues when market is closed (POST)', () => {
     return request(app.getHttpServer())
       .post('/api/v1/orders/buy/market')

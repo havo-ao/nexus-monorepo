@@ -672,6 +672,52 @@
               }
             },
             {
+              "name": "Create Market Buy Order - Compliance Restricted",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"status is 409\", function () { pm.response.to.have.status(409); });",
+                      "pm.test(\"compliance restriction blocks order\", function () { const body = pm.response.json(); pm.expect(body.message).to.exist; });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"traderId\": \"{{restrictedTraderId}}\",\n  \"stockId\": \"{{stockId}}\",\n  \"symbol\": \"AAPL\",\n  \"exchangeId\": \"{{exchangeId}}\",\n  \"quantity\": 1,\n  \"estimatedUnitPrice\": 250,\n  \"marketEvaluatedAt\": \"2026-05-12T14:30:00.000Z\"\n}"
+                },
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/orders/buy/market",
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "orders",
+                    "buy",
+                    "market"
+                  ]
+                },
+                "description": "Requires setting the same restrictedTraderId to RESTRICTED in Compliance first."
+              }
+            },
+            {
               "name": "Create Limit Buy Order",
               "event": [
                 {

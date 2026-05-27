@@ -4,6 +4,7 @@ import {
   Inject,
   Injectable,
 } from '@nestjs/common';
+import { ComplianceValidationService } from '../../compliance-validation/services/compliance-validation.service';
 import { roundMoney } from '../../common/money';
 import { HoldingsValidationService } from '../../holdings-validation/services/holdings-validation.service';
 import type { MarketValidation } from '../../market-validation/entities/market-validation.entity';
@@ -79,6 +80,7 @@ export type CreateTakeProfitOrderInput = {
 @Injectable()
 export class OrdersService {
   constructor(
+    private readonly complianceValidationService: ComplianceValidationService,
     private readonly marketValidationService: MarketValidationService,
     private readonly holdingsValidationService: HoldingsValidationService,
     @Inject(ORDER_REPOSITORY)
@@ -89,6 +91,10 @@ export class OrdersService {
     input: CreateMarketBuyOrderInput,
   ): Promise<TradingOrder> {
     this.assertValidMarketBuyOrder(input);
+    await this.complianceValidationService.assertOperationAllowed(
+      input.traderId,
+      'CREATE_MARKET_BUY_ORDER',
+    );
 
     const marketValidation =
       await this.marketValidationService.validateMarketStatus(
@@ -173,6 +179,10 @@ export class OrdersService {
     if (!Number.isFinite(input.limitPrice) || input.limitPrice <= 0) {
       throw new BadRequestException('limitPrice must be greater than zero');
     }
+    await this.complianceValidationService.assertOperationAllowed(
+      input.traderId,
+      'CREATE_LIMIT_BUY_ORDER',
+    );
 
     const grossAmount = roundMoney(input.quantity * input.limitPrice);
     const result = await this.orderRepository.createLimitBuyOrder({
@@ -197,6 +207,10 @@ export class OrdersService {
     input: CreateMarketSellOrderInput,
   ): Promise<TradingOrder> {
     this.assertValidMarketSellOrder(input);
+    await this.complianceValidationService.assertOperationAllowed(
+      input.traderId,
+      'CREATE_MARKET_SELL_ORDER',
+    );
 
     const marketValidation =
       await this.marketValidationService.validateMarketStatus(
@@ -246,6 +260,10 @@ export class OrdersService {
     input: CreateLimitSellOrderInput,
   ): Promise<TradingOrder> {
     this.assertValidLimitSellOrder(input);
+    await this.complianceValidationService.assertOperationAllowed(
+      input.traderId,
+      'CREATE_LIMIT_SELL_ORDER',
+    );
 
     const holdingsValidation =
       await this.holdingsValidationService.validateSellHoldings({
@@ -284,6 +302,10 @@ export class OrdersService {
     input: CreateStopLossOrderInput,
   ): Promise<TradingOrder> {
     this.assertValidStopLossOrder(input);
+    await this.complianceValidationService.assertOperationAllowed(
+      input.traderId,
+      'CREATE_STOP_LOSS_ORDER',
+    );
 
     const holdingsValidation =
       await this.holdingsValidationService.validateSellHoldings({
@@ -322,6 +344,10 @@ export class OrdersService {
     input: CreateTakeProfitOrderInput,
   ): Promise<TradingOrder> {
     this.assertValidTakeProfitOrder(input);
+    await this.complianceValidationService.assertOperationAllowed(
+      input.traderId,
+      'CREATE_TAKE_PROFIT_ORDER',
+    );
 
     const holdingsValidation =
       await this.holdingsValidationService.validateSellHoldings({
