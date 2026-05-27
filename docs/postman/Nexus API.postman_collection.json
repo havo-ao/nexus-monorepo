@@ -132,6 +132,43 @@
                   "path": ["api", "auth", "register", "admin"]
                 }
               }
+            },
+            {
+              "name": "Distribute Operation Commission",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 201', function () { pm.response.to.have.status(201); });",
+                      "pm.test('commission is distributed', function () { const body = pm.response.json(); pm.expect(body.platformShareBps).to.eql(7000); pm.expect(body.brokerShareBps).to.eql(3000); pm.expect(body.platformAmount + body.brokerAmount).to.be.closeTo(body.commissionAmount, 0.01); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"traderId\": \"{{traderId}}\",\n  \"brokerId\": \"{{brokerId}}\",\n  \"commissionAmount\": 2.63\n}"
+                },
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/commissions/distribute",
+                  "host": ["{{tradingBaseUrl}}"],
+                  "path": ["api", "v1", "commissions", "distribute"]
+                }
+              }
             }
           ]
         },

@@ -100,6 +100,31 @@ describe('AppController (e2e)', () => {
       });
   });
 
+  it('/api/v1/commissions/distribute (POST)', () => {
+    return request(app.getHttpServer())
+      .post('/api/v1/commissions/distribute')
+      .send({
+        traderId: '101',
+        brokerId: '201',
+        commissionAmount: 2.63,
+      })
+      .expect(201)
+      .expect((response) => {
+        const body = response.body as Record<string, unknown>;
+        expect(body).toMatchObject({
+          traderId: '101',
+          brokerId: '201',
+          commissionAmount: 2.63,
+          platformAmount: 1.84,
+          brokerAmount: 0.79,
+          platformShareBps: 7000,
+          brokerShareBps: 3000,
+          currency: 'USD',
+        });
+        expect(body.distributedAt).toEqual(expect.any(String));
+      });
+  });
+
   it('/api/v1/orders/buy/market (POST)', () => {
     return request(app.getHttpServer())
       .post('/api/v1/orders/buy/market')
