@@ -16,6 +16,7 @@ export type CreateMarketBuyOrderInput = {
   traderId: string;
   symbol: string;
   exchangeId: string;
+  stockId?: string;
   quantity: number;
   estimatedUnitPrice: number;
   currency?: string;
@@ -27,6 +28,7 @@ export type CreateLimitBuyOrderInput = {
   traderId: string;
   symbol: string;
   exchangeId: string;
+  stockId?: string;
   quantity: number;
   limitPrice: number;
   currency?: string;
@@ -123,6 +125,7 @@ export class OrdersService {
       | 'traderId'
       | 'symbol'
       | 'exchangeId'
+      | 'stockId'
       | 'quantity'
       | 'estimatedUnitPrice'
       | 'currency'
@@ -135,6 +138,7 @@ export class OrdersService {
       traderId: input.traderId.trim(),
       symbol: input.symbol.trim().toUpperCase(),
       exchangeId: input.exchangeId.trim(),
+      stockId: input.stockId?.trim() || undefined,
       quantity: input.quantity,
       estimatedUnitPrice: input.estimatedUnitPrice,
       grossAmount,
@@ -175,6 +179,7 @@ export class OrdersService {
       traderId: input.traderId.trim(),
       symbol: input.symbol.trim().toUpperCase(),
       exchangeId: input.exchangeId.trim(),
+      stockId: input.stockId?.trim() || undefined,
       quantity: input.quantity,
       limitPrice: input.limitPrice,
       grossAmount,
@@ -221,13 +226,13 @@ export class OrdersService {
 
     const grossAmount = roundMoney(input.quantity * input.estimatedUnitPrice);
     const result = await this.orderRepository.createMarketSellOrder({
-      stockId: input.stockId.trim(),
       ...this.buildMarketOrderCommand(
         input,
         grossAmount,
         queueForMarketOpen,
         'Market sell order queued until market opens',
       ),
+      stockId: input.stockId.trim(),
     });
 
     if (!result.approved || !result.order) {

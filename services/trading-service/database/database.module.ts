@@ -11,6 +11,8 @@ import { MarketValidationEvent } from '../src/market-validation/entities/market-
 import { OrderStatusEventEntity } from '../src/orders/entities/order-status-event.entity';
 import { TradingOrderEntity } from '../src/orders/entities/trading-order.entity';
 import { PortfolioPosition } from '../src/portfolio/entities/portfolio-position.entity';
+import { OrderSettlementEvent } from '../src/settlements/entities/order-settlement-event.entity';
+import { TradingNotificationEvent } from '../src/settlements/entities/trading-notification-event.entity';
 import { Wallet } from '../src/wallet/entities/wallet.entity';
 
 @Module({
@@ -32,7 +34,9 @@ import { Wallet } from '../src/wallet/entities/wallet.entity';
         MarketExchange,
         MarketValidationEvent,
         OrderStatusEventEntity,
+        OrderSettlementEvent,
         PortfolioPosition,
+        TradingNotificationEvent,
         TradingOrderEntity,
         Wallet,
       ],

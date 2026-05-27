@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import type {
+  BrokerOrderStatusResponse,
   BrokerOrderResponse,
   ExternalBrokerClient,
   SendBrokerOrderCommand,
@@ -25,6 +26,8 @@ type AlpacaOrderResponse = {
   client_order_id?: string;
   symbol?: string;
   qty?: string;
+  filled_qty?: string;
+  filled_avg_price?: string;
   side?: string;
   type?: string;
   message?: string;
@@ -41,6 +44,24 @@ export class AlpacaBrokerClient implements ExternalBrokerClient {
     }
 
     return this.sendRealOrder(command);
+  }
+
+  async getOrderStatus(
+    externalOrderId: string,
+  ): Promise<BrokerOrderStatusResponse> {
+    const normalizedExternalOrderId = externalOrderId.trim();
+    if (this.getMode() === 'mock') {
+      return {
+        brokerName: process.env.BROKER_NAME?.trim() || 'ALPACA',
+        externalOrderId: normalizedExternalOrderId,
+        brokerStatus: 'filled',
+        filledQuantity: 1,
+        averageFilledPrice: undefined,
+        responseSummary: `Broker order ${normalizedExternalOrderId} returned status filled`,
+      };
+    }
+
+    return this.getRealOrderStatus(normalizedExternalOrderId);
   }
 
   private sendMockOrder(
@@ -138,6 +159,80 @@ export class AlpacaBrokerClient implements ExternalBrokerClient {
         error instanceof Error
           ? error.message
           : 'Alpaca order submission failed unexpectedly',
+      );
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  private async getRealOrderStatus(
+    externalOrderId: string,
+  ): Promise<BrokerOrderStatusResponse> {
+    const brokerName = 'ALPACA';
+    const requestSummary = `GET ORDER ${externalOrderId}`;
+    const { apiKey, apiSecret } = this.getCredentials();
+
+    if (!apiKey || !apiSecret) {
+      throw new BrokerOrderSubmissionError(
+        brokerName,
+        'CONFIGURATION_ERROR',
+        requestSummary,
+        'Alpaca credentials are required when ALPACA_BROKER_MODE=real',
+      );
+    }
+
+    const timeoutMs = this.getTimeoutMs();
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+    try {
+      const response = await fetch(
+        `${this.getBaseUrl()}/v2/orders/${encodeURIComponent(externalOrderId)}`,
+        {
+          headers: {
+            accept: 'application/json',
+            'APCA-API-KEY-ID': apiKey,
+            'APCA-API-SECRET-KEY': apiSecret,
+          },
+          signal: controller.signal,
+        },
+      );
+      const responseBody = await this.parseResponse(response);
+
+      if (!response.ok) {
+        throw new BrokerOrderSubmissionError(
+          brokerName,
+          response.status.toString(),
+          requestSummary,
+          this.getErrorMessage(responseBody, response.statusText),
+        );
+      }
+
+      const brokerStatus = responseBody.status || 'unknown';
+      return {
+        brokerName,
+        externalOrderId: responseBody.id || externalOrderId,
+        brokerStatus,
+        filledQuantity: Number(responseBody.filled_qty ?? 0),
+        averageFilledPrice: responseBody.filled_avg_price
+          ? Number(responseBody.filled_avg_price)
+          : undefined,
+        responseSummary: `Alpaca order ${responseBody.id || externalOrderId} returned status ${brokerStatus}`,
+      };
+    } catch (error) {
+      if (error instanceof BrokerOrderSubmissionError) {
+        throw error;
+      }
+
+      throw new BrokerOrderSubmissionError(
+        brokerName,
+        error instanceof Error && error.name === 'AbortError'
+          ? 'TIMEOUT'
+          : 'FAILED',
+        requestSummary,
+        error instanceof Error
+          ? error.message
+          : 'Alpaca order status lookup failed unexpectedly',
       );
     } finally {
       clearTimeout(timeout);

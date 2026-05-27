@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { CaptureBalanceReservationDto } from '../dto/capture-balance-reservation.dto';
 import { RecordBalanceReservationDto } from '../dto/record-balance-reservation.dto';
 import { RecordDepositDto } from '../dto/record-deposit.dto';
 import { RecordWithdrawalDto } from '../dto/record-withdrawal.dto';
@@ -188,6 +189,32 @@ export class WalletsService {
     }
   }
 
+  async captureReservedBalance(
+    traderId: string,
+    dto: CaptureBalanceReservationDto,
+  ): Promise<WalletReservationResponseDto> {
+    this.assertValidTraderId(traderId);
+    this.assertValidReservation(dto, dto.capturedAt);
+
+    try {
+      const reservation = await this.walletsRepository.captureReservedBalance({
+        traderId: traderId.trim(),
+        amount: Number(dto.amount),
+        currency: this.normalizeCurrency(dto.currency),
+        sourceOrderId: dto.sourceOrderId?.trim() || undefined,
+        occurredAt: dto.capturedAt ? new Date(dto.capturedAt) : undefined,
+      });
+
+      return this.toReservationResponse(reservation);
+    } catch (error) {
+      if (error instanceof InsufficientReservedBalanceError) {
+        throw new BadRequestException('reserved balance is insufficient');
+      }
+
+      throw error;
+    }
+  }
+
   private assertValidTraderId(traderId: string): void {
     if (!traderId || traderId.trim().length === 0) {
       throw new BadRequestException('traderId is required');
@@ -219,7 +246,10 @@ export class WalletsService {
   }
 
   private assertValidReservation(
-    dto: RecordBalanceReservationDto | ReleaseBalanceReservationDto,
+    dto:
+      | CaptureBalanceReservationDto
+      | RecordBalanceReservationDto
+      | ReleaseBalanceReservationDto,
     occurredAt?: string,
   ): void {
     if (!Number.isFinite(Number(dto.amount)) || Number(dto.amount) <= 0) {

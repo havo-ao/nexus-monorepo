@@ -80,12 +80,12 @@ describe('TypeOrmOrderRepository', () => {
       symbol: 'AAPL',
       grossAmount: 750,
     });
-    expect(wallet.availableBalance).toBe('250.00');
-    expect(wallet.reservedBalance).toBe('750.00');
+    expect(wallet.availableBalance).toBe('247.37');
+    expect(wallet.reservedBalance).toBe('752.63');
     expect(fundsEventRepository.save.mock.calls[0][0]).toMatchObject({
       validationType: 'BUY_ORDER_FUNDS_RESERVATION',
       approved: true,
-      requiredAmount: '750.00',
+      requiredAmount: '752.63',
     });
     expect(statusEventRepository.save.mock.calls[0][0]).toMatchObject({
       toStatus: 'PENDING_EXECUTION',
@@ -154,7 +154,7 @@ describe('TypeOrmOrderRepository', () => {
       approved: false,
       reason: 'Insufficient available funds',
       availableAmount: 100,
-      requiredAmount: 750,
+      requiredAmount: 752.63,
     });
     expect(orderRepository.save.mock.calls).toHaveLength(0);
     expect(statusEventRepository.save.mock.calls).toHaveLength(0);
@@ -197,15 +197,15 @@ describe('TypeOrmOrderRepository', () => {
       limitPrice: 240,
       grossAmount: 480,
     });
-    expect(wallet.availableBalance).toBe('520.00');
-    expect(wallet.reservedBalance).toBe('480.00');
+    expect(wallet.availableBalance).toBe('518.32');
+    expect(wallet.reservedBalance).toBe('481.68');
     expect(orderRepository.save.mock.calls[0][0]).toMatchObject({
       orderType: 'LIMIT',
       status: 'PENDING_CONDITION',
       estimatedUnitPrice: '240.00',
       limitPrice: '240.00',
       grossAmount: '480.00',
-      reservedAmount: '480.00',
+      reservedAmount: '481.68',
     });
     expect(statusEventRepository.save.mock.calls[0][0]).toMatchObject({
       toStatus: 'PENDING_CONDITION',
@@ -443,7 +443,7 @@ describe('TypeOrmOrderRepository', () => {
       approved: false,
       reason: 'Insufficient available funds',
       availableAmount: 0,
-      requiredAmount: 250,
+      requiredAmount: 251,
     });
     expect(fundsEventRepository.save.mock.calls[0][0]).toMatchObject({
       traderId: '404',

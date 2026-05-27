@@ -22,7 +22,7 @@ describe('InMemoryOrderRepository', () => {
       status: 'PENDING_EXECUTION',
       symbol: 'AAPL',
       grossAmount: 750,
-      reservedAmount: 750,
+      reservedAmount: 752.63,
     });
     expect(repository.orders).toHaveLength(1);
   });
@@ -46,7 +46,7 @@ describe('InMemoryOrderRepository', () => {
       side: 'BUY',
       orderType: 'MARKET',
       status: 'PENDING_MARKET_OPEN',
-      reservedAmount: 250,
+      reservedAmount: 251,
     });
   });
 
@@ -67,7 +67,7 @@ describe('InMemoryOrderRepository', () => {
       approved: false,
       reason: 'Insufficient available funds',
       availableAmount: 1000,
-      requiredAmount: 1250,
+      requiredAmount: 1254.38,
     });
     expect(repository.orders).toHaveLength(0);
   });
@@ -95,7 +95,7 @@ describe('InMemoryOrderRepository', () => {
       estimatedUnitPrice: 240,
       limitPrice: 240,
       grossAmount: 480,
-      reservedAmount: 480,
+      reservedAmount: 481.68,
     });
     expect(repository.orders).toHaveLength(1);
   });
