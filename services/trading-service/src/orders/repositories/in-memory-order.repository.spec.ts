@@ -27,6 +27,29 @@ describe('InMemoryOrderRepository', () => {
     expect(repository.orders).toHaveLength(1);
   });
 
+  it('creates a market buy order queued for market open', async () => {
+    const repository = new InMemoryOrderRepository();
+
+    const result = await repository.createMarketBuyOrder({
+      traderId: '101',
+      symbol: 'AAPL',
+      exchangeId: '1',
+      quantity: 1,
+      estimatedUnitPrice: 250,
+      grossAmount: 250,
+      currency: 'USD',
+      initialStatus: 'PENDING_MARKET_OPEN',
+    });
+
+    expect(result.approved).toBe(true);
+    expect(result.order).toMatchObject({
+      side: 'BUY',
+      orderType: 'MARKET',
+      status: 'PENDING_MARKET_OPEN',
+      reservedAmount: 250,
+    });
+  });
+
   it('rejects creation when available funds are insufficient', async () => {
     const repository = new InMemoryOrderRepository();
 

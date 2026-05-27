@@ -114,7 +114,61 @@ describe('OrdersService', () => {
     });
   });
 
-  it('rejects order creation when market is closed', async () => {
+  it('queues a market buy order when market is closed', async () => {
+    const order = new TradingOrder(
+      '1',
+      'closed-market-order-reference',
+      '101',
+      'BUY',
+      'MARKET',
+      'PENDING_MARKET_OPEN',
+      'AAPL',
+      '1',
+      3,
+      250,
+      750,
+      750,
+      'USD',
+      '2026-05-26T22:00:00.000Z',
+    );
+    marketValidationService.validateMarketStatus.mockResolvedValue(
+      new MarketValidation(
+        false,
+        '1',
+        'CLOSED',
+        '2026-05-26T22:00:00.000Z',
+        'America/New_York',
+        '09:30:00',
+        '16:00:00',
+        'Market is closed at this time',
+      ),
+    );
+    orderRepository.createMarketBuyOrder.mockResolvedValue({
+      approved: true,
+      order,
+      availableAmount: 1000,
+      requiredAmount: 750,
+    });
+
+    await expect(
+      service.createMarketBuyOrder({
+        traderId: '101',
+        symbol: 'AAPL',
+        exchangeId: '1',
+        quantity: 3,
+        estimatedUnitPrice: 250,
+      }),
+    ).resolves.toBe(order);
+
+    expect(orderRepository.createMarketBuyOrder.mock.calls[0][0]).toMatchObject(
+      {
+        initialStatus: 'PENDING_MARKET_OPEN',
+        statusReason: 'Market buy order queued until market opens',
+      },
+    );
+  });
+
+  it('rejects market buy order creation when market is closed and queue is disabled', async () => {
     marketValidationService.validateMarketStatus.mockResolvedValue(
       new MarketValidation(
         false,
@@ -135,6 +189,7 @@ describe('OrdersService', () => {
         exchangeId: '1',
         quantity: 3,
         estimatedUnitPrice: 250,
+        queueWhenMarketClosed: false,
       }),
     ).rejects.toThrow(ConflictException);
 
@@ -329,7 +384,7 @@ describe('OrdersService', () => {
     expect(orderRepository.createMarketSellOrder.mock.calls).toHaveLength(0);
   });
 
-  it('rejects market sell order creation when market is closed', async () => {
+  it('rejects market sell order creation when market is closed and queue is disabled', async () => {
     marketValidationService.validateMarketStatus.mockResolvedValue(
       new MarketValidation(
         false,
@@ -351,6 +406,7 @@ describe('OrdersService', () => {
         exchangeId: '1',
         quantity: 3,
         estimatedUnitPrice: 250,
+        queueWhenMarketClosed: false,
       }),
     ).rejects.toThrow(ConflictException);
 
@@ -358,6 +414,69 @@ describe('OrdersService', () => {
       holdingsValidationService.validateSellHoldings.mock.calls,
     ).toHaveLength(0);
     expect(orderRepository.createMarketSellOrder.mock.calls).toHaveLength(0);
+  });
+
+  it('queues a market sell order when market is closed', async () => {
+    const order = new TradingOrder(
+      '3',
+      'closed-market-sell-order-reference',
+      '101',
+      'SELL',
+      'MARKET',
+      'PENDING_MARKET_OPEN',
+      'AAPL',
+      '1',
+      3,
+      250,
+      750,
+      0,
+      'USD',
+      '2026-05-26T22:00:00.000Z',
+      undefined,
+      undefined,
+      '1',
+    );
+    marketValidationService.validateMarketStatus.mockResolvedValue(
+      new MarketValidation(
+        false,
+        '1',
+        'CLOSED',
+        '2026-05-26T22:00:00.000Z',
+        'America/New_York',
+        '09:30:00',
+        '16:00:00',
+        'Market is closed at this time',
+      ),
+    );
+    holdingsValidationService.validateSellHoldings.mockResolvedValue(
+      new HoldingsValidation(true, '101', '1', 3, 10, 'AAPL'),
+    );
+    orderRepository.createMarketSellOrder.mockResolvedValue({
+      approved: true,
+      order,
+      requiredQuantity: 3,
+    });
+
+    await expect(
+      service.createMarketSellOrder({
+        traderId: '101',
+        stockId: '1',
+        symbol: 'AAPL',
+        exchangeId: '1',
+        quantity: 3,
+        estimatedUnitPrice: 250,
+      }),
+    ).resolves.toBe(order);
+
+    expect(
+      holdingsValidationService.validateSellHoldings.mock.calls,
+    ).toHaveLength(1);
+    expect(
+      orderRepository.createMarketSellOrder.mock.calls[0][0],
+    ).toMatchObject({
+      initialStatus: 'PENDING_MARKET_OPEN',
+      statusReason: 'Market sell order queued until market opens',
+    });
   });
 
   it('rejects market sell order creation when persistence fails', async () => {

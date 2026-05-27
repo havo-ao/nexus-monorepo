@@ -51,4 +51,12 @@ export class CreateMarketSellOrderDto {
       'Optional ISO timestamp used to evaluate market status. Defaults to now.',
   })
   marketEvaluatedAt?: string;
+
+  @ApiProperty({
+    example: true,
+    required: false,
+    description:
+      'When true, a market order created while the market is closed is queued until market opens. Defaults to true.',
+  })
+  queueWhenMarketClosed?: boolean;
 }

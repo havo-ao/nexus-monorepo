@@ -54,6 +54,8 @@ export type CreateMarketBuyOrderRequest = {
   quantity: number;
   estimatedUnitPrice: number;
   currency?: string;
+  marketEvaluatedAt?: string;
+  queueWhenMarketClosed?: boolean;
 };
 
 export type CreateLimitBuyOrderRequest = {
@@ -73,6 +75,8 @@ export type CreateMarketSellOrderRequest = {
   quantity: number;
   estimatedUnitPrice: number;
   currency?: string;
+  marketEvaluatedAt?: string;
+  queueWhenMarketClosed?: boolean;
 };
 
 export type CreateLimitSellOrderRequest = {
@@ -115,6 +119,7 @@ export type TradingOrderResponse = {
     | "CREATED"
     | "PENDING_EXECUTION"
     | "PENDING_CONDITION"
+    | "PENDING_MARKET_OPEN"
     | "REJECTED"
     | "CANCELLED"
     | "EXECUTED"
