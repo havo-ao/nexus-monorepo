@@ -14,6 +14,7 @@ import {
   informationCircleOutline,
   layersOutline,
   pulseOutline,
+  shieldCheckmarkOutline,
   ticketOutline,
 } from "ionicons/icons";
 import { useHistory, useLocation } from "react-router-dom";
@@ -29,9 +30,11 @@ import {
   distributeCommission,
   getOrderStatus,
   getOrderStatusHistory,
+  validateOrderByBroker,
   validateBuyFunds,
   validateSellHoldings,
   validateMarketStatus,
+  type BrokerOrderValidationResponse,
   type CommissionCalculationResponse,
   type CommissionDistributionResponse,
   type FundsValidationResponse,
@@ -106,6 +109,10 @@ const TraderPanel: React.FC = () => {
   >([]);
   const [orderStatusError, setOrderStatusError] = useState("");
   const [isLoadingOrderStatus, setIsLoadingOrderStatus] = useState(false);
+  const [brokerValidation, setBrokerValidation] =
+    useState<BrokerOrderValidationResponse | null>(null);
+  const [brokerValidationError, setBrokerValidationError] = useState("");
+  const [isValidatingBrokerOrder, setIsValidatingBrokerOrder] = useState(false);
 
   const quantity = Number(orderQuantity);
   const activePrice =
@@ -320,6 +327,39 @@ const TraderPanel: React.FC = () => {
       );
     } finally {
       setIsLoadingOrderStatus(false);
+    }
+  };
+
+  const handleBrokerValidation = async (decision: "APPROVE" | "REJECT") => {
+    setBrokerValidation(null);
+    setBrokerValidationError("");
+
+    if (!orderReference.trim() || !brokerId.trim()) {
+      setBrokerValidationError("Enter a valid order reference and broker.");
+      return;
+    }
+
+    setIsValidatingBrokerOrder(true);
+    try {
+      const result = await validateOrderByBroker(orderReference.trim(), {
+        brokerId: brokerId.trim(),
+        decision,
+        reason:
+          decision === "APPROVE"
+            ? "Order reviewed by assigned broker."
+            : "Order rejected by assigned broker.",
+      });
+      setBrokerValidation(result);
+      setOrderStatus(null);
+      setOrderStatusHistory([]);
+    } catch (error) {
+      setBrokerValidationError(
+        error instanceof Error
+          ? error.message
+          : "Unable to validate order by broker.",
+      );
+    } finally {
+      setIsValidatingBrokerOrder(false);
     }
   };
 
@@ -864,6 +904,75 @@ const TraderPanel: React.FC = () => {
                 {commissionDistributionError && (
                   <p className="trader-panel-message rejected">
                     {commissionDistributionError}
+                  </p>
+                )}
+              </section>
+
+              <section className="trader-precheck-section">
+                <div className="trader-precheck-title">
+                  <IonIcon icon={shieldCheckmarkOutline} />
+                  <h3>Broker validation</h3>
+                </div>
+                <div className="trader-precheck-fields compact">
+                  <IonItem>
+                    <IonLabel position="stacked">Order reference</IonLabel>
+                    <IonInput
+                      value={orderReference}
+                      onIonInput={(event) =>
+                        setOrderReference(String(event.detail.value ?? ""))
+                      }
+                    />
+                  </IonItem>
+                  <IonItem>
+                    <IonLabel position="stacked">Broker</IonLabel>
+                    <IonInput
+                      value={brokerId}
+                      onIonInput={(event) =>
+                        setBrokerId(String(event.detail.value ?? ""))
+                      }
+                    />
+                  </IonItem>
+                </div>
+                <div className="trader-broker-actions">
+                  <IonButton
+                    expand="block"
+                    fill="outline"
+                    onClick={() => void handleBrokerValidation("APPROVE")}
+                    disabled={isValidatingBrokerOrder}
+                  >
+                    {isValidatingBrokerOrder ? "Validating" : "Approve Order"}
+                  </IonButton>
+                  <IonButton
+                    expand="block"
+                    fill="outline"
+                    color="danger"
+                    onClick={() => void handleBrokerValidation("REJECT")}
+                    disabled={isValidatingBrokerOrder}
+                  >
+                    Reject Order
+                  </IonButton>
+                </div>
+                {brokerValidation && (
+                  <p
+                    className={
+                      brokerValidation.decision === "APPROVE"
+                        ? "trader-panel-message approved"
+                        : "trader-panel-message rejected"
+                    }
+                  >
+                    Broker {brokerValidation.brokerId}{" "}
+                    {brokerValidation.decision === "APPROVE"
+                      ? "approved"
+                      : "rejected"}{" "}
+                    order{" "}
+                    {brokerValidation.orderReference}. Status{" "}
+                    {brokerValidation.status.replaceAll("_", " ").toLowerCase()}
+                    .
+                  </p>
+                )}
+                {brokerValidationError && (
+                  <p className="trader-panel-message rejected">
+                    {brokerValidationError}
                   </p>
                 )}
               </section>
