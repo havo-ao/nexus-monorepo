@@ -51,6 +51,7 @@ export class BrokerExecutionService {
         symbol: order.symbol,
         quantity: order.quantity,
         estimatedUnitPrice: order.estimatedUnitPrice,
+        limitPrice: order.limitPrice,
         currency: order.currency,
       });
 

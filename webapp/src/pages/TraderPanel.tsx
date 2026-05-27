@@ -13,6 +13,7 @@ import {
   checkmarkCircleOutline,
   informationCircleOutline,
   layersOutline,
+  paperPlaneOutline,
   pulseOutline,
   shieldCheckmarkOutline,
   ticketOutline,
@@ -31,10 +32,12 @@ import {
   distributeCommission,
   getOrderStatus,
   getOrderStatusHistory,
+  sendOrderToBroker,
   validateOrderByBroker,
   validateBuyFunds,
   validateSellHoldings,
   validateMarketStatus,
+  type BrokerExecutionResponse,
   type BrokerOrderValidationResponse,
   type CommissionCalculationResponse,
   type CommissionDistributionResponse,
@@ -117,6 +120,10 @@ const TraderPanel: React.FC = () => {
     useState<BrokerOrderValidationResponse | null>(null);
   const [brokerValidationError, setBrokerValidationError] = useState("");
   const [isValidatingBrokerOrder, setIsValidatingBrokerOrder] = useState(false);
+  const [brokerExecution, setBrokerExecution] =
+    useState<BrokerExecutionResponse | null>(null);
+  const [brokerExecutionError, setBrokerExecutionError] = useState("");
+  const [isSendingToBroker, setIsSendingToBroker] = useState(false);
   const [isCancellingOrder, setIsCancellingOrder] = useState(false);
 
   const quantity = Number(orderQuantity);
@@ -127,9 +134,7 @@ const TraderPanel: React.FC = () => {
       ? quantity * activePrice
       : 0;
   const nextStatus =
-    orderSide === "SELL" && orderMode === "MARKET"
-      ? "Pending execution"
-      : "Pending condition";
+    orderMode === "MARKET" ? "Pending execution" : "Pending condition";
 
   const handleOrderSideChange = (nextSide: OrderSide) => {
     setOrderSide(nextSide);
@@ -311,6 +316,7 @@ const TraderPanel: React.FC = () => {
     setOrderStatus(null);
     setOrderStatusHistory([]);
     setCancelledOrder(null);
+    setBrokerExecution(null);
     setOrderStatusError("");
 
     if (!orderReference.trim()) {
@@ -358,6 +364,7 @@ const TraderPanel: React.FC = () => {
       setBrokerValidation(result);
       setOrderStatus(null);
       setOrderStatusHistory([]);
+      setBrokerExecution(null);
     } catch (error) {
       setBrokerValidationError(
         error instanceof Error
@@ -369,9 +376,47 @@ const TraderPanel: React.FC = () => {
     }
   };
 
+  const handleSendOrderToBroker = async () => {
+    setBrokerExecution(null);
+    setBrokerExecutionError("");
+    setCancelledOrder(null);
+
+    if (!orderReference.trim()) {
+      setBrokerExecutionError("Enter an order reference.");
+      return;
+    }
+
+    setIsSendingToBroker(true);
+    try {
+      const normalizedReference = orderReference.trim();
+      const result = await sendOrderToBroker(normalizedReference);
+      const [status, history] = await Promise.all([
+        getOrderStatus(normalizedReference),
+        getOrderStatusHistory(normalizedReference),
+      ]);
+      setBrokerExecution(result);
+      setOrderStatus(status);
+      setOrderStatusHistory(history);
+      setCreatedOrder((current) =>
+        current && current.orderReference === result.orderReference
+          ? { ...current, status: result.status }
+          : current,
+      );
+    } catch (error) {
+      setBrokerExecutionError(
+        error instanceof Error
+          ? error.message
+          : "Unable to send order to broker.",
+      );
+    } finally {
+      setIsSendingToBroker(false);
+    }
+  };
+
   const handleCancelOrder = async () => {
     setCancelledOrder(null);
     setOrderStatusError("");
+    setBrokerExecution(null);
 
     if (!orderReference.trim() || !traderId.trim()) {
       setOrderStatusError("Enter an order reference and trader.");
@@ -408,6 +453,8 @@ const TraderPanel: React.FC = () => {
   const handleCreateBuyOrder = async () => {
     setCreatedOrder(null);
     setOrderError("");
+    setBrokerExecution(null);
+    setBrokerExecutionError("");
 
     if (
       !traderId.trim() ||
@@ -469,6 +516,9 @@ const TraderPanel: React.FC = () => {
             });
       setCreatedOrder(order);
       setOrderReference(order.orderReference);
+      setOrderStatus(null);
+      setOrderStatusHistory([]);
+      setBrokerValidation(null);
     } catch (error) {
       setOrderError(
         error instanceof Error
@@ -725,6 +775,9 @@ const TraderPanel: React.FC = () => {
                   {createdOrder.side === "BUY"
                     ? `${createdOrder.quantity} ${createdOrder.symbol}.`
                     : `${createdOrder.symbol}.`}
+                  {createdOrder.status === "PENDING_EXECUTION"
+                    ? " It is ready to send to the broker."
+                    : ""}
                 </p>
               )}
               {orderError && (
@@ -1015,6 +1068,60 @@ const TraderPanel: React.FC = () => {
                 {brokerValidationError && (
                   <p className="trader-panel-message rejected">
                     {brokerValidationError}
+                  </p>
+                )}
+              </section>
+
+              <section className="trader-precheck-section">
+                <div className="trader-precheck-title">
+                  <IonIcon icon={paperPlaneOutline} />
+                  <h3>Broker execution</h3>
+                </div>
+                <div className="trader-precheck-fields">
+                  <IonItem>
+                    <IonLabel position="stacked">Order reference</IonLabel>
+                    <IonInput
+                      value={orderReference}
+                      onIonInput={(event) =>
+                        setOrderReference(String(event.detail.value ?? ""))
+                      }
+                    />
+                  </IonItem>
+                </div>
+                <IonButton
+                  expand="block"
+                  fill="outline"
+                  onClick={handleSendOrderToBroker}
+                  disabled={isSendingToBroker}
+                >
+                  {isSendingToBroker ? "Sending to Broker" : "Send to Broker"}
+                </IonButton>
+                {brokerExecution && (
+                  <div
+                    className={
+                      brokerExecution.status === "SENT_TO_BROKER"
+                        ? "trader-panel-message approved"
+                        : "trader-panel-message rejected"
+                    }
+                  >
+                    <strong>
+                      {brokerExecution.brokerName}{" "}
+                      {brokerExecution.brokerStatus.toLowerCase()}
+                    </strong>
+                    <span>
+                      {brokerExecution.symbol}{" "}
+                      {brokerExecution.side.toLowerCase()}{" "}
+                      {brokerExecution.quantity} share
+                      {brokerExecution.quantity === 1 ? "" : "s"}.
+                    </span>
+                    <span>
+                      External order {brokerExecution.externalOrderId}.
+                    </span>
+                  </div>
+                )}
+                {brokerExecutionError && (
+                  <p className="trader-panel-message rejected">
+                    {brokerExecutionError}
                   </p>
                 )}
               </section>

@@ -85,6 +85,11 @@ services:
       DB_USERNAME: nexus_user
       DB_PASSWORD: ${NEXUS_MYSQL_PASSWORD:?Set NEXUS_MYSQL_PASSWORD}
       DB_DATABASE: nexus
+      ALPACA_BROKER_MODE: ${ALPACA_BROKER_MODE:-mock}
+      ALPACA_API_BASE_URL: ${ALPACA_API_BASE_URL:-https://paper-api.alpaca.markets}
+      ALPACA_API_KEY: ${ALPACA_API_KEY:-}
+      ALPACA_SECRET_KEY: ${ALPACA_SECRET_KEY:-}
+      ALPACA_TIMEOUT_MS: ${ALPACA_TIMEOUT_MS:-5000}
     volumes:
       - ../../services/trading-service:/app
       - /app/node_modules

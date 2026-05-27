@@ -36,6 +36,7 @@ export class TypeOrmBrokerExecutionRepository implements BrokerExecutionReposito
       symbol: order.symbol,
       quantity: Number(order.quantity),
       estimatedUnitPrice: Number(order.estimatedUnitPrice),
+      limitPrice: order.limitPrice ? Number(order.limitPrice) : undefined,
       currency: order.currency,
     };
   }

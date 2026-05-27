@@ -250,6 +250,16 @@
   line-height: 1.45;
 }
 
+.trader-panel-message strong,
+.trader-panel-message span {
+  display: block;
+}
+
+.trader-panel-message strong + span,
+.trader-panel-message span + span {
+  margin-top: 4px;
+}
+
 .trader-panel-message.approved {
   color: #d8f8e2;
   background: rgba(31, 122, 68, 0.28);
