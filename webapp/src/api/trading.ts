@@ -232,6 +232,21 @@ export type BrokerOrderValidationResponse = {
   validatedAt: string;
 };
 
+export type BrokerExecutionResponse = {
+  orderId: string;
+  orderReference: string;
+  traderId: string;
+  side: TradingOrderResponse["side"];
+  orderType: TradingOrderResponse["orderType"];
+  status: TradingOrderResponse["status"];
+  symbol: string;
+  quantity: number;
+  externalOrderId: string;
+  brokerStatus: string;
+  brokerName: string;
+  sentAt: string;
+};
+
 export type CancelOrderRequest = {
   actorId: string;
   reason?: string;
@@ -581,6 +596,34 @@ export async function validateOrderByBroker(
   }
 
   return body as BrokerOrderValidationResponse;
+}
+
+export async function sendOrderToBroker(
+  orderReference: string,
+): Promise<BrokerExecutionResponse> {
+  const response = await fetch(
+    tradingApiUrl(
+      `${API_PATHS.tradingBrokerExecution}/${encodeURIComponent(orderReference)}/send`,
+    ),
+    {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+      },
+    },
+  );
+
+  const body = await readJsonSafe(response);
+
+  if (!response.ok) {
+    const maybeMessage =
+      body && typeof body === "object" && "message" in body
+        ? String((body as { message?: unknown }).message)
+        : "Unable to send order to broker.";
+    throw new Error(maybeMessage);
+  }
+
+  return body as BrokerExecutionResponse;
 }
 
 export async function cancelOrder(

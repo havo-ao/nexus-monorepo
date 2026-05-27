@@ -20,6 +20,7 @@ export type ExecutableOrder = {
   symbol: string;
   quantity: number;
   estimatedUnitPrice: number;
+  limitPrice?: number;
   currency: string;
 };
 

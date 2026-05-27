@@ -12,6 +12,7 @@ export type SendBrokerOrderCommand = {
   symbol: string;
   quantity: number;
   estimatedUnitPrice: number;
+  limitPrice?: number;
   currency: string;
 };
 
