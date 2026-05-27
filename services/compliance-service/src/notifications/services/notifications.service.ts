@@ -47,6 +47,15 @@ const mailTemplateDefinitions: Record<
     supportMessage:
       'Our compliance team will support you so your investment experience on Nexus remains safe and transparent.',
   },
+  ORDER_EXECUTED: {
+    subject: 'Nexus: your trading order was executed',
+    template: 'order-executed',
+    headline: 'Order executed',
+    intro:
+      'Your trading order was executed and recorded in Nexus. You can review the operation status, portfolio impact, and commission evidence from the Trading desk.',
+    supportMessage:
+      'This notification is part of the audit trail for your trading operations.',
+  },
 };
 
 @Injectable()

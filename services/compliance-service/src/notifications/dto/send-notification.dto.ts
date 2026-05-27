@@ -5,6 +5,7 @@ export const notificationTemplateNames = [
   'LOGIN_SUCCESS',
   'LOGIN_FAILED',
   'USER_REGISTERED',
+  'ORDER_EXECUTED',
 ] as const;
 
 export type NotificationTemplateName =
@@ -20,6 +21,8 @@ export const notificationTemplateDescriptions: Record<
     'Alerts the user after 5 failed sign-in attempts in less than 10 minutes and reports when the lockout event happened.',
   USER_REGISTERED:
     'Welcomes a new user after finishing registration in Nexus and reports when the account was created.',
+  ORDER_EXECUTED:
+    'Confirms that a trading order was executed and recorded by Nexus.',
 };
 
 export const notificationTemplateDescription = notificationTemplateNames

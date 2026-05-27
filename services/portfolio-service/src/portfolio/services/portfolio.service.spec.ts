@@ -63,6 +63,7 @@ describe('PortfolioService', () => {
       recordWithdrawal: jest.fn(),
       reserveBalance: jest.fn(),
       releaseReservedBalance: jest.fn(),
+      captureReservedBalance: jest.fn(),
     } as unknown as jest.Mocked<WalletsService>;
 
     const module: TestingModule = await Test.createTestingModule({
@@ -438,6 +439,36 @@ describe('PortfolioService', () => {
     );
 
     expect(walletsService.releaseReservedBalance.mock.calls[0]).toEqual([
+      '7',
+      request,
+    ]);
+  });
+
+  it('captures reserved balance for an executed trader order', async () => {
+    const response = {
+      movementId: '9103',
+      traderId: '7',
+      amount: 450,
+      availableBalance: 550,
+      reservedBalance: 0,
+      totalBalance: 550,
+      currency: 'USD',
+      movementType: 'CAPTURE' as const,
+      sourceOrderId: 'order_123456',
+      createdAt: '2026-05-22T14:45:00.000Z',
+    };
+    const request = {
+      amount: 450,
+      sourceOrderId: 'order_123456',
+      capturedAt: '2026-05-22T14:45:00.000Z',
+    };
+    walletsService.captureReservedBalance.mockResolvedValue(response);
+
+    await expect(service.captureReservedBalance('7', request)).resolves.toEqual(
+      response,
+    );
+
+    expect(walletsService.captureReservedBalance.mock.calls[0]).toEqual([
       '7',
       request,
     ]);

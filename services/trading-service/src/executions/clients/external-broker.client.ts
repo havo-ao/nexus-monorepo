@@ -24,8 +24,18 @@ export type BrokerOrderResponse = {
   responseSummary: string;
 };
 
+export type BrokerOrderStatusResponse = {
+  brokerName: string;
+  externalOrderId: string;
+  brokerStatus: string;
+  filledQuantity: number;
+  averageFilledPrice?: number;
+  responseSummary: string;
+};
+
 export interface ExternalBrokerClient {
   sendOrder(command: SendBrokerOrderCommand): Promise<BrokerOrderResponse>;
+  getOrderStatus(externalOrderId: string): Promise<BrokerOrderStatusResponse>;
 }
 
 export class BrokerOrderSubmissionError extends Error {

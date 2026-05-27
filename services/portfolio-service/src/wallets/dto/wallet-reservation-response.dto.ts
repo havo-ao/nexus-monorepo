@@ -22,8 +22,8 @@ export class WalletReservationResponseDto {
   @ApiProperty({ example: 'USD' })
   currency!: string;
 
-  @ApiProperty({ example: 'RESERVE', enum: ['RESERVE', 'RELEASE'] })
-  movementType!: 'RESERVE' | 'RELEASE';
+  @ApiProperty({ example: 'RESERVE', enum: ['RESERVE', 'RELEASE', 'CAPTURE'] })
+  movementType!: 'RESERVE' | 'RELEASE' | 'CAPTURE';
 
   @ApiPropertyOptional({ example: 'order_123456' })
   sourceOrderId?: string;

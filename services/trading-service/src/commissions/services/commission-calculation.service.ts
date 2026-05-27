@@ -1,4 +1,8 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import {
+  calculatePlatformCommission,
+  PLATFORM_COMMISSION_RATE_BPS,
+} from '../../common/commission';
 import { roundMoney } from '../../common/money';
 import type {
   OrderSide,
@@ -10,8 +14,6 @@ import {
   type CommissionCalculationRepository,
 } from '../repositories/commission-calculation.repository';
 
-const PLATFORM_COMMISSION_RATE_BPS = 35;
-const MINIMUM_COMMISSION_AMOUNT = 1;
 const ORDER_TYPES: readonly OrderType[] = [
   'MARKET',
   'LIMIT',
@@ -39,12 +41,7 @@ export class CommissionCalculationService {
     this.assertValidInput(input);
 
     const grossAmount = roundMoney(input.grossAmount);
-    const rawCommission = roundMoney(
-      (grossAmount * PLATFORM_COMMISSION_RATE_BPS) / 10000,
-    );
-    const commissionAmount = roundMoney(
-      Math.max(rawCommission, MINIMUM_COMMISSION_AMOUNT),
-    );
+    const commissionAmount = calculatePlatformCommission(grossAmount);
     const netAmount =
       input.side === 'BUY'
         ? roundMoney(grossAmount + commissionAmount)

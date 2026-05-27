@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
+import { calculatePlatformCommission } from '../../common/commission';
 import { DataSource, EntityManager } from 'typeorm';
 import { roundMoney } from '../../common/money';
 import { FundsValidationEvent } from '../../funds-validation/entities/funds-validation-event.entity';
@@ -132,13 +133,16 @@ export class TypeOrmOrderRepository implements OrderRepository {
       wallet ? Number(wallet.reservedBalance) : 0,
     );
 
-    if (!wallet || availableAmount < command.grossAmount) {
+    const commissionAmount = calculatePlatformCommission(command.grossAmount);
+    const requiredAmount = roundMoney(command.grossAmount + commissionAmount);
+
+    if (!wallet || availableAmount < requiredAmount) {
       await fundsEventRepository.save(
         this.toFundsEvent({
           approved: false,
           traderId: command.traderId,
           availableAmount,
-          requiredAmount: command.grossAmount,
+          requiredAmount,
           reservedAmount: currentReservedAmount,
           reason: 'Insufficient available funds',
         }),
@@ -148,16 +152,12 @@ export class TypeOrmOrderRepository implements OrderRepository {
         approved: false,
         reason: 'Insufficient available funds',
         availableAmount,
-        requiredAmount: command.grossAmount,
+        requiredAmount,
       };
     }
 
-    const reservedAmount = roundMoney(
-      currentReservedAmount + command.grossAmount,
-    );
-    wallet.availableBalance = this.toDecimal(
-      availableAmount - command.grossAmount,
-    );
+    const reservedAmount = roundMoney(currentReservedAmount + requiredAmount);
+    wallet.availableBalance = this.toDecimal(availableAmount - requiredAmount);
     wallet.reservedBalance = this.toDecimal(reservedAmount);
     await walletRepository.save(wallet);
 
@@ -166,7 +166,7 @@ export class TypeOrmOrderRepository implements OrderRepository {
         approved: true,
         traderId: command.traderId,
         availableAmount,
-        requiredAmount: command.grossAmount,
+        requiredAmount,
         reservedAmount,
       }),
     );
@@ -179,6 +179,7 @@ export class TypeOrmOrderRepository implements OrderRepository {
     orderEntity.status = status;
     orderEntity.symbol = command.symbol;
     orderEntity.exchangeId = command.exchangeId;
+    orderEntity.stockId = command.stockId;
     orderEntity.quantity = command.quantity.toFixed(6);
     orderEntity.estimatedUnitPrice = this.toDecimal(
       'estimatedUnitPrice' in command
@@ -188,7 +189,7 @@ export class TypeOrmOrderRepository implements OrderRepository {
     orderEntity.limitPrice =
       'limitPrice' in command ? this.toDecimal(command.limitPrice) : undefined;
     orderEntity.grossAmount = this.toDecimal(command.grossAmount);
-    orderEntity.reservedAmount = this.toDecimal(command.grossAmount);
+    orderEntity.reservedAmount = this.toDecimal(requiredAmount);
     orderEntity.currency = command.currency;
 
     const savedOrder = await orderRepository.save(orderEntity);
@@ -206,7 +207,7 @@ export class TypeOrmOrderRepository implements OrderRepository {
       approved: true,
       order: this.toDomain(savedOrder),
       availableAmount,
-      requiredAmount: command.grossAmount,
+      requiredAmount,
     };
   }
 

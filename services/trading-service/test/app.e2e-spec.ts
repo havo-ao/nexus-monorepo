@@ -243,7 +243,7 @@ describe('AppController (e2e)', () => {
           quantity: 1,
           estimatedUnitPrice: 250,
           grossAmount: 250,
-          reservedAmount: 250,
+          reservedAmount: 251,
           currency: 'USD',
         });
         expect(body.orderReference).toEqual(expect.any(String));
@@ -274,7 +274,7 @@ describe('AppController (e2e)', () => {
           quantity: 1,
           estimatedUnitPrice: 250,
           grossAmount: 250,
-          reservedAmount: 250,
+          reservedAmount: 251,
           currency: 'USD',
         });
       });
@@ -362,7 +362,7 @@ describe('AppController (e2e)', () => {
           estimatedUnitPrice: 240,
           limitPrice: 240,
           grossAmount: 240,
-          reservedAmount: 240,
+          reservedAmount: 241,
           currency: 'USD',
         });
         expect(body.orderReference).toEqual(expect.any(String));

@@ -7,6 +7,7 @@ import { ValuationsService } from '../../valuations/services/valuations.service'
 import { RecordBalanceReservationDto } from '../../wallets/dto/record-balance-reservation.dto';
 import { RecordDepositDto } from '../../wallets/dto/record-deposit.dto';
 import { RecordWithdrawalDto } from '../../wallets/dto/record-withdrawal.dto';
+import { CaptureBalanceReservationDto } from '../../wallets/dto/capture-balance-reservation.dto';
 import { ReleaseBalanceReservationDto } from '../../wallets/dto/release-balance-reservation.dto';
 import { WalletBalanceResponseDto } from '../../wallets/dto/wallet-balance-response.dto';
 import { WalletDepositResponseDto } from '../../wallets/dto/wallet-deposit-response.dto';
@@ -129,6 +130,13 @@ export class PortfolioService {
     dto: ReleaseBalanceReservationDto,
   ): Promise<WalletReservationResponseDto> {
     return this.walletsService.releaseReservedBalance(traderId, dto);
+  }
+
+  captureReservedBalance(
+    traderId: string,
+    dto: CaptureBalanceReservationDto,
+  ): Promise<WalletReservationResponseDto> {
+    return this.walletsService.captureReservedBalance(traderId, dto);
   }
 
   async recordExecutedBuy(

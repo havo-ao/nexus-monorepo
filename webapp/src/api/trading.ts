@@ -1,4 +1,5 @@
 import { API_PATHS, tradingApiUrl } from "../config/api";
+import { getAccessToken } from "../auth/storage";
 
 export type ValidateBuyFundsRequest = {
   traderId: string;
@@ -51,6 +52,7 @@ export type CreateMarketBuyOrderRequest = {
   traderId: string;
   symbol: string;
   exchangeId: string;
+  stockId?: string;
   quantity: number;
   estimatedUnitPrice: number;
   currency?: string;
@@ -62,6 +64,7 @@ export type CreateLimitBuyOrderRequest = {
   traderId: string;
   symbol: string;
   exchangeId: string;
+  stockId?: string;
   quantity: number;
   limitPrice: number;
   currency?: string;
@@ -245,6 +248,41 @@ export type BrokerExecutionResponse = {
   brokerStatus: string;
   brokerName: string;
   sentAt: string;
+};
+
+export type SettlementNotificationRecipient = {
+  email: string;
+  name: string;
+  surname: string;
+  username: string;
+};
+
+export type SyncOrderSettlementRequest = {
+  actorId?: string;
+  notificationRecipient?: SettlementNotificationRecipient;
+};
+
+export type OrderSettlementResponse = {
+  orderId: string;
+  orderReference: string;
+  traderId: string;
+  side: TradingOrderResponse["side"];
+  status: TradingOrderResponse["status"];
+  symbol: string;
+  quantity: number;
+  filledQuantity: number;
+  averageFilledPrice?: number;
+  settledAmount: number;
+  commissionAmount: number;
+  netAmount: number;
+  currency: string;
+  brokerName: string;
+  externalOrderId: string;
+  brokerStatus: string;
+  portfolioUpdated: boolean;
+  fundsUpdated: boolean;
+  notificationDelivered: boolean;
+  settledAt: string;
 };
 
 export type CancelOrderRequest = {
@@ -624,6 +662,43 @@ export async function sendOrderToBroker(
   }
 
   return body as BrokerExecutionResponse;
+}
+
+export async function syncOrderSettlement(
+  orderReference: string,
+  request: SyncOrderSettlementRequest,
+): Promise<OrderSettlementResponse> {
+  const accessToken = getAccessToken();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  };
+  if (accessToken) {
+    headers.Authorization = `Bearer ${accessToken}`;
+  }
+
+  const response = await fetch(
+    tradingApiUrl(
+      `${API_PATHS.tradingSettlement}/${encodeURIComponent(orderReference)}/settlement/sync`,
+    ),
+    {
+      method: "POST",
+      headers,
+      body: JSON.stringify(request),
+    },
+  );
+
+  const body = await readJsonSafe(response);
+
+  if (!response.ok) {
+    const maybeMessage =
+      body && typeof body === "object" && "message" in body
+        ? String((body as { message?: unknown }).message)
+        : "Unable to synchronize broker settlement.";
+    throw new Error(maybeMessage);
+  }
+
+  return body as OrderSettlementResponse;
 }
 
 export async function cancelOrder(
