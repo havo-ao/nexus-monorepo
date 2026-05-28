@@ -211,6 +211,7 @@ describe('AppController (e2e)', () => {
 
     const attempts = await request(app.getHttpServer())
       .get('/api/v1/notifications/attempts?entityId=ORD-2026-0003')
+      .set(legalAuth)
       .expect(200);
 
     expect(attempts.body).toHaveLength(1);
