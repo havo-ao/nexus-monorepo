@@ -32,6 +32,12 @@ export function getPortfolioApiBaseUrl(): string {
   );
 }
 
+export function getComplianceApiBaseUrl(): string {
+  return cleanBaseUrl(
+    import.meta.env.VITE_COMPLIANCE_API_BASE_URL ?? "/compliance-api",
+  );
+}
+
 export function apiUrl(path: string): string {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   const base = getApiBaseUrl();
@@ -53,8 +59,14 @@ export function portfolioApiUrl(path: string): string {
   return `${getPortfolioApiBaseUrl()}${normalizedPath}`;
 }
 
+export function complianceApiUrl(path: string): string {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${getComplianceApiBaseUrl()}${normalizedPath}`;
+}
+
 export const API_PATHS = {
   authLogin: "/api/auth/login",
+  authMe: "/api/auth/me",
   authRegisterTrader: "/api/auth/register/trader",
   tradingValidateBuyFunds: "/api/v1/validations/funds/buy",
   tradingValidateSellHoldings: "/api/v1/validations/holdings/sell",
@@ -92,4 +104,5 @@ export const API_PATHS = {
   adminSubscriptionPlans: "/api/admin/subscription-plans",
   subscriptionVerify: "/api/subscriptions/verify",
   portfolioBase: "/api/v1/portfolio",
+  complianceReports: "/api/v1/reports",
 } as const;
