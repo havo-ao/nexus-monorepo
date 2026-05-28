@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, VersioningType } from '@nestjs/common';
+import { createHmac } from 'node:crypto';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
@@ -8,8 +9,13 @@ import { ORDER_SETTLEMENT_REPOSITORY } from './../src/settlements/repositories/o
 
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
+  const jwtSecret = 'e2e-secret-at-least-256-bits-for-tests';
+  const adminAuth = {
+    Authorization: `Bearer ${signToken({ role: 'ADMIN', userId: 'admin-1' }, jwtSecret)}`,
+  };
 
   beforeEach(async () => {
+    process.env.NEXUS_JWT_SECRET = jwtSecret;
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
@@ -40,6 +46,7 @@ describe('AppController (e2e)', () => {
   it('/api/v1/validations/market/status (POST)', () => {
     return request(app.getHttpServer())
       .post('/api/v1/validations/market/status')
+      .set(adminAuth)
       .send({
         exchangeId: '1',
         evaluatedAt: '2026-05-12T14:30:00.000Z',
@@ -59,6 +66,7 @@ describe('AppController (e2e)', () => {
   it('/api/v1/orders/pending/process (POST)', () => {
     return request(app.getHttpServer())
       .post('/api/v1/orders/pending/process')
+      .set(adminAuth)
       .send({
         limit: 2,
         evaluatedAt: '2026-05-12T14:30:00.000Z',
@@ -94,6 +102,7 @@ describe('AppController (e2e)', () => {
   it('/api/v1/validations/holdings/sell (POST)', () => {
     return request(app.getHttpServer())
       .post('/api/v1/validations/holdings/sell')
+      .set(adminAuth)
       .send({
         traderId: '101',
         stockId: '1',
@@ -114,6 +123,7 @@ describe('AppController (e2e)', () => {
   it('/api/v1/commissions/calculate (POST)', () => {
     return request(app.getHttpServer())
       .post('/api/v1/commissions/calculate')
+      .set(adminAuth)
       .send({
         traderId: '101',
         side: 'BUY',
@@ -140,6 +150,7 @@ describe('AppController (e2e)', () => {
   it('/api/v1/commissions/distribute (POST)', () => {
     return request(app.getHttpServer())
       .post('/api/v1/commissions/distribute')
+      .set(adminAuth)
       .send({
         traderId: '101',
         brokerId: '201',
@@ -165,6 +176,7 @@ describe('AppController (e2e)', () => {
   it('/api/v1/executions/broker/orders/:orderReference/send (POST)', () => {
     return request(app.getHttpServer())
       .post('/api/v1/executions/broker/orders/order-reference/send')
+      .set(adminAuth)
       .expect(201)
       .expect((response) => {
         const body = response.body as Record<string, unknown>;
@@ -190,6 +202,7 @@ describe('AppController (e2e)', () => {
       .post(
         '/api/v1/executions/broker/orders/broker-failure-order-reference/send',
       )
+      .set(adminAuth)
       .expect(201)
       .expect((response) => {
         const body = response.body as Record<string, unknown>;
@@ -239,7 +252,7 @@ describe('AppController (e2e)', () => {
 
     return request(app.getHttpServer())
       .post('/api/v1/orders/settlement-order-reference/settlement/sync')
-      .set('Authorization', 'Bearer trader-token')
+      .set(adminAuth)
       .send({
         actorId: 'broker-reviewer',
         notificationRecipient: {
@@ -278,6 +291,7 @@ describe('AppController (e2e)', () => {
   it('/api/v1/orders/:orderReference/broker-validation approves an order (POST)', () => {
     return request(app.getHttpServer())
       .post('/api/v1/orders/order-reference/broker-validation')
+      .set(adminAuth)
       .send({
         brokerId: '201',
         decision: 'APPROVE',
@@ -301,6 +315,7 @@ describe('AppController (e2e)', () => {
   it('/api/v1/orders/:orderReference/broker-validation rejects an order (POST)', () => {
     return request(app.getHttpServer())
       .post('/api/v1/orders/broker-rejected-order-reference/broker-validation')
+      .set(adminAuth)
       .send({
         brokerId: '201',
         decision: 'REJECT',
@@ -324,6 +339,7 @@ describe('AppController (e2e)', () => {
   it('/api/v1/orders/buy/market (POST)', () => {
     return request(app.getHttpServer())
       .post('/api/v1/orders/buy/market')
+      .set(adminAuth)
       .send({
         traderId: '101',
         symbol: 'AAPL',
@@ -355,6 +371,7 @@ describe('AppController (e2e)', () => {
   it('/api/v1/orders/buy/market blocks restricted traders (POST)', () => {
     return request(app.getHttpServer())
       .post('/api/v1/orders/buy/market')
+      .set(adminAuth)
       .send({
         traderId: 'restricted-trader',
         symbol: 'AAPL',
@@ -374,6 +391,7 @@ describe('AppController (e2e)', () => {
   it('/api/v1/orders/buy/market queues when market is closed (POST)', () => {
     return request(app.getHttpServer())
       .post('/api/v1/orders/buy/market')
+      .set(adminAuth)
       .send({
         traderId: '101',
         symbol: 'AAPL',
@@ -404,6 +422,7 @@ describe('AppController (e2e)', () => {
   it('/api/v1/orders/:orderReference/status (GET)', () => {
     return request(app.getHttpServer())
       .get('/api/v1/orders/order-reference/status')
+      .set(adminAuth)
       .expect(200)
       .expect({
         orderId: '1',
@@ -427,6 +446,7 @@ describe('AppController (e2e)', () => {
   it('/api/v1/orders/:orderReference/status-history (GET)', () => {
     return request(app.getHttpServer())
       .get('/api/v1/orders/order-reference/status-history')
+      .set(adminAuth)
       .expect(200)
       .expect([
         {
@@ -445,6 +465,7 @@ describe('AppController (e2e)', () => {
   it('/api/v1/orders/:orderReference/cancel (POST)', () => {
     return request(app.getHttpServer())
       .post('/api/v1/orders/order-reference/cancel')
+      .set(adminAuth)
       .send({
         actorId: '101',
       })
@@ -462,6 +483,7 @@ describe('AppController (e2e)', () => {
   it('/api/v1/orders/buy/limit (POST)', () => {
     return request(app.getHttpServer())
       .post('/api/v1/orders/buy/limit')
+      .set(adminAuth)
       .send({
         traderId: '101',
         symbol: 'AAPL',
@@ -493,6 +515,7 @@ describe('AppController (e2e)', () => {
   it('/api/v1/orders/sell/market (POST)', () => {
     return request(app.getHttpServer())
       .post('/api/v1/orders/sell/market')
+      .set(adminAuth)
       .send({
         traderId: '101',
         stockId: '1',
@@ -526,6 +549,7 @@ describe('AppController (e2e)', () => {
   it('/api/v1/orders/sell/limit (POST)', () => {
     return request(app.getHttpServer())
       .post('/api/v1/orders/sell/limit')
+      .set(adminAuth)
       .send({
         traderId: '101',
         stockId: '1',
@@ -559,6 +583,7 @@ describe('AppController (e2e)', () => {
   it('/api/v1/orders/sell/stop-loss (POST)', () => {
     return request(app.getHttpServer())
       .post('/api/v1/orders/sell/stop-loss')
+      .set(adminAuth)
       .send({
         traderId: '101',
         stockId: '1',
@@ -592,6 +617,7 @@ describe('AppController (e2e)', () => {
   it('/api/v1/orders/sell/take-profit (POST)', () => {
     return request(app.getHttpServer())
       .post('/api/v1/orders/sell/take-profit')
+      .set(adminAuth)
       .send({
         traderId: '101',
         stockId: '1',
@@ -622,3 +648,23 @@ describe('AppController (e2e)', () => {
       });
   });
 });
+
+function signToken(
+  payload: { role: string; userId: string },
+  secret: string,
+): string {
+  const encodedHeader = Buffer.from(
+    JSON.stringify({ alg: 'HS256', typ: 'JWT' }),
+  ).toString('base64url');
+  const encodedPayload = Buffer.from(
+    JSON.stringify({
+      exp: Math.floor(Date.now() / 1000) + 3600,
+      type: 'access',
+      ...payload,
+    }),
+  ).toString('base64url');
+  const signature = createHmac('sha256', secret)
+    .update(`${encodedHeader}.${encodedPayload}`)
+    .digest('base64url');
+  return `${encodedHeader}.${encodedPayload}.${signature}`;
+}

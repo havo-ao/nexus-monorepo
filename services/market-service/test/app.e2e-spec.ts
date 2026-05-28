@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, VersioningType } from '@nestjs/common';
+import { createHmac } from 'node:crypto';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
@@ -145,8 +146,13 @@ interface DashboardResponse {
 
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
+  const jwtSecret = 'e2e-secret-at-least-256-bits-for-tests';
+  const adminAuth = {
+    Authorization: `Bearer ${signToken({ role: 'ADMIN', userId: 'admin-1' }, jwtSecret)}`,
+  };
 
   beforeEach(async () => {
+    process.env.NEXUS_JWT_SECRET = jwtSecret;
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
@@ -255,6 +261,7 @@ describe('AppController (e2e)', () => {
   it('/api/v1/instruments/sync (POST) synchronizes available instruments', async () => {
     await request(app.getHttpServer())
       .post('/api/v1/instruments/sync')
+      .set(adminAuth)
       .expect(200)
       .expect((response) => {
         const body = response.body as SyncInstrumentsResponse;
@@ -298,6 +305,7 @@ describe('AppController (e2e)', () => {
   it('/api/v1/instruments/:symbol (GET) returns instrument detail', async () => {
     await request(app.getHttpServer())
       .post('/api/v1/quotes/sync')
+      .set(adminAuth)
       .send({
         symbols: ['AAPL'],
         requestedBy: 'system@nexus.local',
@@ -339,6 +347,7 @@ describe('AppController (e2e)', () => {
   it('/api/v1/instruments/:symbol/metadata/sync (POST) enriches instrument detail', async () => {
     await request(app.getHttpServer())
       .post('/api/v1/instruments/AAPL/metadata/sync')
+      .set(adminAuth)
       .expect(200)
       .expect((response) => {
         const body = response.body as SyncInstrumentMetadataResponse;
@@ -376,6 +385,7 @@ describe('AppController (e2e)', () => {
   it('/api/v1/instruments/:symbol/detail/sync (POST) prepares detail view data', async () => {
     await request(app.getHttpServer())
       .post('/api/v1/instruments/AAPL/detail/sync')
+      .set(adminAuth)
       .expect(200)
       .expect((response) => {
         const body = response.body as SyncInstrumentDetailResponse;
@@ -425,6 +435,7 @@ describe('AppController (e2e)', () => {
   it('/api/v1/admin/market-hours/:marketCode (PUT) configures schedule', async () => {
     await request(app.getHttpServer())
       .put('/api/v1/admin/market-hours/BVC')
+      .set(adminAuth)
       .send({
         timezone: 'America/Bogota',
         openTime: { hour: 9, minute: 0 },
@@ -458,6 +469,7 @@ describe('AppController (e2e)', () => {
 
     await request(app.getHttpServer())
       .get('/api/v1/admin/market-hours/BVC')
+      .set(adminAuth)
       .expect(200)
       .expect((response) => {
         expect(response.body).toEqual(
@@ -473,6 +485,7 @@ describe('AppController (e2e)', () => {
   it('/api/v1/admin/market-hours/:marketCode/restrictions (POST) configures restriction', async () => {
     await request(app.getHttpServer())
       .post('/api/v1/admin/market-hours/NYSE/restrictions')
+      .set(adminAuth)
       .send({
         date: '2026-06-19',
         status: 'CLOSED',
@@ -512,6 +525,7 @@ describe('AppController (e2e)', () => {
   it('/api/v1/quotes/sync (POST) synchronizes market data', async () => {
     await request(app.getHttpServer())
       .post('/api/v1/quotes/sync')
+      .set(adminAuth)
       .send({
         symbols: ['AAPL'],
         requestedBy: 'system@nexus.local',
@@ -541,6 +555,7 @@ describe('AppController (e2e)', () => {
   it('/api/v1/quotes/:symbol (GET) returns latest price components', async () => {
     await request(app.getHttpServer())
       .post('/api/v1/quotes/sync')
+      .set(adminAuth)
       .send({
         symbols: ['AAPL'],
         requestedBy: 'system@nexus.local',
@@ -572,6 +587,7 @@ describe('AppController (e2e)', () => {
   it('/api/v1/quotes/:symbol/history (GET) returns historical prices', async () => {
     await request(app.getHttpServer())
       .post('/api/v1/quotes/sync')
+      .set(adminAuth)
       .send({
         symbols: ['AAPL'],
         requestedBy: 'system@nexus.local',
@@ -599,6 +615,7 @@ describe('AppController (e2e)', () => {
   it('/api/v1/quotes/:symbol/history/sync (POST) synchronizes historical prices', async () => {
     await request(app.getHttpServer())
       .post('/api/v1/quotes/AAPL/history/sync')
+      .set(adminAuth)
       .expect(200)
       .expect((response) => {
         const body = response.body as {
@@ -640,6 +657,7 @@ describe('AppController (e2e)', () => {
   it('/api/v1/watchlists/:traderId manages watched symbols with current quotes', async () => {
     await request(app.getHttpServer())
       .post('/api/v1/quotes/sync')
+      .set(adminAuth)
       .send({
         symbols: ['AAPL'],
         requestedBy: 'system@nexus.local',
@@ -648,6 +666,7 @@ describe('AppController (e2e)', () => {
 
     await request(app.getHttpServer())
       .post('/api/v1/watchlists/trader-123/items')
+      .set(adminAuth)
       .send({ symbol: 'aapl' })
       .expect(200)
       .expect((response) => {
@@ -663,6 +682,7 @@ describe('AppController (e2e)', () => {
 
     await request(app.getHttpServer())
       .delete('/api/v1/watchlists/trader-123/items/AAPL')
+      .set(adminAuth)
       .expect(200)
       .expect((response) => {
         const body = response.body as WatchlistResponse;
@@ -674,6 +694,7 @@ describe('AppController (e2e)', () => {
   it('/api/v1/price-alerts creates and evaluates target price alerts', async () => {
     await request(app.getHttpServer())
       .post('/api/v1/quotes/sync')
+      .set(adminAuth)
       .send({
         symbols: ['AAPL'],
         requestedBy: 'system@nexus.local',
@@ -682,6 +703,7 @@ describe('AppController (e2e)', () => {
 
     await request(app.getHttpServer())
       .post('/api/v1/price-alerts')
+      .set(adminAuth)
       .send({
         traderId: 'trader-123',
         symbol: 'aapl',
@@ -705,6 +727,7 @@ describe('AppController (e2e)', () => {
 
     await request(app.getHttpServer())
       .get('/api/v1/price-alerts/trader-123')
+      .set(adminAuth)
       .expect(200)
       .expect((response) => {
         const body = response.body as PriceAlertResponse[];
@@ -715,6 +738,7 @@ describe('AppController (e2e)', () => {
 
     await request(app.getHttpServer())
       .post('/api/v1/price-alerts/evaluate')
+      .set(adminAuth)
       .expect(200)
       .expect((response) => {
         const body = response.body as EvaluatePriceAlertsResponse;
@@ -734,6 +758,7 @@ describe('AppController (e2e)', () => {
   it('/api/v1/dashboard (GET) returns market dashboard summary', async () => {
     await request(app.getHttpServer())
       .post('/api/v1/quotes/sync')
+      .set(adminAuth)
       .send({
         symbols: ['AAPL', 'MSFT'],
         requestedBy: 'system@nexus.local',
@@ -742,6 +767,7 @@ describe('AppController (e2e)', () => {
 
     await request(app.getHttpServer())
       .post('/api/v1/quotes/sync')
+      .set(adminAuth)
       .send({
         symbols: ['AAPL', 'MSFT'],
         requestedBy: 'system@nexus.local',
@@ -785,3 +811,23 @@ describe('AppController (e2e)', () => {
       });
   });
 });
+
+function signToken(
+  payload: { role: string; userId: string },
+  secret: string,
+): string {
+  const encodedHeader = Buffer.from(
+    JSON.stringify({ alg: 'HS256', typ: 'JWT' }),
+  ).toString('base64url');
+  const encodedPayload = Buffer.from(
+    JSON.stringify({
+      exp: Math.floor(Date.now() / 1000) + 3600,
+      type: 'access',
+      ...payload,
+    }),
+  ).toString('base64url');
+  const signature = createHmac('sha256', secret)
+    .update(`${encodedHeader}.${encodedPayload}`)
+    .digest('base64url');
+  return `${encodedHeader}.${encodedPayload}.${signature}`;
+}

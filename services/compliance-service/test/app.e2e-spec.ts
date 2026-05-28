@@ -2,6 +2,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, VersioningType } from '@nestjs/common';
 import { MailerService } from '@nestjs-modules/mailer';
+import { createHmac } from 'node:crypto';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
@@ -12,6 +13,10 @@ describe('AppController (e2e)', () => {
   let originalMailUser: string | undefined;
   let originalMailPass: string | undefined;
   const sendMailMock = jest.fn();
+  const jwtSecret = 'e2e-secret-at-least-256-bits-for-tests';
+  const legalAuth = {
+    Authorization: `Bearer ${signToken({ role: 'LEGAL_USER', userId: 'legal-1' }, jwtSecret)}`,
+  };
 
   beforeEach(async () => {
     originalMailFrom = process.env.MAIL_FROM;
@@ -20,6 +25,7 @@ describe('AppController (e2e)', () => {
     process.env.MAIL_FROM = 'no-reply@nexus.local';
     process.env.MAIL_USER = 'smtp-user@nexus.local';
     process.env.MAIL_PASS = 'smtp-pass';
+    process.env.NEXUS_JWT_SECRET = jwtSecret;
     sendMailMock.mockResolvedValue(undefined);
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -139,6 +145,7 @@ describe('AppController (e2e)', () => {
 
     const query = await request(app.getHttpServer())
       .get('/api/v1/audit/events?entityId=ORD-2026-0001&critical=true')
+      .set(legalAuth)
       .expect(200);
 
     expect(query.body).toHaveLength(1);
@@ -219,6 +226,7 @@ describe('AppController (e2e)', () => {
   it('blocks restricted trader operations and records the compliance decision', async () => {
     await request(app.getHttpServer())
       .post('/api/v1/restrictions/traders/trader-101')
+      .set(legalAuth)
       .send({
         status: 'RESTRICTED',
         reason: 'Unusual activity under review.',
@@ -260,6 +268,7 @@ describe('AppController (e2e)', () => {
 
     const response = await request(app.getHttpServer())
       .get('/api/v1/reports/executive')
+      .set(legalAuth)
       .expect(200);
 
     expect(response.body).toEqual(
@@ -273,3 +282,23 @@ describe('AppController (e2e)', () => {
     );
   });
 });
+
+function signToken(
+  payload: { role: string; userId: string },
+  secret: string,
+): string {
+  const encodedHeader = Buffer.from(
+    JSON.stringify({ alg: 'HS256', typ: 'JWT' }),
+  ).toString('base64url');
+  const encodedPayload = Buffer.from(
+    JSON.stringify({
+      exp: Math.floor(Date.now() / 1000) + 3600,
+      type: 'access',
+      ...payload,
+    }),
+  ).toString('base64url');
+  const signature = createHmac('sha256', secret)
+    .update(`${encodedHeader}.${encodedPayload}`)
+    .digest('base64url');
+  return `${encodedHeader}.${encodedPayload}.${signature}`;
+}
