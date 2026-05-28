@@ -315,6 +315,64 @@ const ManageAdmins: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    if (!isAdmin) {
+      return;
+    }
+
+    let active = true;
+
+    const loadActiveSection = async () => {
+      resetMessages();
+      setLoading(true);
+
+      try {
+        if (activeAction === "listAdmins") {
+          const response = await getAdminsAudit();
+          if (active) {
+            setAdmins(response);
+            setFeedback(response.length > 0 ? "Administrator audit loaded successfully." : "No administrators were returned.");
+          }
+          return;
+        }
+
+        if (activeAction === "listTraders") {
+          const response = await getTraderAudit();
+          if (active) {
+            setTraders(response);
+            setFeedback(response.length > 0 ? "Trader audit loaded successfully." : "No traders were returned.");
+          }
+          return;
+        }
+
+        if (activeAction === "counts") {
+          const [adminsTotal, tradersTotal] = await Promise.all([getAdminCount(), getTraderAuditCount()]);
+          if (active) {
+            setAdminCount(adminsTotal);
+            setTraderCount(tradersTotal);
+            setFeedback("Platform counts refreshed successfully.");
+          }
+        }
+      } catch (err) {
+        if (active) {
+          setError(err instanceof Error ? err.message : "Could not load the selected section.");
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    };
+
+    if (activeAction === "listAdmins" || activeAction === "listTraders" || activeAction === "counts") {
+      void loadActiveSection();
+    }
+
+    return () => {
+      active = false;
+    };
+  }, [activeAction, isAdmin]);
+
   return (
     <IonPage>
       <NavBar />
