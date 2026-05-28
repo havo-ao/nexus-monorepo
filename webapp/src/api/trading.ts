@@ -328,6 +328,24 @@ async function readJsonSafe(response: Response): Promise<unknown> {
   }
 }
 
+function parseTradingError(body: unknown, fallback: string): string {
+  if (body && typeof body === "object" && "message" in body) {
+    const message = (body as { message?: unknown }).message;
+    if (Array.isArray(message)) {
+      return message.join(" ");
+    }
+    if (typeof message === "string" && message.trim()) {
+      return message;
+    }
+  }
+
+  if (typeof body === "string" && body.trim()) {
+    return body;
+  }
+
+  return fallback;
+}
+
 export async function validateBuyFunds(
   request: ValidateBuyFundsRequest,
 ): Promise<FundsValidationResponse> {
@@ -343,7 +361,7 @@ export async function validateBuyFunds(
   const body = await readJsonSafe(response);
 
   if (!response.ok) {
-    throw new Error("Unable to validate operation funds.");
+    throw new Error(parseTradingError(body, "Unable to validate operation funds."));
   }
 
   return body as FundsValidationResponse;
@@ -364,7 +382,7 @@ export async function validateSellHoldings(
   const body = await readJsonSafe(response);
 
   if (!response.ok) {
-    throw new Error("Unable to validate available holdings.");
+    throw new Error(parseTradingError(body, "Unable to validate available holdings."));
   }
 
   return body as HoldingsValidationResponse;
@@ -385,7 +403,7 @@ export async function validateMarketStatus(
   const body = await readJsonSafe(response);
 
   if (!response.ok) {
-    throw new Error("Unable to validate market status.");
+    throw new Error(parseTradingError(body, "Unable to validate market status."));
   }
 
   return body as MarketValidationResponse;

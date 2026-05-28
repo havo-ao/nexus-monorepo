@@ -1,4 +1,4 @@
-/** Mirrors backend `TraderCreateRequest` / `LoginRequest` password rules (no spaces, charset, length). */
+/** Mirrors backend create/update password rules (no spaces, charset, length). */
 
 export type PasswordRuleStatus = {
   minLength: boolean;
