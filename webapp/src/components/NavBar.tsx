@@ -3,6 +3,7 @@ import { IonIcon } from '@ionic/react';
 import {
   albumsOutline,
   analyticsOutline,
+  barChartOutline,
   briefcaseOutline,
   cardOutline,
   cartOutline,
@@ -42,6 +43,8 @@ const NavBar: React.FC = () => {
   const [sessionUser, setSessionUser] = useState<UserProfile | null>(() => getStoredUser());
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const isAdmin = sessionUser?.userRol === 'ADMIN';
+  const isLegal = sessionUser?.userRol === 'LEGAL_USER';
+  const isBroker = sessionUser?.userRol === 'CONSULTANT';
 
   useEffect(() => {
     const handleSessionChange = () => setSessionUser(getStoredUser());
@@ -122,12 +125,39 @@ const NavBar: React.FC = () => {
       { label: 'Market', icon: analyticsOutline, path: '/markets', action: () => goToRoute('/markets') },
       { label: 'Market Hours', icon: timeOutline, path: '/admin/market-hours', action: () => goToRoute('/admin/market-hours') },
       { label: 'Manage Admins', icon: ribbonOutline, path: '/manage-admins', action: () => goToRoute('/manage-admins') },
-      { label: 'Manage Plans', icon: cardOutline, path: '/manage-plans', action: () => goToRoute('/manage-plans') }
+      { label: 'Manage Plans', icon: cardOutline, path: '/manage-plans', action: () => goToRoute('/manage-plans') },
+      { label: 'Reports', icon: barChartOutline, path: '/reports', action: () => goToRoute('/reports') }
     ],
     [goToRoute]
   );
 
-  const navItems = sessionUser ? (isAdmin ? adminLinks : memberLinks) : guestLinks;
+  const legalLinks = useMemo<NavItem[]>(
+    () => [
+      { label: 'Profile', icon: personCircleOutline, path: '/profile', action: () => goToRoute('/profile') },
+      { label: 'Reports', icon: barChartOutline, path: '/reports', action: () => goToRoute('/reports') },
+      { label: 'Notifications', icon: notificationsOutline, path: '/notifications', action: () => goToRoute('/notifications') }
+    ],
+    [goToRoute]
+  );
+
+  const brokerLinks = useMemo<NavItem[]>(
+    () => [
+      { label: 'Profile', icon: personCircleOutline, path: '/profile', action: () => goToRoute('/profile') },
+      { label: 'Trading', icon: cartOutline, path: '/trader-panel', action: () => goToRoute('/trader-panel') },
+      { label: 'Market', icon: analyticsOutline, path: '/markets', action: () => goToRoute('/markets') }
+    ],
+    [goToRoute]
+  );
+
+  const navItems = sessionUser
+    ? isAdmin
+      ? adminLinks
+      : isLegal
+        ? legalLinks
+        : isBroker
+          ? brokerLinks
+          : memberLinks
+    : guestLinks;
 
   const isItemActive = (item: NavItem) => {
     if (item.path === '/markets') {

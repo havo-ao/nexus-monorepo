@@ -24,18 +24,18 @@ import {
   type DashboardQuote,
   type MarketDashboardResponse,
 } from "../api/market";
+import {
+  getPortfolioSummary,
+  getWalletBalance,
+  type PortfolioSummary,
+  type WalletBalance,
+} from "../api/portfolio";
+import { getCurrentTraderId } from "../auth/traderContext";
 import "./Dashboard.css";
 
 type PortfolioPoint = {
   date: string;
   value: number;
-};
-
-type PositionPreview = {
-  symbol: string;
-  shares: number;
-  averagePrice: number;
-  currentPrice: number;
 };
 
 const portfolioPoints: PortfolioPoint[] = [
@@ -50,12 +50,6 @@ const portfolioPoints: PortfolioPoint[] = [
   { date: "05-11", value: 195 },
   { date: "05-14", value: 194 },
   { date: "05-16", value: 196 },
-];
-
-const mockPositions: PositionPreview[] = [
-  { symbol: "AAPL", shares: 50, averagePrice: 172.3, currentPrice: 186.4 },
-  { symbol: "MSFT", shares: 25, averagePrice: 398.2, currentPrice: 214.4 },
-  { symbol: "TSLA", shares: 15, averagePrice: 255.8, currentPrice: 208.4 },
 ];
 
 function formatCurrency(value: number, currency = "USD"): string {
@@ -96,16 +90,25 @@ const Dashboard: React.FC = () => {
   const [dashboard, setDashboard] = useState<MarketDashboardResponse | null>(
     null,
   );
+  const [portfolio, setPortfolio] = useState<PortfolioSummary | null>(null);
+  const [wallet, setWallet] = useState<WalletBalance | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const traderId = getCurrentTraderId();
 
   const loadDashboard = async () => {
     setIsLoading(true);
     setError("");
 
     try {
-      const result = await getMarketDashboard();
-      setDashboard(result);
+      const [marketResult, portfolioResult, walletResult] = await Promise.all([
+        getMarketDashboard(),
+        traderId ? getPortfolioSummary(traderId).catch(() => null) : null,
+        traderId ? getWalletBalance(traderId).catch(() => null) : null,
+      ]);
+      setDashboard(marketResult);
+      setPortfolio(portfolioResult);
+      setWallet(walletResult);
     } catch (requestError) {
       setError(
         requestError instanceof Error
@@ -123,11 +126,11 @@ const Dashboard: React.FC = () => {
 
   const chartPolyline = useMemo(() => buildChartPolyline(portfolioPoints), []);
   const latestQuote = resolveLatestQuote(dashboard);
-  const totalBalance = 125487.65;
-  const portfolioValue = 98234.5;
-  const availableFunds = totalBalance - portfolioValue;
-  const dailyPnL = 1847.32;
-  const dailyPnLPercent = 1.91;
+  const portfolioValue = portfolio?.currentValue ?? 0;
+  const availableFunds = wallet?.availableBalance ?? 0;
+  const totalBalance = wallet ? wallet.totalBalance + portfolioValue : portfolioValue;
+  const dailyPnL = portfolio?.profitLoss ?? 0;
+  const dailyPnLPercent = portfolio?.returnPercentage ?? 0;
   const generatedAt = dashboard
     ? new Date(dashboard.platform.generatedAt).toLocaleString()
     : "Pending sync";
@@ -171,7 +174,7 @@ const Dashboard: React.FC = () => {
                   <div>
                     <span>Total Balance</span>
                     <strong>{formatCurrency(totalBalance)}</strong>
-                    <small>Mocked until portfolio-service is integrated</small>
+                    <small>Wallet plus current holdings</small>
                   </div>
                   <IonIcon icon={walletOutline} />
                 </article>
@@ -187,15 +190,18 @@ const Dashboard: React.FC = () => {
                   <div>
                     <span>Available Funds</span>
                     <strong>{formatCurrency(availableFunds)}</strong>
-                    <small>Mocked until trading-service is connected</small>
+                    <small>Available wallet balance</small>
                   </div>
                   <IonIcon icon={cashOutline} />
                 </article>
                 <article className="dashboard-metric-card dashboard-profit-card">
                   <div>
                     <span>Today&apos;s P&amp;L</span>
-                    <strong>+{formatCurrency(dailyPnL)}</strong>
-                    <small>{formatPercent(dailyPnLPercent)} today</small>
+                    <strong>
+                      {dailyPnL >= 0 ? "+" : ""}
+                      {formatCurrency(dailyPnL)}
+                    </strong>
+                    <small>{formatPercent(dailyPnLPercent)} return</small>
                   </div>
                   <IonIcon icon={analyticsOutline} />
                 </article>
@@ -270,7 +276,7 @@ const Dashboard: React.FC = () => {
                 <div className="dashboard-panel-header">
                   <div>
                     <h2>Portfolio Performance</h2>
-                    <p>Last 30 days, mocked until portfolio-service is ready</p>
+                    <p>Portfolio trend preview and latest valuation context</p>
                   </div>
                   <div className="dashboard-range-control" aria-label="Range">
                     <button type="button" className="active">
@@ -328,7 +334,7 @@ const Dashboard: React.FC = () => {
                   <div className="dashboard-panel-header">
                     <div>
                       <h2>Your Positions</h2>
-                      <p>Temporary data until portfolio-service is connected</p>
+                      <p>Current holdings from portfolio-service</p>
                     </div>
                     <button type="button" className="dashboard-link-button">
                       View all
@@ -336,23 +342,18 @@ const Dashboard: React.FC = () => {
                     </button>
                   </div>
                   <div className="dashboard-position-list">
-                    {mockPositions.map((position) => {
-                      const value = position.shares * position.currentPrice;
-                      const pnl =
-                        (position.currentPrice - position.averagePrice) *
-                        position.shares;
-                      const pnlPercent =
-                        ((position.currentPrice - position.averagePrice) /
-                          position.averagePrice) *
-                        100;
+                    {(portfolio?.positions ?? []).slice(0, 4).map((position) => {
+                      const value = position.currentValue ?? 0;
+                      const pnl = position.profitLoss ?? 0;
+                      const pnlPercent = position.returnPercentage ?? 0;
 
                       return (
-                        <div key={position.symbol} className="dashboard-position">
+                        <div key={position.positionId} className="dashboard-position">
                           <div>
-                            <strong>{position.symbol}</strong>
+                            <strong>{position.symbol ?? position.stockId}</strong>
                             <span>
-                              {position.shares} shares @{" "}
-                              {formatCurrency(position.averagePrice)}
+                              {position.quantity} shares @{" "}
+                              {formatCurrency(position.averageBuyPrice)}
                             </span>
                           </div>
                           <div>
@@ -365,6 +366,12 @@ const Dashboard: React.FC = () => {
                         </div>
                       );
                     })}
+                    {!portfolio?.positions.length && (
+                      <p className="dashboard-empty-text">
+                        No positions yet. Create a buy order to start building
+                        your portfolio.
+                      </p>
+                    )}
                   </div>
                 </article>
               </section>

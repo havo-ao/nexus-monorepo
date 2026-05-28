@@ -17,6 +17,7 @@ import ManageAdmins from './pages/ManageAdmins';
 import ManagePlans from './pages/ManagePlans';
 import MarketHoursAdmin from './pages/MarketHoursAdmin';
 import CancelledPayment from './pages/CancelledPayment';
+import Reports from './pages/Reports';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -110,6 +111,9 @@ const App: React.FC = () => (
         </Route>
         <Route exact path="/admin/market-hours">
           <MarketHoursAdmin />
+        </Route>
+        <Route exact path="/reports">
+          <Reports />
         </Route>
         <Route render={() => <Redirect to="/" />} />
       </IonRouterOutlet>

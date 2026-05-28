@@ -25,6 +25,11 @@ export default defineConfig({
         target: process.env.VITE_PROXY_PORTFOLIO_API_TARGET ?? 'http://localhost:8883',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/portfolio-api/, '')
+      },
+      '/compliance-api': {
+        target: process.env.VITE_PROXY_COMPLIANCE_API_TARGET ?? 'http://localhost:8885',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/compliance-api/, '')
       }
     }
   },

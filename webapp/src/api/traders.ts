@@ -8,7 +8,14 @@ type ErrorResponse = {
 };
 
 function getProfilePath(): string {
-  return getStoredUser()?.userRol === "ADMIN" ? API_PATHS.adminMe : API_PATHS.tradersMe;
+  const role = getStoredUser()?.userRol;
+  if (role === "ADMIN") {
+    return API_PATHS.adminMe;
+  }
+  if (role === "TRADER") {
+    return API_PATHS.tradersMe;
+  }
+  return API_PATHS.authMe;
 }
 
 export async function getTraderMe(): Promise<ProfileResponse> {

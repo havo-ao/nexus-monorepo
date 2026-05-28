@@ -97,3 +97,14 @@ export async function getSubscriptionStatus(): Promise<SubscriptionStatusRespons
 
   return body;
 }
+
+export async function hasActivePremiumAccess(): Promise<boolean> {
+  try {
+    const status = await getSubscriptionStatus();
+    const normalizedStatus = String(status.status ?? "").toUpperCase();
+    const planName = String(status.planName ?? "").toUpperCase();
+    return normalizedStatus === "ACTIVE" && planName.includes("PREMIUM");
+  } catch {
+    return false;
+  }
+}

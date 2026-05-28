@@ -28,6 +28,7 @@ import {
   type Quote,
   type WatchlistResponse,
 } from "../api/market";
+import { hasActivePremiumAccess } from "../api/subscriptions";
 import "./Watchlist.css";
 
 type WatchlistItem = WatchlistResponse["items"][number];
@@ -92,6 +93,16 @@ const Watchlist: React.FC = () => {
     setViewState({ isLoading: true, error: "" });
 
     try {
+      if (!(await hasActivePremiumAccess())) {
+        setItems([]);
+        setViewState({
+          isLoading: false,
+          error:
+            "Watchlists are available for Premium traders. Activate Premium from Subscription to unlock this workspace.",
+        });
+        return;
+      }
+
       const watchlist = await getWatchlist(traderId);
       setItems(
         watchlist.items.map((item) => ({

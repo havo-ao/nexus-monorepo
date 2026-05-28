@@ -49,6 +49,7 @@ import {
   type MarketStatus,
   type Quote,
 } from "../api/market";
+import { hasActivePremiumAccess } from "../api/subscriptions";
 import "./Market.css";
 
 type MarketRouteParams = {
@@ -291,6 +292,13 @@ const Market: React.FC = () => {
     setWatchlistMessage("");
 
     try {
+      if (!(await hasActivePremiumAccess())) {
+        setWatchlistMessage(
+          "Watchlists are available for Premium traders. Activate Premium from Subscription first.",
+        );
+        return;
+      }
+
       await addWatchlistItem(traderId, selectedSymbol);
       setWatchlistSymbols((currentSymbols) => {
         const nextSymbols = new Set(currentSymbols);
@@ -332,6 +340,15 @@ const Market: React.FC = () => {
     setPendingWatchlistSymbol(normalizedSymbol);
 
     try {
+      if (!isInWatchlist && !(await hasActivePremiumAccess())) {
+        setStatus({
+          isLoading: false,
+          error:
+            "Watchlists are available for Premium traders. Activate Premium from Subscription first.",
+        });
+        return;
+      }
+
       if (isInWatchlist) {
         await removeWatchlistItem(traderId, normalizedSymbol);
         setWatchlistSymbols((currentSymbols) => {
