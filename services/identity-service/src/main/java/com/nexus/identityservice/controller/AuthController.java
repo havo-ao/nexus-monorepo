@@ -4,8 +4,11 @@ import com.nexus.identityservice.dto.admin.AdminCreateRequest;
 import com.nexus.identityservice.dto.admin.AdminResponse;
 import com.nexus.identityservice.dto.auth.AuthResponse;
 import com.nexus.identityservice.dto.auth.LoginRequest;
+import com.nexus.identityservice.dto.auth.UserResponse;
 import com.nexus.identityservice.dto.trader.TraderCreateRequest;
 import com.nexus.identityservice.dto.trader.TraderResponse;
+import com.nexus.identityservice.mapper.UserMapper;
+import com.nexus.identityservice.model.User;
 import com.nexus.identityservice.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -14,6 +17,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,11 +30,18 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Autenticación", description = "Endpoints para el registro y acceso de usuarios (Traders y Admins)")
 public class AuthController {
     private final AuthService authService;
+    private final UserMapper userMapper;
 
     @PostMapping("/login")
     @Operation(summary = "Iniciar sesión", description = "Permite a cualquier usuario autenticarse y obtener un token JWT. Use las credenciales registradas.")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
+    }
+
+    @GetMapping("/me")
+    @Operation(summary = "Consultar usuario autenticado", description = "Retorna el usuario autenticado actual para vistas compartidas por rol.")
+    public ResponseEntity<UserResponse> getMe(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(userMapper.toResponse(user));
     }
 
     @PostMapping("/register/trader")
