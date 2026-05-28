@@ -30,6 +30,14 @@ http://localhost:9200
 
 ## Kibana data view
 
+You can configure Kibana automatically:
+
+```bash
+node infrastructure/observability/elastic/configure-kibana.mjs
+```
+
+Or configure it manually:
+
 In Kibana:
 
 1. Go to **Stack Management**.
