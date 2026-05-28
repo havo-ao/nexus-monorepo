@@ -27,9 +27,11 @@ services:
       VITE_TRADING_API_BASE_URL: http://localhost:8882
       VITE_MARKET_API_BASE_URL: /market-api
       VITE_PORTFOLIO_API_BASE_URL: /portfolio-api
+      VITE_COMPLIANCE_API_BASE_URL: /compliance-api
       VITE_PROXY_API_TARGET: http://identity-service:8881
       VITE_PROXY_MARKET_API_TARGET: http://market-service:8884
       VITE_PROXY_PORTFOLIO_API_TARGET: http://portfolio-service:8883
+      VITE_PROXY_COMPLIANCE_API_TARGET: http://compliance-service:8885
     volumes:
       - ../../webapp:/app
       - /app/node_modules
@@ -85,6 +87,7 @@ services:
       DB_USERNAME: nexus_user
       DB_PASSWORD: ${NEXUS_MYSQL_PASSWORD:?Set NEXUS_MYSQL_PASSWORD}
       DB_DATABASE: nexus
+      NEXUS_JWT_SECRET: ${NEXUS_JWT_SECRET:?Set NEXUS_JWT_SECRET}
       ALPACA_BROKER_MODE: ${ALPACA_BROKER_MODE:-mock}
       ALPACA_API_BASE_URL: ${ALPACA_API_BASE_URL:-https://paper-api.alpaca.markets}
       ALPACA_API_KEY: ${ALPACA_API_KEY:-}
@@ -156,6 +159,7 @@ services:
       QUOTES_REPOSITORY: mysql
       WATCHLISTS_REPOSITORY: mysql
       PRICE_ALERTS_REPOSITORY: mysql
+      NEXUS_JWT_SECRET: ${NEXUS_JWT_SECRET:?Set NEXUS_JWT_SECRET}
       MYSQL_HOST: mysql
       MYSQL_PORT: 3306
       MYSQL_DATABASE: nexus
@@ -193,6 +197,7 @@ services:
       MAIL_USER: ${MAIL_USER:?Set MAIL_USER}
       MAIL_PASS: ${MAIL_PASS:?Set MAIL_PASS}
       MAIL_FROM: ${MAIL_FROM:?Set MAIL_FROM}
+      NEXUS_JWT_SECRET: ${NEXUS_JWT_SECRET:?Set NEXUS_JWT_SECRET}
     volumes:
       - ../../services/compliance-service:/app
       - /app/node_modules

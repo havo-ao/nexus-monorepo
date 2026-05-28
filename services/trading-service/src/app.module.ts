@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from '../database/database.module';
@@ -13,6 +14,7 @@ import { OrderStatusModule } from './order-status/order-status.module';
 import { OrdersModule } from './orders/orders.module';
 import { PendingOrdersModule } from './pending-orders/pending-orders.module';
 import { SettlementsModule } from './settlements/settlements.module';
+import { JwtRoleGuard } from './auth/jwt-role.guard';
 
 const databaseImports = process.env.NODE_ENV === 'test' ? [] : [DatabaseModule];
 
@@ -32,6 +34,12 @@ const databaseImports = process.env.NODE_ENV === 'test' ? [] : [DatabaseModule];
     SettlementsModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: JwtRoleGuard,
+    },
+  ],
 })
 export class AppModule {}

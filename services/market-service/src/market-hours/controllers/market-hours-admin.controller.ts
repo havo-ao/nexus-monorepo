@@ -18,12 +18,14 @@ import { ConfigureMarketHoursDto } from '../dto/configure-market-hours.dto';
 import { ConfigureMarketRestrictionDto } from '../dto/configure-market-restriction.dto';
 import { MarketHoursConfigurationResponseDto } from '../dto/market-hours-configuration-response.dto';
 import { MarketHoursAdminService } from '../services/market-hours-admin.service';
+import { Roles } from '../../auth/roles.decorator';
 
 @ApiTags('market-hours-admin')
 @Controller({
   path: 'admin/market-hours',
   version: '1',
 })
+@Roles('ADMIN')
 export class MarketHoursAdminController {
   constructor(
     private readonly marketHoursAdminService: MarketHoursAdminService,

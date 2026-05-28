@@ -17,6 +17,7 @@ import { InstrumentDetailSyncService } from '../services/instrument-detail-sync.
 import { InstrumentMetadataSyncService } from '../services/instrument-metadata-sync.service';
 import { InstrumentsSyncService } from '../services/instruments-sync.service';
 import { InstrumentsService } from '../services/instruments.service';
+import { Roles } from '../../auth/roles.decorator';
 
 @ApiTags('instruments')
 @Controller({
@@ -33,6 +34,7 @@ export class InstrumentsController {
   ) {}
 
   @Post('sync')
+  @Roles('ADMIN')
   @HttpCode(200)
   @ApiOperation({
     summary: 'Synchronize available instruments catalog',
@@ -56,6 +58,7 @@ export class InstrumentsController {
   }
 
   @Post(':symbol/detail/sync')
+  @Roles('ADMIN')
   @HttpCode(200)
   @ApiOperation({
     summary: 'Synchronize full instrument detail view',
@@ -73,6 +76,7 @@ export class InstrumentsController {
   }
 
   @Post(':symbol/metadata/sync')
+  @Roles('ADMIN')
   @HttpCode(200)
   @ApiOperation({
     summary: 'Synchronize instrument metadata',

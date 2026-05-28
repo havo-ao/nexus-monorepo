@@ -8,6 +8,7 @@ import {
 import { SyncMarketDataDto } from '../dto/sync-market-data.dto';
 import { SyncMarketDataResponseDto } from '../dto/sync-market-data-response.dto';
 import { MarketDataSyncService } from '../services/market-data-sync.service';
+import { Roles } from '../../auth/roles.decorator';
 
 @ApiTags('quotes')
 @Controller({
@@ -18,6 +19,7 @@ export class MarketDataSyncController {
   constructor(private readonly marketDataSyncService: MarketDataSyncService) {}
 
   @Post('sync')
+  @Roles('ADMIN')
   @ApiOperation({
     summary: 'Synchronize market quotes from provider',
     description:

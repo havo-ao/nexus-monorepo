@@ -2,9 +2,11 @@ import { Body, Controller, Param, Post } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CancelOrderDto } from '../dto/cancel-order.dto';
 import { OrderCancellationService } from '../services/order-cancellation.service';
+import { Roles } from '../../auth/roles.decorator';
 
 @ApiTags('order-cancellation')
 @Controller('orders')
+@Roles('TRADER', 'CONSULTANT', 'ADMIN')
 export class OrderCancellationController {
   constructor(
     private readonly orderCancellationService: OrderCancellationService,

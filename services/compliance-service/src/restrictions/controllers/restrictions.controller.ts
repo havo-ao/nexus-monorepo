@@ -8,6 +8,7 @@ import {
 import { UpsertRestrictionDto } from '../dto/upsert-restriction.dto';
 import { ValidateOperationDto } from '../dto/validate-operation.dto';
 import { RestrictionsService } from '../services/restrictions.service';
+import { Roles } from '../../auth/roles.decorator';
 
 @ApiTags('restrictions')
 @Controller({ path: 'restrictions', version: '1' })
@@ -15,6 +16,7 @@ export class RestrictionsController {
   constructor(private readonly restrictionsService: RestrictionsService) {}
 
   @Post('traders/:traderId')
+  @Roles('ADMIN', 'LEGAL_USER')
   @ApiOperation({ summary: 'Create or update a trader compliance status' })
   @ApiCreatedResponse({ description: 'Compliance restriction updated' })
   upsert(
@@ -25,6 +27,7 @@ export class RestrictionsController {
   }
 
   @Get('traders/:traderId')
+  @Roles('ADMIN', 'LEGAL_USER', 'TRADER')
   @ApiOperation({ summary: 'Get trader compliance restriction status' })
   @ApiOkResponse({ description: 'Compliance restriction status' })
   findByTraderId(@Param('traderId') traderId: string) {

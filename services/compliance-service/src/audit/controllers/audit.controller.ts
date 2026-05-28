@@ -10,6 +10,7 @@ import { AuditEventResponseDto } from '../dto/audit-event-response.dto';
 import { CreateAuditEventDto } from '../dto/create-audit-event.dto';
 import { AuditEventFilters } from '../entities/audit-event.entity';
 import { AuditService } from '../services/audit.service';
+import { Roles } from '../../auth/roles.decorator';
 
 @ApiTags('audit')
 @Controller({ path: 'audit/events', version: '1' })
@@ -24,6 +25,7 @@ export class AuditController {
   }
 
   @Get()
+  @Roles('ADMIN', 'LEGAL_USER')
   @ApiOperation({ summary: 'Query auditable compliance events' })
   @ApiOkResponse({ type: AuditEventResponseDto, isArray: true })
   @ApiQuery({ name: 'actorId', required: false })

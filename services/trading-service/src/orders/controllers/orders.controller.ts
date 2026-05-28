@@ -7,9 +7,11 @@ import { CreateMarketSellOrderDto } from '../dto/create-market-sell-order.dto';
 import { CreateStopLossOrderDto } from '../dto/create-stop-loss-order.dto';
 import { CreateTakeProfitOrderDto } from '../dto/create-take-profit-order.dto';
 import { OrdersService } from '../services/orders.service';
+import { Roles } from '../../auth/roles.decorator';
 
 @ApiTags('orders')
 @Controller('orders')
+@Roles('TRADER', 'ADMIN')
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 

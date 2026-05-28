@@ -19,12 +19,14 @@ import { CreatePriceAlertDto } from '../dto/create-price-alert.dto';
 import { EvaluatePriceAlertsResponseDto } from '../dto/evaluate-price-alerts-response.dto';
 import { PriceAlertResponseDto } from '../dto/price-alert-response.dto';
 import { PriceAlertsService } from '../services/price-alerts.service';
+import { Roles } from '../../auth/roles.decorator';
 
 @ApiTags('price-alerts')
 @Controller({
   path: 'price-alerts',
   version: '1',
 })
+@Roles('TRADER', 'ADMIN')
 export class PriceAlertsController {
   constructor(private readonly priceAlertsService: PriceAlertsService) {}
 
@@ -45,6 +47,7 @@ export class PriceAlertsController {
   }
 
   @Post('evaluate')
+  @Roles('ADMIN')
   @ApiOperation({
     summary: 'Evaluate active target price alerts',
     description:
