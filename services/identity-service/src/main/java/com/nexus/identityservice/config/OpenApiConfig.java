@@ -45,12 +45,12 @@ public class OpenApiConfig {
         // Create Info object with HTML description
         io.swagger.v3.oas.models.info.Info info =
                 new io.swagger.v3.oas.models.info.Info()
-                        .title("API identity service NEXUS")
+                        .title("Acciones ElBosque Identity Service API")
                         .version("1.0")
                         .description(mainDescription)
                         .contact(
                                 new io.swagger.v3.oas.models.info.Contact()
-                                        .name("Nexus Company")
+                                        .name("Acciones ElBosque")
                                         .email("dsramireza@unbosque.edu.co")
                                         .url("https://github.com/Nexus-Trading/nexus-monorepo"));
 

@@ -171,7 +171,7 @@ const NavBar: React.FC = () => {
           <span className="nexus-mobile-brand-mark">
             <IonIcon icon={sparklesOutline} />
           </span>
-          <span>Nexus</span>
+          <span>Acciones ElBosque</span>
         </button>
       </header>
 
@@ -199,7 +199,7 @@ const NavBar: React.FC = () => {
               <span className="nexus-sidebar-logo-mark">
                 <IonIcon icon={sparklesOutline} />
               </span>
-              <span className="nexus-sidebar-logo-text">Nexus</span>
+              <span className="nexus-sidebar-logo-text">Acciones ElBosque</span>
             </button>
             <button
               type="button"

@@ -5,10 +5,10 @@ import './AboutSection.css';
 const AboutSection: React.FC = () => {
   return (
     <div className="about-section">
-      <h1 className="nexus-title">Nexus</h1>
+      <h1 className="nexus-title">Acciones ElBosque</h1>
       <div className="description">
         <p>
-          Nexus is an intelligent investment platform that connects traders, brokers and global markets in a single ecosystem. 
+          Acciones ElBosque is an intelligent investment platform that connects traders, brokers and global markets in a single ecosystem.
           We offer real-time analysis tools, institutional-level security and flexible plans to take control of your finances.
         </p>
         <p>
