@@ -162,6 +162,7 @@ export class WalletsRepository {
       } else {
         wallet = walletRepository.create({
           traderId: input.traderId,
+          balance: input.amount.toFixed(2),
           availableBalance: input.amount.toFixed(2),
           reservedBalance: '0.00',
           currency: input.currency,
@@ -170,14 +171,8 @@ export class WalletsRepository {
         });
       }
 
+      this.syncTotalBalance(wallet);
       const savedWallet = await walletRepository.save(wallet);
-      await manager.query('UPDATE wallet SET balance = ? WHERE id = ?', [
-        (
-          Number(savedWallet.availableBalance) +
-          Number(savedWallet.reservedBalance)
-        ).toFixed(2),
-        savedWallet.id,
-      ]);
 
       const movement = await movementRepository.save(
         movementRepository.create({
@@ -237,8 +232,8 @@ export class WalletsRepository {
       ).toFixed(2);
       wallet.updatedAt = createdAt;
 
+      this.syncTotalBalance(wallet);
       const savedWallet = await walletRepository.save(wallet);
-      await this.syncTotalBalance(manager, savedWallet);
 
       const movement = await movementRepository.save(
         movementRepository.create({
@@ -302,8 +297,8 @@ export class WalletsRepository {
       ).toFixed(2);
       wallet.updatedAt = createdAt;
 
+      this.syncTotalBalance(wallet);
       const savedWallet = await walletRepository.save(wallet);
-      await this.syncTotalBalance(manager, savedWallet);
       const movement = await this.saveReservationMovement(
         movementRepository,
         input,
@@ -354,8 +349,8 @@ export class WalletsRepository {
       ).toFixed(2);
       wallet.updatedAt = createdAt;
 
+      this.syncTotalBalance(wallet);
       const savedWallet = await walletRepository.save(wallet);
-      await this.syncTotalBalance(manager, savedWallet);
       const movement = await this.saveReservationMovement(
         movementRepository,
         input,
@@ -403,8 +398,8 @@ export class WalletsRepository {
       ).toFixed(2);
       wallet.updatedAt = createdAt;
 
+      this.syncTotalBalance(wallet);
       const savedWallet = await walletRepository.save(wallet);
-      await this.syncTotalBalance(manager, savedWallet);
       const movement = await this.saveReservationMovement(
         movementRepository,
         input,
@@ -417,18 +412,10 @@ export class WalletsRepository {
     });
   }
 
-  private async syncTotalBalance(
-    manager: {
-      query: (query: string, parameters: unknown[]) => Promise<unknown>;
-    },
-    wallet: Wallet,
-  ): Promise<void> {
-    await manager.query('UPDATE wallet SET balance = ? WHERE id = ?', [
-      (
-        Number(wallet.availableBalance) + Number(wallet.reservedBalance)
-      ).toFixed(2),
-      wallet.id,
-    ]);
+  private syncTotalBalance(wallet: Wallet): void {
+    wallet.balance = (
+      Number(wallet.availableBalance) + Number(wallet.reservedBalance)
+    ).toFixed(2);
   }
 
   private async saveReservationMovement(

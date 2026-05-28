@@ -9,6 +9,13 @@ export class Wallet {
   traderId!: string;
 
   @Column({
+    type: 'decimal',
+    precision: 18,
+    scale: 2,
+  })
+  balance!: string;
+
+  @Column({
     name: 'available_balance',
     type: 'decimal',
     precision: 18,

@@ -1,5 +1,5 @@
 import { apiUrl, API_PATHS } from "../config/api";
-import { getAccessToken, getStoredUser } from "../auth/storage";
+import { clearAuthSession, getAccessToken, getStoredUser } from "../auth/storage";
 
 export type ProfileResponse = Record<string, unknown>;
 
@@ -32,6 +32,11 @@ export async function getTraderMe(): Promise<ProfileResponse> {
 
   const body = (await response.json().catch(() => ({}))) as ErrorResponse;
   if (!response.ok) {
+    if (response.status === 401) {
+      clearAuthSession();
+      throw new Error("Your session expired. Please sign in again.");
+    }
+
     const message =
       typeof body.message === "string"
         ? body.message
@@ -58,6 +63,11 @@ export async function updateTrader(payload: Record<string, unknown>): Promise<Pr
 
   const body = (await response.json().catch(() => ({}))) as ErrorResponse;
   if (!response.ok) {
+    if (response.status === 401) {
+      clearAuthSession();
+      throw new Error("Your session expired. Please sign in again.");
+    }
+
     const message =
       typeof body.message === "string"
         ? body.message

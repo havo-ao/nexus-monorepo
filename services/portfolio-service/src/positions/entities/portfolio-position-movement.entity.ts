@@ -31,10 +31,20 @@ export class PortfolioPositionMovement {
   @Column({ name: 'gross_amount', type: 'decimal', precision: 18, scale: 2 })
   grossAmount!: string;
 
-  @Column({ name: 'source_order_id', type: 'bigint', nullable: true })
+  @Column({
+    name: 'source_order_id',
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+  })
   sourceOrderId?: string | null;
 
-  @Column({ name: 'source_transaction_id', type: 'bigint', nullable: true })
+  @Column({
+    name: 'source_transaction_id',
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+  })
   sourceTransactionId?: string | null;
 
   @Column({ name: 'occurred_at', type: 'timestamp' })

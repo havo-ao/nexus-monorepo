@@ -1,5 +1,5 @@
 import { API_PATHS, portfolioApiUrl } from "../config/api";
-import { getAccessToken } from "../auth/storage";
+import { clearAuthSession, getAccessToken } from "../auth/storage";
 
 export type PortfolioPosition = {
   positionId: string;
@@ -146,6 +146,11 @@ async function getJson<T>(path: string, errorMessage: string): Promise<T> {
   const body = await readJsonSafe(response);
 
   if (!response.ok) {
+    if (response.status === 401) {
+      clearAuthSession();
+      throw new Error("Your session expired. Please sign in again.");
+    }
+
     throw new Error(parsePortfolioError(errorMessage, body));
   }
 
@@ -165,6 +170,11 @@ async function postJson<T>(
   const body = await readJsonSafe(response);
 
   if (!response.ok) {
+    if (response.status === 401) {
+      clearAuthSession();
+      throw new Error("Your session expired. Please sign in again.");
+    }
+
     throw new Error(parsePortfolioError(errorMessage, body));
   }
 

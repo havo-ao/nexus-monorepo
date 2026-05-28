@@ -41,7 +41,8 @@ public class SecurityConfig {
                                         "/swagger-ui/**", "/v3/api-docs/**"
                                 ).permitAll()
                                 // Public authentication endpoints
-                                .requestMatchers("/api/auth/**").permitAll()
+                                .requestMatchers("/api/auth/login", "/api/auth/register/trader").permitAll()
+                                .requestMatchers("/api/auth/me", "/api/auth/register/admin").authenticated()
                                 // Protected endpoints
                                 .requestMatchers("/api/traders/**").authenticated()
 

@@ -49,8 +49,11 @@ public class LoadDefaultAdmin {
     private static final String DEFAULT_ADMIN_DEPARTMENT = "Technology";
     private static final String DEFAULT_ADMIN_POSITION = "Database Administrator";
     private static final String DEFAULT_TRADER_EMAIL = "trader@accioneselbosque.local";
+    private static final String DEFAULT_TRADER_USERNAME = "andytrader";
     private static final String DEFAULT_BROKER_EMAIL = "broker@accioneselbosque.local";
+    private static final String DEFAULT_BROKER_USERNAME = "camilabroker";
     private static final String DEFAULT_LEGAL_EMAIL = "legal@accioneselbosque.local";
+    private static final String DEFAULT_LEGAL_USERNAME = "lauralegal";
     private static final String DEFAULT_PREMIUM_PLAN_NAME = "Premium";
 
     @Value("${ADMIN_EMAIL:}")
@@ -82,12 +85,8 @@ public class LoadDefaultAdmin {
         return args -> {
             if (isBlank(adminEmail) || isBlank(adminPassword)) {
                 log.error("ADMIN_EMAIL or ADMIN_PASSWORD environment variables are not set");
-            } else if (adminRepo.findByEmail(adminEmail).isEmpty()) {
-                Admin master = createDefaultAdmin(adminEmail, adminPassword, passwordEncoder);
-                adminRepo.save(master);
-                log.info("Preloading administrator user");
             } else {
-                log.info("Administrator already exists, skipping administrator creation...");
+                preloadAdmin(adminRepo, traderRepo, brokerRepo, legalUserRepo, passwordEncoder);
             }
 
             preloadDemoUsers(
@@ -101,8 +100,44 @@ public class LoadDefaultAdmin {
         };
     }
 
+    private void preloadAdmin(
+            AdminRepository adminRepo,
+            TraderRepository traderRepo,
+            BrokerRepository brokerRepo,
+            LegalUserRepository legalUserRepo,
+            PasswordEncoder passwordEncoder
+    ) {
+        Admin admin = adminRepo.findByEmail(adminEmail)
+                .orElseGet(() -> adminRepo.findByUsername(DEFAULT_ADMIN_USERNAME).orElse(null));
+
+        if (admin != null) {
+            admin.setPassword(passwordEncoder.encode(adminPassword));
+            admin.setFailedLoginAttempts(0);
+            adminRepo.save(admin);
+            log.info("Administrator already exists, refreshing administrator credentials...");
+            return;
+        }
+
+        if (traderRepo.findByEmail(adminEmail).isPresent()
+                || brokerRepo.findByEmail(adminEmail).isPresent()
+                || legalUserRepo.findByEmail(adminEmail).isPresent()) {
+            log.warn("ADMIN_EMAIL already belongs to another role; skipping administrator creation");
+            return;
+        }
+
+        Admin master = createDefaultAdmin(
+                adminEmail,
+                availableUsername(adminRepo, DEFAULT_ADMIN_USERNAME),
+                adminPassword,
+                passwordEncoder
+        );
+        adminRepo.save(master);
+        log.info("Preloading administrator user");
+    }
+
     private Admin createDefaultAdmin(
             String adminEmail,
+            String username,
             String adminPassword,
             PasswordEncoder passwordEncoder
     ) {
@@ -111,7 +146,7 @@ public class LoadDefaultAdmin {
         admin.setSurname(DEFAULT_ADMIN_SURNAME);
         admin.setGenre(Genre.MALE);
         admin.setEmail(adminEmail);
-        admin.setUsername(DEFAULT_ADMIN_USERNAME);
+        admin.setUsername(username);
         admin.setPassword(passwordEncoder.encode(adminPassword));
         admin.setUserRol(UserRol.ADMIN);
         admin.setCreatedAt(Instant.now());
@@ -138,22 +173,42 @@ public class LoadDefaultAdmin {
         SubscriptionPlan premiumPlan = ensurePremiumPlan(subscriptionPlanRepo);
         Trader trader = traderRepo.findByEmail(DEFAULT_TRADER_EMAIL).orElse(null);
         if (trader == null) {
-            trader = traderRepo.save(createDemoTrader(passwordEncoder));
+            trader = traderRepo.save(createDemoTrader(
+                    availableUsername(traderRepo, DEFAULT_TRADER_USERNAME),
+                    passwordEncoder
+            ));
             log.info("Preloading demo trader user");
-        } else if (!trader.isActivePremiumPlan()) {
+        } else {
+            refreshDemoPassword(trader, passwordEncoder);
+        }
+        if (!trader.isActivePremiumPlan()) {
             trader.setActivePremiumPlan(true);
             trader = traderRepo.save(trader);
         }
         ensureDemoSubscription(trader, premiumPlan, traderSubscriptionRepo);
 
-        if (brokerRepo.findByEmail(DEFAULT_BROKER_EMAIL).isEmpty()) {
-            brokerRepo.save(createDemoBroker(passwordEncoder));
+        Broker broker = brokerRepo.findByEmail(DEFAULT_BROKER_EMAIL).orElse(null);
+        if (broker == null) {
+            brokerRepo.save(createDemoBroker(
+                    availableUsername(brokerRepo, DEFAULT_BROKER_USERNAME),
+                    passwordEncoder
+            ));
             log.info("Preloading demo broker user");
+        } else {
+            refreshDemoPassword(broker, passwordEncoder);
+            brokerRepo.save(broker);
         }
 
-        if (legalUserRepo.findByEmail(DEFAULT_LEGAL_EMAIL).isEmpty()) {
-            legalUserRepo.save(createDemoLegalUser(passwordEncoder));
+        LegalUser legalUser = legalUserRepo.findByEmail(DEFAULT_LEGAL_EMAIL).orElse(null);
+        if (legalUser == null) {
+            legalUserRepo.save(createDemoLegalUser(
+                    availableUsername(legalUserRepo, DEFAULT_LEGAL_USERNAME),
+                    passwordEncoder
+            ));
             log.info("Preloading demo legal user");
+        } else {
+            refreshDemoPassword(legalUser, passwordEncoder);
+            legalUserRepo.save(legalUser);
         }
     }
 
@@ -194,14 +249,14 @@ public class LoadDefaultAdmin {
                 .build());
     }
 
-    private Trader createDemoTrader(PasswordEncoder passwordEncoder) {
+    private Trader createDemoTrader(String username, PasswordEncoder passwordEncoder) {
         Trader trader = new Trader();
         applyBaseUser(
                 trader,
                 "Andy",
                 "Trader",
                 DEFAULT_TRADER_EMAIL,
-                "andytrader",
+                username,
                 UserRol.TRADER,
                 passwordEncoder
         );
@@ -217,14 +272,14 @@ public class LoadDefaultAdmin {
         return trader;
     }
 
-    private Broker createDemoBroker(PasswordEncoder passwordEncoder) {
+    private Broker createDemoBroker(String username, PasswordEncoder passwordEncoder) {
         Broker broker = new Broker();
         applyBaseUser(
                 broker,
                 "Camila",
                 "Broker",
                 DEFAULT_BROKER_EMAIL,
-                "camilabroker",
+                username,
                 UserRol.CONSULTANT,
                 passwordEncoder
         );
@@ -240,14 +295,14 @@ public class LoadDefaultAdmin {
         return broker;
     }
 
-    private LegalUser createDemoLegalUser(PasswordEncoder passwordEncoder) {
+    private LegalUser createDemoLegalUser(String username, PasswordEncoder passwordEncoder) {
         LegalUser legalUser = new LegalUser();
         applyBaseUser(
                 legalUser,
                 "Laura",
                 "Legal",
                 DEFAULT_LEGAL_EMAIL,
-                "lauralegal",
+                username,
                 UserRol.LEGAL_USER,
                 passwordEncoder
         );
@@ -273,6 +328,31 @@ public class LoadDefaultAdmin {
         user.setUserRol(role);
         user.setCreatedAt(Instant.now());
         user.setFailedLoginAttempts(0);
+    }
+
+    private void refreshDemoPassword(
+            com.nexus.identityservice.model.User user,
+            PasswordEncoder passwordEncoder
+    ) {
+        user.setPassword(passwordEncoder.encode(demoUserPassword));
+        user.setFailedLoginAttempts(0);
+    }
+
+    private String availableUsername(
+            com.nexus.identityservice.repository.UserRepository<?> repository,
+            String preferredUsername
+    ) {
+        if (!repository.existsByUsername(preferredUsername)) {
+            return preferredUsername;
+        }
+
+        int suffix = 2;
+        String candidate = preferredUsername + suffix;
+        while (repository.existsByUsername(candidate)) {
+            suffix++;
+            candidate = preferredUsername + suffix;
+        }
+        return candidate;
     }
 
     private boolean isBlank(String value) {
