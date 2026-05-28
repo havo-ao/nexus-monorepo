@@ -25,6 +25,7 @@ import {
   timeOutline
 } from 'ionicons/icons';
 import { useHistory, useLocation } from 'react-router-dom';
+import { getSubscriptionStatus } from '../api/subscriptions';
 import type { UserProfile } from '../api/types';
 import { clearAuthSession, formatUserDisplayName, getStoredUser, SESSION_CHANGE_EVENT } from '../auth/storage';
 import './NavBar.css';
@@ -37,11 +38,17 @@ type NavItem = {
   action: () => void;
 };
 
+type UserBadge = {
+  label: string;
+  tone: 'free' | 'premium' | 'role' | 'loading';
+};
+
 const NavBar: React.FC = () => {
   const history = useHistory();
   const location = useLocation();
   const [sessionUser, setSessionUser] = useState<UserProfile | null>(() => getStoredUser());
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [userBadge, setUserBadge] = useState<UserBadge | null>(null);
   const isAdmin = sessionUser?.userRol === 'ADMIN';
   const isLegal = sessionUser?.userRol === 'LEGAL_USER';
   const isBroker = sessionUser?.userRol === 'CONSULTANT';
@@ -51,6 +58,56 @@ const NavBar: React.FC = () => {
     window.addEventListener(SESSION_CHANGE_EVENT, handleSessionChange);
     return () => window.removeEventListener(SESSION_CHANGE_EVENT, handleSessionChange);
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!sessionUser) {
+      setUserBadge(null);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    if (sessionUser.userRol !== 'TRADER') {
+      const roleLabels: Record<UserProfile['userRol'], string> = {
+        ADMIN: 'Admin',
+        TRADER: 'Trader',
+        CONSULTANT: 'Broker',
+        LEGAL_USER: 'Legal'
+      };
+      setUserBadge({ label: roleLabels[sessionUser.userRol], tone: 'role' });
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    setUserBadge({ label: 'Checking', tone: 'loading' });
+
+    void getSubscriptionStatus()
+      .then((status) => {
+        if (cancelled) {
+          return;
+        }
+
+        const normalizedStatus = String(status.status ?? '').toUpperCase();
+        const planName = String(status.planName ?? '').toUpperCase();
+        const isPremium = normalizedStatus === 'ACTIVE' && planName.includes('PREMIUM');
+        setUserBadge({
+          label: isPremium ? 'Premium' : 'Free',
+          tone: isPremium ? 'premium' : 'free'
+        });
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setUserBadge({ label: 'Free', tone: 'free' });
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [location.pathname, sessionUser]);
 
   useEffect(() => {
     document.body.classList.add('nexus-sidebar-layout');
@@ -243,7 +300,14 @@ const NavBar: React.FC = () => {
 
           {sessionUser ? (
             <div className="nexus-sidebar-user" aria-live="polite">
-              <strong>{formatUserDisplayName(sessionUser)}</strong>
+              <div className="nexus-sidebar-user-head">
+                <strong>{formatUserDisplayName(sessionUser)}</strong>
+                {userBadge && (
+                  <span className={`nexus-sidebar-user-badge ${userBadge.tone}`}>
+                    {userBadge.label}
+                  </span>
+                )}
+              </div>
               <span>@{sessionUser.username}</span>
             </div>
           ) : (
