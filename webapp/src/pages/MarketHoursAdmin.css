@@ -1,0 +1,268 @@
+.market-hours-admin-content {
+  --background: #070b1a;
+  color: #f8fbff;
+}
+
+.market-hours-admin-container {
+  width: min(1120px, calc(100vw - 56px));
+  margin: 0 auto;
+  padding: 32px 0 56px;
+}
+
+.market-hours-admin-hero,
+.market-hours-admin-panel,
+.market-hours-admin-card,
+.market-hours-admin-message,
+.market-hours-admin-toolbar {
+  border: 1px solid rgba(74, 132, 255, 0.28);
+  background: rgba(17, 24, 49, 0.92);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.22);
+}
+
+.market-hours-admin-hero {
+  padding: 28px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(34, 95, 235, 0.62), rgba(17, 24, 49, 0.96));
+}
+
+.market-hours-admin-kicker {
+  display: inline-block;
+  margin-bottom: 8px;
+  color: #9cc4ff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.market-hours-admin-hero h1,
+.market-hours-admin-panel-head h2 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.75rem;
+  font-weight: 850;
+}
+
+.market-hours-admin-hero p,
+.market-hours-admin-panel-head p,
+.market-hours-admin-card p,
+.market-hours-admin-restrictions p {
+  margin: 8px 0 0;
+  color: #b8c9ee;
+  line-height: 1.55;
+}
+
+.market-hours-admin-toolbar {
+  margin-top: 18px;
+  padding: 16px;
+  border-radius: 16px;
+}
+
+.market-hours-admin-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.market-hours-admin-card {
+  min-height: 138px;
+  padding: 20px;
+  border-radius: 16px;
+}
+
+.market-hours-admin-card span,
+.market-hours-admin-panel-head p,
+.market-hours-admin-restrictions span {
+  color: #9db8e8;
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+.market-hours-admin-card strong {
+  display: block;
+  margin-top: 12px;
+  color: #ffffff;
+  font-size: 1.65rem;
+}
+
+.market-hours-admin-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(340px, 0.9fr);
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.market-hours-admin-panel {
+  padding: 22px;
+  border-radius: 18px;
+}
+
+.market-hours-admin-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.market-hours-admin-form-grid--single {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.market-hours-admin-field,
+.market-hours-admin-field.item {
+  --background: rgba(255, 255, 255, 0.055);
+  --border-color: rgba(100, 142, 220, 0.22);
+  --border-radius: 12px;
+  --color: #ffffff;
+  --highlight-color-focused: #3b82f6;
+  border-radius: 12px;
+}
+
+.market-hours-admin-field ion-label {
+  color: #b7c8eb;
+  font-weight: 750;
+}
+
+.market-hours-admin-field ion-input,
+.market-hours-admin-field ion-select {
+  color: #ffffff;
+}
+
+.market-hours-admin-field--wide {
+  grid-column: 1 / -1;
+}
+
+.market-hours-admin-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+  margin: 18px 0;
+}
+
+.market-hours-admin-days button {
+  min-height: 40px;
+  border: 1px solid rgba(67, 116, 210, 0.48);
+  border-radius: 12px;
+  background: rgba(16, 31, 66, 0.86);
+  color: #bdd2f9;
+  font-weight: 800;
+}
+
+.market-hours-admin-days button.active {
+  border-color: #4b8dff;
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.market-hours-admin-weekly-schedule {
+  display: grid;
+  gap: 14px;
+  margin: 18px 0;
+}
+
+.market-hours-admin-day-group {
+  padding: 14px;
+  border: 1px solid rgba(74, 132, 255, 0.22);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.market-hours-admin-day-group h3 {
+  margin: 0 0 12px;
+  color: #ffffff;
+  font-size: 0.98rem;
+}
+
+.market-hours-admin-day-row {
+  display: grid;
+  grid-template-columns: 92px minmax(120px, 1fr) minmax(112px, 0.65fr) minmax(112px, 0.65fr);
+  gap: 10px;
+  align-items: center;
+  padding: 10px 0;
+  border-top: 1px solid rgba(100, 142, 220, 0.16);
+}
+
+.market-hours-admin-day-row:first-of-type {
+  border-top: 0;
+}
+
+.market-hours-admin-day-row strong {
+  color: #ffffff;
+}
+
+.market-hours-admin-day-row ion-input {
+  min-height: 38px;
+  --background: rgba(255, 255, 255, 0.055);
+  --border-color: rgba(100, 142, 220, 0.22);
+  --border-radius: 10px;
+  --color: #ffffff;
+  border-radius: 10px;
+}
+
+.market-hours-admin-day-row button {
+  min-height: 36px;
+  border: 1px solid rgba(255, 99, 132, 0.42);
+  border-radius: 10px;
+  background: rgba(86, 18, 38, 0.78);
+  color: #ffd9e1;
+  font-weight: 800;
+}
+
+.market-hours-admin-day-row button.active {
+  border-color: rgba(52, 211, 153, 0.48);
+  background: rgba(16, 86, 59, 0.72);
+  color: #d9ffef;
+}
+
+.market-hours-admin-message {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  color: #dce9ff;
+}
+
+.market-hours-admin-message--error {
+  border-color: rgba(255, 99, 132, 0.45);
+  background: rgba(86, 18, 38, 0.78);
+  color: #ffd9e1;
+}
+
+.market-hours-admin-restrictions {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.market-hours-admin-restrictions article {
+  padding: 14px;
+  border: 1px solid rgba(74, 132, 255, 0.22);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.market-hours-admin-restrictions strong {
+  display: block;
+  color: #ffffff;
+}
+
+@media (max-width: 980px) {
+  .market-hours-admin-container {
+    width: min(100%, calc(100vw - 24px));
+    padding-top: 20px;
+  }
+
+  .market-hours-admin-summary,
+  .market-hours-admin-grid,
+  .market-hours-admin-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .market-hours-admin-days {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .market-hours-admin-day-row {
+    grid-template-columns: 1fr;
+  }
+}

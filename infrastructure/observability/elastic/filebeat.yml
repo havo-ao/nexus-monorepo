@@ -1,0 +1,51 @@
+filebeat.inputs:
+  - type: filestream
+    id: nexus-docker-containers
+    enabled: true
+    paths:
+      - /var/lib/docker/containers/*/*.log
+    parsers:
+      - container: ~
+    processors:
+      - add_docker_metadata:
+          host: "unix:///var/run/docker.sock"
+      - drop_event:
+          when:
+            not:
+              or:
+                - equals:
+                    container.name: nexus-webapp
+                - equals:
+                    container.name: nexus-identity-service
+                - equals:
+                    container.name: nexus-trading-service
+                - equals:
+                    container.name: nexus-portfolio-service
+                - equals:
+                    container.name: nexus-market-service
+                - equals:
+                    container.name: compliance-service
+                - equals:
+                    container.name: nexus-mysql
+
+processors:
+  - add_fields:
+      target: project
+      fields:
+        name: acciones-elbosque
+        architecture: service-based-architecture
+        environment: local
+
+setup.kibana:
+  host: "http://kibana:5601"
+
+output.elasticsearch:
+  hosts:
+    - "http://elasticsearch:9200"
+  index: "acciones-elbosque-logs-%{+yyyy.MM.dd}"
+
+setup.template.name: "acciones-elbosque-logs"
+setup.template.pattern: "acciones-elbosque-logs-*"
+setup.ilm.enabled: false
+
+logging.level: info

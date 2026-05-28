@@ -1,0 +1,393 @@
+:root {
+  --nexus-sidebar-width: 272px;
+  --nexus-mobile-header-height: 64px;
+  --nexus-sidebar-width-mobile: min(84vw, 320px);
+}
+
+.nexus-mobile-header,
+.nexus-sidebar-backdrop,
+.nexus-sidebar-close {
+  display: none;
+}
+
+.nexus-sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: var(--nexus-sidebar-width);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: linear-gradient(180deg, #0d1730 0%, #10192f 100%);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 18px 0 40px rgba(3, 7, 18, 0.34);
+  z-index: 1000;
+}
+
+body.nexus-sidebar-layout .ion-page {
+  padding-left: var(--nexus-sidebar-width);
+}
+
+.nexus-sidebar-top {
+  padding: 20px 18px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.nexus-sidebar-brand-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.nexus-sidebar-logo {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: 0;
+  background: transparent;
+  color: #ffffff;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.nexus-sidebar-logo-mark {
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: var(--nexus-accent-gradient);
+  color: #ffffff;
+  box-shadow: 0 14px 28px rgba(var(--nexus-accent-rgb), 0.32);
+  flex-shrink: 0;
+}
+
+.nexus-sidebar-logo-mark ion-icon {
+  font-size: 1.15rem;
+}
+
+.nexus-sidebar-logo-text {
+  font-family: "Montserrat", sans-serif;
+  font-size: 1.6rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+}
+
+.nexus-sidebar-user,
+.nexus-sidebar-tagline {
+  margin: 16px 2px 0;
+}
+
+.nexus-sidebar-user {
+  display: grid;
+  gap: 4px;
+}
+
+.nexus-sidebar-user-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.nexus-sidebar-user strong {
+  color: #f8fbff;
+  font-size: 0.96rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nexus-sidebar-user span,
+.nexus-sidebar-tagline {
+  color: rgba(191, 219, 254, 0.82);
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+.nexus-sidebar-user-badge {
+  flex-shrink: 0;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 999px;
+  padding: 3px 8px;
+  color: #dbeafe;
+  background: rgba(15, 23, 42, 0.62);
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.nexus-sidebar-user-badge.premium {
+  color: #fef3c7;
+  border-color: rgba(245, 158, 11, 0.34);
+  background: rgba(180, 83, 9, 0.22);
+}
+
+.nexus-sidebar-user-badge.free {
+  color: #bfdbfe;
+  border-color: rgba(96, 165, 250, 0.26);
+  background: rgba(37, 99, 235, 0.14);
+}
+
+.nexus-sidebar-user-badge.loading {
+  color: #cbd5e1;
+}
+
+.nexus-sidebar-user-badge.role {
+  color: #d1fae5;
+  border-color: rgba(16, 185, 129, 0.26);
+  background: rgba(5, 150, 105, 0.14);
+}
+
+.nexus-sidebar-nav {
+  flex: 1;
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  padding: 18px 14px;
+  overflow-y: auto;
+}
+
+.nexus-sidebar-link,
+.nexus-sidebar-action {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  padding: 12px 14px;
+  background: transparent;
+  color: #d8e4ff;
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.nexus-sidebar-link ion-icon,
+.nexus-sidebar-action ion-icon {
+  font-size: 1.1rem;
+  color: rgba(191, 219, 254, 0.86);
+  flex-shrink: 0;
+}
+
+.nexus-sidebar-link span,
+.nexus-sidebar-action span {
+  white-space: nowrap;
+}
+
+.nexus-sidebar-link:hover,
+.nexus-sidebar-action:hover {
+  background: rgba(var(--nexus-accent-rgb), 0.14);
+  border-color: rgba(var(--nexus-accent-rgb), 0.22);
+  color: #ffffff;
+  transform: translateX(2px);
+}
+
+.nexus-sidebar-link:hover ion-icon,
+.nexus-sidebar-action:hover ion-icon {
+  color: #ffffff;
+}
+
+.nexus-sidebar-link.active {
+  background: rgba(var(--nexus-accent-rgb), 0.18);
+  border-color: rgba(var(--nexus-accent-rgb), 0.3);
+  color: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(var(--nexus-accent-rgb), 0.08);
+}
+
+.nexus-sidebar-link.active ion-icon {
+  color: #ffffff;
+}
+
+.nexus-sidebar-footer {
+  display: grid;
+  gap: 10px;
+  padding: 18px 14px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.nexus-sidebar-action--ghost {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.nexus-sidebar-action--solid {
+  background: var(--nexus-accent);
+  border-color: rgba(var(--nexus-accent-rgb), 0.56);
+  color: #ffffff;
+  box-shadow: 0 12px 24px rgba(var(--nexus-accent-rgb), 0.26);
+}
+
+.nexus-sidebar-action--solid ion-icon {
+  color: #ffffff;
+}
+
+.nexus-sidebar-action--solid:hover {
+  background: var(--nexus-accent);
+  border-color: rgba(var(--nexus-accent-rgb), 0.7);
+}
+
+@media (max-width: 900px) {
+  body.nexus-mobile-menu-open {
+    overflow: hidden;
+  }
+
+  body.nexus-sidebar-layout .ion-page {
+    padding-left: 0;
+    padding-top: var(--nexus-mobile-header-height);
+  }
+
+  .nexus-mobile-header {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 1200;
+    height: var(--nexus-mobile-header-height);
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: calc(env(safe-area-inset-top, 0px) + 10px) 16px 10px;
+    background: rgba(13, 23, 48, 0.96);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 14px 30px rgba(3, 7, 18, 0.3);
+    backdrop-filter: blur(14px);
+  }
+
+  .nexus-mobile-menu-button,
+  .nexus-mobile-brand,
+  .nexus-sidebar-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    background: rgba(255, 255, 255, 0.04);
+    color: #ffffff;
+    cursor: pointer;
+  }
+
+  .nexus-mobile-menu-button,
+  .nexus-sidebar-close {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    flex-shrink: 0;
+  }
+
+  .nexus-mobile-menu-button ion-icon,
+  .nexus-sidebar-close ion-icon {
+    font-size: 1.35rem;
+  }
+
+  .nexus-mobile-brand {
+    gap: 10px;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    font-family: "Montserrat", sans-serif;
+    font-size: 1.28rem;
+    font-weight: 900;
+    text-align: left;
+  }
+
+  .nexus-mobile-brand-mark {
+    width: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 13px;
+    background: var(--nexus-accent-gradient);
+    color: #ffffff;
+    box-shadow: 0 12px 24px rgba(var(--nexus-accent-rgb), 0.28);
+    flex-shrink: 0;
+  }
+
+  .nexus-mobile-brand span:last-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .nexus-sidebar-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1250;
+    display: block;
+    padding: 0;
+    border: 0;
+    background: rgba(2, 6, 23, 0.62);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .nexus-sidebar-backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .nexus-sidebar {
+    inset: 0 auto 0 0;
+    width: var(--nexus-sidebar-width-mobile);
+    max-width: 100%;
+    z-index: 1300;
+    transform: translateX(-104%);
+    transition: transform 0.24s ease;
+  }
+
+  .nexus-sidebar.open {
+    transform: translateX(0);
+  }
+
+  .nexus-sidebar-top {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 18px);
+  }
+
+  .nexus-sidebar-logo {
+    min-width: 0;
+  }
+
+  .nexus-sidebar-logo-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 1.4rem;
+    white-space: nowrap;
+  }
+
+  .nexus-sidebar-close {
+    display: inline-flex;
+  }
+
+  .nexus-sidebar-link span,
+  .nexus-sidebar-action span {
+    white-space: normal;
+  }
+
+  .nexus-sidebar-link,
+  .nexus-sidebar-action {
+    gap: 12px;
+    padding: 11px 12px;
+    font-size: 0.92rem;
+  }
+}
+
+@media (max-width: 420px) {
+  :root {
+    --nexus-sidebar-width-mobile: min(88vw, 304px);
+  }
+
+  .nexus-mobile-header {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+}

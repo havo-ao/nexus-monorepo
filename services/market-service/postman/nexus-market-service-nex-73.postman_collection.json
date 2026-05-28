@@ -1,0 +1,46 @@
+{
+  "info": {
+    "name": "Nexus Market Service - NEX-73 Dashboard",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Synchronize dashboard quotes",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/quotes/sync",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "quotes", "sync"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"symbols\": [\"AAPL\", \"MSFT\", \"TSLA\"],\n  \"requestedBy\": \"system@nexus.local\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Get market dashboard",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/dashboard",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "dashboard"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8884"
+    }
+  ]
+}

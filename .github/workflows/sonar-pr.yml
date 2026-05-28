@@ -1,0 +1,261 @@
+name: CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: pr-static-checks-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  trading-service:
+    name: Build trading service
+    runs-on: ubuntu-latest
+    if: ${{ !github.event.pull_request.draft }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Test and build trading-service
+        working-directory: services/trading-service
+        run: |
+          npm install --no-audit --no-fund
+          npm run lint:check
+          npm run test:cov
+          npm run test:e2e
+          npm run build
+
+      - name: Upload trading coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: trading-service-coverage
+          path: services/trading-service/coverage/lcov.info
+          if-no-files-found: error
+
+  portfolio-service:
+    name: Build portfolio service
+    runs-on: ubuntu-latest
+    if: ${{ !github.event.pull_request.draft }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Build portfolio-service
+        working-directory: services/portfolio-service
+        run: |
+          npm install --no-audit --no-fund
+          npm run lint:check
+          npm run test:cov
+          npm run test:e2e
+          npm run build
+
+      - name: Upload portfolio coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: portfolio-service-coverage
+          path: services/portfolio-service/coverage/lcov.info
+          if-no-files-found: error
+
+  market-service:
+    name: Build market service
+    runs-on: ubuntu-latest
+    if: ${{ !github.event.pull_request.draft }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Test and build market-service
+        working-directory: services/market-service
+        run: |
+          npm install --no-audit --no-fund
+          npm run lint:check
+          npm run test:cov
+          npm run test:e2e
+          npm run build
+
+      - name: Upload market coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: market-service-coverage
+          path: services/market-service/coverage/lcov.info
+          if-no-files-found: error
+
+  compliance-service:
+    name: Build compliance service
+    runs-on: ubuntu-latest
+    if: ${{ !github.event.pull_request.draft }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Build compliance-service
+        working-directory: services/compliance-service
+        run: |
+          npm install --no-audit --no-fund
+          npm run lint:check
+          npm run test:cov
+          npm run test:e2e
+          npm run build
+
+      - name: Upload compliance coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: compliance-service-coverage
+          path: services/compliance-service/coverage/lcov.info
+          if-no-files-found: error
+
+  identity-service:
+    name: Build identity service
+    runs-on: ubuntu-latest
+    if: ${{ !github.event.pull_request.draft }}
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: nexus
+          MYSQL_USER: nexus_user
+          MYSQL_PASSWORD: nexus_password
+        ports:
+          - 3307:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+
+      - name: Build identity service
+        working-directory: services/identity-service
+        env:
+          SPRING_PROFILES_ACTIVE: test
+          NEXUS_JWT_SECRET: local-ci-jwt-secret-change-before-production-123456
+          ADMIN_EMAIL: admin@nexus.local
+          ADMIN_PASSWORD: Admin123@
+          STRIPE_SECRET_KEY: sk_test_local_ci_placeholder
+          STRIPE_MONTHLY_PRICE: price_local_ci_monthly
+          STRIPE_YEARLY_PRICE: price_local_ci_yearly
+          FRONTEND_DOMAIN: http://localhost:8100
+          NOTIFICATION_SERVICE_URL: http://compliance-service:8885/api/v1/
+        run: bash ./mvnw -B verify
+
+      - name: Upload identity bytecode
+        uses: actions/upload-artifact@v4
+        with:
+          name: identity-service-classes
+          path: services/identity-service/target/classes
+          if-no-files-found: error
+
+      - name: Upload identity coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: identity-service-coverage
+          path: services/identity-service/target/site/jacoco/jacoco.xml
+          if-no-files-found: error
+
+  sonar:
+    name: Analyze code with SonarCloud
+    runs-on: ubuntu-latest
+    if: ${{ !github.event.pull_request.draft }}
+    needs:
+      - trading-service
+      - portfolio-service
+      - market-service
+      - compliance-service
+      - identity-service
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Download identity bytecode
+        uses: actions/download-artifact@v4
+        with:
+          name: identity-service-classes
+          path: services/identity-service/target/classes
+
+      - name: Download identity coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: identity-service-coverage
+          path: services/identity-service/target/site/jacoco
+
+      - name: Download trading coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: trading-service-coverage
+          path: services/trading-service/coverage
+
+      - name: Download market coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: market-service-coverage
+          path: services/market-service/coverage
+
+      - name: Download portfolio coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: portfolio-service-coverage
+          path: services/portfolio-service/coverage
+
+      - name: Download compliance coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: compliance-service-coverage
+          path: services/compliance-service/coverage
+
+      - name: SonarQube Cloud scan
+        uses: SonarSource/sonarqube-scan-action@v7
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
+            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
+            -Dsonar.javascript.lcov.reportPaths=services/trading-service/coverage/lcov.info,services/market-service/coverage/lcov.info,services/portfolio-service/coverage/lcov.info,services/compliance-service/coverage/lcov.info
+            -Dsonar.coverage.jacoco.xmlReportPaths=services/identity-service/target/site/jacoco/jacoco.xml
+            -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/build/**,**/coverage/**,**/.next/**,**/.ionic/**,**/target/**,**/mvnw,**/mvnw.cmd,**/database/migrations/**,**/postman/**
+            -Dsonar.coverage.exclusions=webapp/**,services/trading-service/database/**,services/market-service/database/**,services/portfolio-service/database/**,services/market-service/scripts/**,services/portfolio-service/scripts/**,services/portfolio-service/src/valuations/clients/**,services/identity-service/src/main/java/com/nexus/identityservice/service/NotificationServiceClient.java,**/repositories/**,**/auth/**,**/config/**,services/portfolio-service/src/common/tracing/**,**/main.ts,**/*.module.ts,**/dto/**,**/entities/**,**/controllers/**
+            -Dsonar.cpd.exclusions=**/*.spec.ts,**/*.e2e-spec.ts,**/*.test.ts,**/database/migrations/**,**/postman/**,**/controllers/**,**/dto/**,**/entities/**,**/auth/**,**/config/**,services/portfolio-service/database/**,services/portfolio-service/src/common/tracing/**,**/repositories/**
+            -Dsonar.qualitygate.wait=true

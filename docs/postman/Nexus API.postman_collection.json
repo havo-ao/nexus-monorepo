@@ -1,0 +1,2102 @@
+{
+  "info": {
+    "_postman_id": "08c94549-1e4d-4e4f-99fd-c06432d8b0d3",
+    "name": "Nexus API",
+    "description": "Colección local de Nexus organizada por servicios y módulos. Importar junto con el ambiente `Nexus Local`.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Identity Service",
+      "item": [
+        {
+          "name": "Auth",
+          "item": [
+            {
+              "name": "Login Admin",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+                      "const body = pm.response.json();",
+                      "const token = body.token || body.accessToken || body.jwt;",
+                      "if (token) { pm.environment.set('authToken', token); }"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{identityBaseUrl}}/api/auth/login",
+                  "host": [
+                    "{{identityBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "login"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Register Trader",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 201', function () { pm.response.to.have.status(201); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Test\",\n  \"surname\": \"Trader\",\n  \"genre\": \"MALE\",\n  \"email\": \"trader{{$timestamp}}@nexus.local\",\n  \"username\": \"trader{{$timestamp}}\",\n  \"password\": \"Trader123@\",\n  \"phone\": \"3001234567\",\n  \"address\": \"Calle 123\",\n  \"nationalityCode\": \"CO\",\n  \"timeZone\": \"America/Bogota\",\n  \"experience\": \"BEGINNER\"\n}"
+                },
+                "url": {
+                  "raw": "{{identityBaseUrl}}/api/auth/register/trader",
+                  "host": [
+                    "{{identityBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "register",
+                    "trader"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Register Admin",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 201 or authorized error when token is missing', function () { pm.expect([201, 401, 403]).to.include(pm.response.code); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{authToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Test\",\n  \"surname\": \"Admin\",\n  \"genre\": \"MALE\",\n  \"email\": \"admin{{$timestamp}}@nexus.local\",\n  \"username\": \"admin{{$timestamp}}\",\n  \"password\": \"Admin123@\",\n  \"department\": \"Operations\",\n  \"position\": \"Analyst\"\n}"
+                },
+                "url": {
+                  "raw": "{{identityBaseUrl}}/api/auth/register/admin",
+                  "host": [
+                    "{{identityBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "register",
+                    "admin"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin",
+          "item": [
+            {
+              "name": "Count Admins",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 200', function () { pm.response.to.have.status(200); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{authToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{identityBaseUrl}}/api/admin/count",
+                  "host": [
+                    "{{identityBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "admin",
+                    "count"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Count Traders",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 200', function () { pm.response.to.have.status(200); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{authToken}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{identityBaseUrl}}/api/admin/traders/count",
+                  "host": [
+                    "{{identityBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "admin",
+                    "traders",
+                    "count"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Traders",
+          "item": [
+            {
+              "name": "Create Trader",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 201', function () { pm.response.to.have.status(201); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Direct\",\n  \"surname\": \"Trader\",\n  \"genre\": \"MALE\",\n  \"email\": \"direct.trader{{$timestamp}}@nexus.local\",\n  \"username\": \"direct{{$timestamp}}\",\n  \"password\": \"Trader123@\",\n  \"phone\": \"3009876543\",\n  \"address\": \"Carrera 45\",\n  \"nationalityCode\": \"CO\",\n  \"timeZone\": \"America/Bogota\",\n  \"experience\": \"BEGINNER\"\n}"
+                },
+                "url": {
+                  "raw": "{{identityBaseUrl}}/api/traders",
+                  "host": [
+                    "{{identityBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "traders"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Trading Service",
+      "item": [
+        {
+          "name": "Health",
+          "item": [
+            {
+              "name": "Health Check",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+                      "pm.test('service is trading-service', function () { pm.expect(pm.response.json().service).to.eql('trading-service'); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/health",
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "health"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Funds Validation",
+          "item": [
+            {
+              "name": "Validate Buy Funds - Approved",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+                      "pm.test('approved field exists', function () { pm.expect(pm.response.json()).to.have.property('approved'); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"traderId\": \"{{traderId}}\",\n  \"grossAmount\": 750\n}"
+                },
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/validations/funds/buy",
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "validations",
+                    "funds",
+                    "buy"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Validate Buy Funds - Rejected",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+                      "pm.test('request is rejected', function () { pm.expect(pm.response.json().approved).to.eql(false); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"traderId\": \"{{traderId}}\",\n  \"grossAmount\": 1250\n}"
+                },
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/validations/funds/buy",
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "validations",
+                    "funds",
+                    "buy"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Holdings Validation",
+          "item": [
+            {
+              "name": "Validate Sell Holdings - Approved",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+                      "pm.test('request is approved', function () { pm.expect(pm.response.json().approved).to.eql(true); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"traderId\": \"{{traderId}}\",\n  \"stockId\": \"{{stockId}}\",\n  \"symbol\": \"AAPL\",\n  \"quantity\": 3\n}"
+                },
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/validations/holdings/sell",
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "validations",
+                    "holdings",
+                    "sell"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Validate Sell Holdings - Rejected",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+                      "pm.test('request is rejected', function () { pm.expect(pm.response.json().approved).to.eql(false); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"traderId\": \"{{traderId}}\",\n  \"stockId\": \"{{stockId}}\",\n  \"symbol\": \"AAPL\",\n  \"quantity\": 999\n}"
+                },
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/validations/holdings/sell",
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "validations",
+                    "holdings",
+                    "sell"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Commissions",
+          "item": [
+            {
+              "name": "Calculate Operation Commission",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 201', function () { pm.response.to.have.status(201); });",
+                      "pm.test('commission is calculated', function () { const body = pm.response.json(); pm.expect(body.rateBps).to.eql(35); pm.expect(body.commissionAmount).to.exist; pm.expect(body.netAmount).to.exist; });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"traderId\": \"{{traderId}}\",\n  \"side\": \"BUY\",\n  \"orderType\": \"MARKET\",\n  \"grossAmount\": 750\n}"
+                },
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/commissions/calculate",
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "commissions",
+                    "calculate"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Distribute Operation Commission",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"status is 201\", function () { pm.response.to.have.status(201); });",
+                      "pm.test(\"commission is distributed\", function () { const body = pm.response.json(); pm.expect(body.platformShareBps).to.eql(7000); pm.expect(body.brokerShareBps).to.eql(3000); pm.expect(body.platformAmount + body.brokerAmount).to.be.closeTo(body.commissionAmount, 0.01); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"traderId\": \"{{traderId}}\",\n  \"brokerId\": \"{{brokerId}}\",\n  \"commissionAmount\": 2.63\n}"
+                },
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/commissions/distribute",
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "commissions",
+                    "distribute"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Orders",
+          "item": [
+            {
+              "name": "Create Market Buy Order",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"status is 201\", function () { pm.response.to.have.status(201); });",
+                      "pm.test(\"market buy order is pending execution\", function () { const body = pm.response.json(); pm.expect(body.side).to.eql(\"BUY\"); pm.expect(body.orderType).to.eql(\"MARKET\"); pm.expect(body.status).to.eql(\"PENDING_EXECUTION\"); pm.environment.set(\"orderReference\", body.orderReference); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"traderId\": \"{{traderId}}\",\n  \"stockId\": \"{{stockId}}\",\n  \"symbol\": \"AAPL\",\n  \"exchangeId\": \"{{exchangeId}}\",\n  \"quantity\": 1,\n  \"estimatedUnitPrice\": 250,\n  \"marketEvaluatedAt\": \"2026-05-12T14:30:00.000Z\"\n}"
+                },
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/orders/buy/market",
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "orders",
+                    "buy",
+                    "market"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Create Market Buy Order - Compliance Restricted",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"status is 409\", function () { pm.response.to.have.status(409); });",
+                      "pm.test(\"compliance restriction blocks order\", function () { const body = pm.response.json(); pm.expect(body.message).to.exist; });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"traderId\": \"{{restrictedTraderId}}\",\n  \"stockId\": \"{{stockId}}\",\n  \"symbol\": \"AAPL\",\n  \"exchangeId\": \"{{exchangeId}}\",\n  \"quantity\": 1,\n  \"estimatedUnitPrice\": 250,\n  \"marketEvaluatedAt\": \"2026-05-12T14:30:00.000Z\"\n}"
+                },
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/orders/buy/market",
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "orders",
+                    "buy",
+                    "market"
+                  ]
+                },
+                "description": "Requires setting the same restrictedTraderId to RESTRICTED in Compliance first."
+              }
+            },
+            {
+              "name": "Create Limit Buy Order",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"status is 201\", function () { pm.response.to.have.status(201); });",
+                      "pm.test(\"limit buy order is pending condition\", function () { const body = pm.response.json(); pm.expect(body.side).to.eql(\"BUY\"); pm.expect(body.orderType).to.eql(\"LIMIT\"); pm.expect(body.status).to.eql(\"PENDING_CONDITION\"); pm.environment.set(\"orderReference\", body.orderReference); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"traderId\": \"{{traderId}}\",\n  \"stockId\": \"{{stockId}}\",\n  \"symbol\": \"AAPL\",\n  \"exchangeId\": \"{{exchangeId}}\",\n  \"quantity\": 1,\n  \"limitPrice\": 240\n}"
+                },
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/orders/buy/limit",
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "orders",
+                    "buy",
+                    "limit"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Create Market Buy Order - Queued Closed Market",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 201', function () { pm.response.to.have.status(201); });",
+                      "pm.test('market buy order is queued', function () { const body = pm.response.json(); pm.expect(body.side).to.eql('BUY'); pm.expect(body.orderType).to.eql('MARKET'); pm.expect(body.status).to.eql('PENDING_MARKET_OPEN'); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"traderId\": \"{{traderId}}\",\n  \"symbol\": \"AAPL\",\n  \"exchangeId\": \"{{exchangeId}}\",\n  \"quantity\": 1,\n  \"estimatedUnitPrice\": 250,\n  \"marketEvaluatedAt\": \"2026-05-12T22:00:00.000Z\"\n}"
+                },
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/orders/buy/market",
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "orders",
+                    "buy",
+                    "market"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Create Market Sell Order",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 201', function () { pm.response.to.have.status(201); });",
+                      "pm.test('market sell order is pending execution', function () { const body = pm.response.json(); pm.expect(body.side).to.eql('SELL'); pm.expect(body.orderType).to.eql('MARKET'); pm.expect(body.status).to.eql('PENDING_EXECUTION'); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"traderId\": \"{{traderId}}\",\n  \"stockId\": \"{{stockId}}\",\n  \"symbol\": \"AAPL\",\n  \"exchangeId\": \"{{exchangeId}}\",\n  \"quantity\": 1,\n  \"estimatedUnitPrice\": 250,\n  \"marketEvaluatedAt\": \"2026-05-12T14:30:00.000Z\"\n}"
+                },
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/orders/sell/market",
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "orders",
+                    "sell",
+                    "market"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Create Limit Sell Order",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 201', function () { pm.response.to.have.status(201); });",
+                      "pm.test('limit sell order is pending condition', function () { const body = pm.response.json(); pm.expect(body.side).to.eql('SELL'); pm.expect(body.orderType).to.eql('LIMIT'); pm.expect(body.status).to.eql('PENDING_CONDITION'); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"traderId\": \"{{traderId}}\",\n  \"stockId\": \"{{stockId}}\",\n  \"symbol\": \"AAPL\",\n  \"exchangeId\": \"{{exchangeId}}\",\n  \"quantity\": 1,\n  \"limitPrice\": 260\n}"
+                },
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/orders/sell/limit",
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "orders",
+                    "sell",
+                    "limit"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Create Stop Loss Order",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 201', function () { pm.response.to.have.status(201); });",
+                      "pm.test('stop loss order is pending condition', function () { const body = pm.response.json(); pm.expect(body.side).to.eql('SELL'); pm.expect(body.orderType).to.eql('STOP_LOSS'); pm.expect(body.status).to.eql('PENDING_CONDITION'); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"traderId\": \"{{traderId}}\",\n  \"stockId\": \"{{stockId}}\",\n  \"symbol\": \"AAPL\",\n  \"exchangeId\": \"{{exchangeId}}\",\n  \"quantity\": 1,\n  \"stopPrice\": 220\n}"
+                },
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/orders/sell/stop-loss",
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "orders",
+                    "sell",
+                    "stop-loss"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Create Take Profit Order",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 201', function () { pm.response.to.have.status(201); });",
+                      "pm.test('take profit order is pending condition', function () { const body = pm.response.json(); pm.expect(body.side).to.eql('SELL'); pm.expect(body.orderType).to.eql('TAKE_PROFIT'); pm.expect(body.status).to.eql('PENDING_CONDITION'); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"traderId\": \"{{traderId}}\",\n  \"stockId\": \"{{stockId}}\",\n  \"symbol\": \"AAPL\",\n  \"exchangeId\": \"{{exchangeId}}\",\n  \"quantity\": 1,\n  \"targetPrice\": 290\n}"
+                },
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/orders/sell/take-profit",
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "orders",
+                    "sell",
+                    "take-profit"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Validate Order By Broker - Approve",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 201', function () { pm.response.to.have.status(201); });",
+                      "pm.test('broker approves order', function () { const body = pm.response.json(); pm.expect(body.brokerId).to.eql(pm.environment.get('brokerId')); pm.expect(body.decision).to.eql('APPROVE'); pm.expect(body.status).to.exist; });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"brokerId\": \"{{brokerId}}\",\n  \"decision\": \"APPROVE\",\n  \"reason\": \"Order reviewed by assigned broker.\"\n}"
+                },
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/orders/{{orderReference}}/broker-validation",
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "orders",
+                    "{{orderReference}}",
+                    "broker-validation"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Validate Order By Broker - Reject",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 201', function () { pm.response.to.have.status(201); });",
+                      "pm.test('broker rejects order', function () { const body = pm.response.json(); pm.expect(body.brokerId).to.eql(pm.environment.get('brokerId')); pm.expect(body.decision).to.eql('REJECT'); pm.expect(body.status).to.eql('REJECTED'); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"brokerId\": \"{{brokerId}}\",\n  \"decision\": \"REJECT\",\n  \"reason\": \"Risk policy did not approve this order.\"\n}"
+                },
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/orders/{{orderReference}}/broker-validation",
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "orders",
+                    "{{orderReference}}",
+                    "broker-validation"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Current Order Status",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+                      "pm.test('order status is present', function () { const body = pm.response.json(); pm.expect(body.orderReference).to.exist; pm.expect(body.status).to.exist; });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/orders/{{orderReference}}/status",
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "orders",
+                    "{{orderReference}}",
+                    "status"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Order Status History",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+                      "pm.test('status history is present', function () { const body = pm.response.json(); pm.expect(body).to.be.an('array'); if (body.length > 0) { pm.expect(body[0].orderReference).to.exist; pm.expect(body[0].toStatus).to.exist; } });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/orders/{{orderReference}}/status-history",
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "orders",
+                    "{{orderReference}}",
+                    "status-history"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Cancel Order",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 201', function () { pm.response.to.have.status(201); });",
+                      "pm.test('order is cancelled', function () { const body = pm.response.json(); pm.expect(body.orderReference).to.exist; pm.expect(body.currentStatus).to.eql('CANCELLED'); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"actorId\": \"{{traderId}}\",\n  \"reason\": \"Trader requested cancellation before execution\"\n}"
+                },
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/orders/{{orderReference}}/cancel",
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "orders",
+                    "{{orderReference}}",
+                    "cancel"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Process Pending Orders",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('pending orders were evaluated', function () { const body = pm.response.json(); pm.expect(body.scanned).to.be.a('number'); pm.expect(body.evaluations).to.be.an('array'); });",
+                      "pm.test('processor response is successful', function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"limit\": 25,\n  \"evaluatedAt\": \"2026-05-12T14:30:00.000Z\"\n}"
+                },
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/orders/pending/process",
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "orders",
+                    "pending",
+                    "process"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ]
+        },
+        {
+          "name": "Executions",
+          "item": [
+            {
+              "name": "Send Order To Broker",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 201', function () { pm.response.to.have.status(201); });",
+                      "pm.test('order is sent to broker', function () { const body = pm.response.json(); pm.expect(body.status).to.eql('SENT_TO_BROKER'); pm.expect(body.externalOrderId).to.exist; pm.expect(body.brokerStatus).to.eql('ACCEPTED'); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/executions/broker/orders/{{orderReference}}/send",
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "executions",
+                    "broker",
+                    "orders",
+                    "{{orderReference}}",
+                    "send"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Send Order To Broker - Failure",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"status is 201\", function () { pm.response.to.have.status(201); });",
+                      "pm.test(\"broker failure is controlled\", function () { const body = pm.response.json(); pm.expect(body.status).to.eql(\"FAILED\"); pm.expect(body.externalOrderId).to.eql(\"unavailable\"); pm.expect(body.brokerStatus).to.eql(\"FAILED\"); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}"
+                },
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/executions/broker/orders/broker-failure-order-reference/send",
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "executions",
+                    "broker",
+                    "orders",
+                    "broker-failure-order-reference",
+                    "send"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Settlements",
+          "item": [
+            {
+              "name": "Sync Order Settlement",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"status is 200\", function () { pm.response.to.have.status(200); });",
+                      "pm.test(\"settlement is synchronized\", function () { const body = pm.response.json(); pm.expect(body.orderReference).to.eql(pm.environment.get(\"orderReference\")); pm.expect(body.brokerName).to.exist; pm.expect(body.status).to.exist; });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{authToken}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"actorId\": \"{{brokerId}}\",\n  \"notificationRecipient\": {\n    \"email\": \"{{traderEmail}}\",\n    \"name\": \"{{traderName}}\",\n    \"surname\": \"{{traderSurname}}\",\n    \"username\": \"{{traderUsername}}\"\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/orders/{{orderReference}}/settlement/sync",
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "orders",
+                    "{{orderReference}}",
+                    "settlement",
+                    "sync"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Market Validation",
+          "item": [
+            {
+              "name": "Validate Market Status - Open",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+                      "pm.test('market is open', function () { const body = pm.response.json(); pm.expect(body.marketStatus).to.eql('OPEN'); pm.expect(body.canOperate).to.eql(true); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"exchangeId\": \"{{exchangeId}}\",\n  \"evaluatedAt\": \"2026-05-12T14:30:00.000Z\"\n}"
+                },
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/validations/market/status",
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "validations",
+                    "market",
+                    "status"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Validate Market Status - Closed",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+                      "pm.test('market is closed', function () { const body = pm.response.json(); pm.expect(body.marketStatus).to.eql('CLOSED'); pm.expect(body.canOperate).to.eql(false); pm.expect(body.reason).to.exist; });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"exchangeId\": \"{{exchangeId}}\",\n  \"evaluatedAt\": \"2026-05-12T22:00:00.000Z\"\n}"
+                },
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/validations/market/status",
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "validations",
+                    "market",
+                    "status"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Validate Market Status - Restricted",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 200', function () { pm.response.to.have.status(200); });",
+                      "pm.test('market is restricted', function () { const body = pm.response.json(); pm.expect(body.marketStatus).to.eql('RESTRICTED'); pm.expect(body.canOperate).to.eql(false); pm.expect(body.reason).to.exist; });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"exchangeId\": \"99\",\n  \"evaluatedAt\": \"2026-05-12T14:30:00.000Z\"\n}"
+                },
+                "url": {
+                  "raw": "{{tradingBaseUrl}}/api/v1/validations/market/status",
+                  "host": [
+                    "{{tradingBaseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "validations",
+                    "market",
+                    "status"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Portfolio Service",
+      "item": [
+        {
+          "name": "Health",
+          "item": [
+            {
+              "name": "Health Check",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 200', function () { pm.response.to.have.status(200); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{portfolioBaseUrl}}/health",
+                  "host": [
+                    "{{portfolioBaseUrl}}"
+                  ],
+                  "path": [
+                    "health"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Market Service",
+      "item": [
+        {
+          "name": "Health",
+          "item": [
+            {
+              "name": "Health Check",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 200', function () { pm.response.to.have.status(200); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{marketBaseUrl}}/health",
+                  "host": [
+                    "{{marketBaseUrl}}"
+                  ],
+                  "path": [
+                    "health"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Compliance Service",
+      "item": [
+        {
+          "name": "Health",
+          "item": [
+            {
+              "name": "Health Check",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 200', function () { pm.response.to.have.status(200); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{complianceBaseUrl}}/health",
+                  "host": [
+                    "{{complianceBaseUrl}}"
+                  ],
+                  "path": [
+                    "health"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Audit",
+          "item": [
+            {
+              "name": "Record Audit Event",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('audit event recorded', function () { const body = pm.response.json(); pm.expect(body.eventType).to.eql('ORDER_STATUS_CHANGED'); pm.expect(body.entityId).to.eql(pm.environment.get('orderReference')); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"eventType\": \"ORDER_STATUS_CHANGED\",\n  \"sourceService\": \"trading-service\",\n  \"actorId\": \"{{traderId}}\",\n  \"actorRole\": \"TRADER\",\n  \"entityType\": \"ORDER\",\n  \"entityId\": \"{{orderReference}}\",\n  \"correlationId\": \"{{orderReference}}\",\n  \"result\": \"SUCCESS\",\n  \"critical\": true,\n  \"context\": {\n    \"toStatus\": \"SENT_TO_BROKER\"\n  },\n  \"occurredAt\": \"2026-05-27T15:30:00.000Z\"\n}"
+                },
+                "url": {
+                  "raw": "{{complianceBaseUrl}}/audit/events",
+                  "host": [
+                    "{{complianceBaseUrl}}"
+                  ],
+                  "path": [
+                    "audit",
+                    "events"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Query Audit Events",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('audit events returned', function () { pm.response.to.have.status(200); pm.expect(pm.response.json()).to.be.an('array'); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{complianceBaseUrl}}/audit/events?entityId={{orderReference}}",
+                  "host": [
+                    "{{complianceBaseUrl}}"
+                  ],
+                  "path": [
+                    "audit",
+                    "events?entityId={{orderReference}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Notifications",
+          "item": [
+            {
+              "name": "Process Order Notification Event",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('notification attempt recorded', function () { const body = pm.response.json(); pm.expect(body.category).to.eql('ORDER_STATUS'); pm.expect(body.entityId).to.eql(pm.environment.get('orderReference')); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"category\": \"ORDER_STATUS\",\n  \"sourceService\": \"trading-service\",\n  \"entityType\": \"ORDER\",\n  \"entityId\": \"{{orderReference}}\",\n  \"subject\": \"Order status changed\",\n  \"message\": \"Your order changed status in Nexus.\",\n  \"recipient\": {\n    \"email\": \"{{traderEmail}}\",\n    \"name\": \"{{traderName}}\",\n    \"surname\": \"{{traderSurname}}\",\n    \"username\": \"{{traderUsername}}\"\n  },\n  \"correlationId\": \"{{orderReference}}\",\n  \"occurredAt\": \"2026-05-27T15:30:00.000Z\"\n}"
+                },
+                "url": {
+                  "raw": "{{complianceBaseUrl}}/notifications/events",
+                  "host": [
+                    "{{complianceBaseUrl}}"
+                  ],
+                  "path": [
+                    "notifications",
+                    "events"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Query Notification Attempts",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 200', function () { pm.response.to.have.status(200); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{complianceBaseUrl}}/notifications/attempts?entityId={{orderReference}}",
+                  "host": [
+                    "{{complianceBaseUrl}}"
+                  ],
+                  "path": [
+                    "notifications",
+                    "attempts?entityId={{orderReference}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Order History",
+          "item": [
+            {
+              "name": "Record Order History Event",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 201', function () { pm.response.to.have.status(201); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"orderReference\": \"{{orderReference}}\",\n  \"fromStatus\": \"PENDING_EXECUTION\",\n  \"toStatus\": \"SENT_TO_BROKER\",\n  \"actorId\": \"{{brokerId}}\",\n  \"actorRole\": \"BROKER\",\n  \"reason\": \"Broker approved and sent the order to Alpaca.\",\n  \"sourceService\": \"trading-service\",\n  \"correlationId\": \"{{orderReference}}\",\n  \"occurredAt\": \"2026-05-27T15:30:00.000Z\"\n}"
+                },
+                "url": {
+                  "raw": "{{complianceBaseUrl}}/order-history/events",
+                  "host": [
+                    "{{complianceBaseUrl}}"
+                  ],
+                  "path": [
+                    "order-history",
+                    "events"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Order History",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 200', function () { pm.response.to.have.status(200); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{complianceBaseUrl}}/order-history/orders/{{orderReference}}",
+                  "host": [
+                    "{{complianceBaseUrl}}"
+                  ],
+                  "path": [
+                    "order-history",
+                    "orders",
+                    "{{orderReference}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Restrictions",
+          "item": [
+            {
+              "name": "Restrict Trader",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 201', function () { pm.response.to.have.status(201); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"status\": \"RESTRICTED\",\n  \"reason\": \"Unusual trading activity under review.\",\n  \"updatedBy\": \"{{adminUserId}}\"\n}"
+                },
+                "url": {
+                  "raw": "{{complianceBaseUrl}}/restrictions/traders/{{traderId}}",
+                  "host": [
+                    "{{complianceBaseUrl}}"
+                  ],
+                  "path": [
+                    "restrictions",
+                    "traders",
+                    "{{traderId}}"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Validate Trader Operation",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 201', function () { pm.response.to.have.status(201); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"traderId\": \"{{traderId}}\",\n  \"operation\": \"CREATE_ORDER\",\n  \"sourceService\": \"trading-service\"\n}"
+                },
+                "url": {
+                  "raw": "{{complianceBaseUrl}}/restrictions/validate-operation",
+                  "host": [
+                    "{{complianceBaseUrl}}"
+                  ],
+                  "path": [
+                    "restrictions",
+                    "validate-operation"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Get Trader Restriction Status",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 200', function () { pm.response.to.have.status(200); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{complianceBaseUrl}}/restrictions/traders/{{traderId}}",
+                  "host": [
+                    "{{complianceBaseUrl}}"
+                  ],
+                  "path": [
+                    "restrictions",
+                    "traders",
+                    "{{traderId}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reports",
+          "item": [
+            {
+              "name": "Operational Report",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 200', function () { pm.response.to.have.status(200); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{complianceBaseUrl}}/reports/operational",
+                  "host": [
+                    "{{complianceBaseUrl}}"
+                  ],
+                  "path": [
+                    "reports",
+                    "operational"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Regulatory Report",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 200', function () { pm.response.to.have.status(200); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{complianceBaseUrl}}/reports/regulatory",
+                  "host": [
+                    "{{complianceBaseUrl}}"
+                  ],
+                  "path": [
+                    "reports",
+                    "regulatory"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Executive Report",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('status is 200', function () { pm.response.to.have.status(200); });"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{complianceBaseUrl}}/reports/executive",
+                  "host": [
+                    "{{complianceBaseUrl}}"
+                  ],
+                  "path": [
+                    "reports",
+                    "executive"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "info": {
+    "name": "Nexus Market Service - NEX-78",
+    "description": "Manual validation collection for NEX-78: consult historical prices.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8884"
+    }
+  ],
+  "item": [
+    {
+      "name": "Synchronize AAPL historical prices",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/quotes/AAPL/history/sync",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "quotes", "AAPL", "history", "sync"]
+        },
+        "description": "Synchronizes daily historical prices from the configured market history provider."
+      }
+    },
+    {
+      "name": "Synchronize AAPL quote snapshot",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"symbols\": [\"AAPL\"],\n  \"requestedBy\": \"system@nexus.local\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/quotes/sync",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "quotes", "sync"]
+        },
+        "description": "Adds a quote snapshot to the historical price cache."
+      }
+    },
+    {
+      "name": "Get AAPL price history",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/quotes/AAPL/history",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "quotes", "AAPL", "history"]
+        },
+        "description": "Returns the historical price series available for AAPL."
+      }
+    }
+  ]
+}

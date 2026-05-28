@@ -1,0 +1,74 @@
+{
+  "info": {
+    "name": "Nexus Market Service - NEX-83",
+    "description": "Manual validation collection for NEX-83: administer market hours and restrictions.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8884"
+    },
+    {
+      "key": "marketCode",
+      "value": "BVC"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/health"
+      }
+    },
+    {
+      "name": "Configure Market Hours",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"timezone\": \"America/Bogota\",\n  \"openTime\": {\n    \"hour\": 9,\n    \"minute\": 0\n  },\n  \"closeTime\": {\n    \"hour\": 15,\n    \"minute\": 0\n  },\n  \"operatingDays\": [1, 2, 3, 4, 5],\n  \"actor\": \"admin@nexus.local\"\n}"
+        },
+        "url": "{{baseUrl}}/api/v1/admin/market-hours/{{marketCode}}"
+      }
+    },
+    {
+      "name": "Configure Market Restriction",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"date\": \"2026-06-19\",\n  \"status\": \"CLOSED\",\n  \"reason\": \"Juneteenth market holiday\",\n  \"actor\": \"admin@nexus.local\"\n}"
+        },
+        "url": "{{baseUrl}}/api/v1/admin/market-hours/{{marketCode}}/restrictions"
+      }
+    },
+    {
+      "name": "Validate Open Market Status",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/market-hours/{{marketCode}}/status?at=2026-05-11T15:00:00.000Z"
+      }
+    },
+    {
+      "name": "Validate Restricted Date",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/market-hours/{{marketCode}}/status?at=2026-06-19T15:00:00.000Z"
+      }
+    }
+  ]
+}

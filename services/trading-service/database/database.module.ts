@@ -1,0 +1,51 @@
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { BrokerOrderValidationEvent } from '../src/broker-validation/entities/broker-order-validation-event.entity';
+import { CommissionCalculationEvent } from '../src/commissions/entities/commission-calculation-event.entity';
+import { CommissionDistributionEvent } from '../src/commissions/entities/commission-distribution-event.entity';
+import { ComplianceValidationEvent } from '../src/compliance-validation/entities/compliance-validation-event.entity';
+import { BrokerExecutionEvent } from '../src/executions/entities/broker-execution-event.entity';
+import { FundsValidationEvent } from '../src/funds-validation/entities/funds-validation-event.entity';
+import { HoldingsValidationEvent } from '../src/holdings-validation/entities/holdings-validation-event.entity';
+import { MarketExchange } from '../src/market/entities/market-exchange.entity';
+import { MarketValidationEvent } from '../src/market-validation/entities/market-validation-event.entity';
+import { OrderStatusEventEntity } from '../src/orders/entities/order-status-event.entity';
+import { PendingOrderProcessingEvent } from '../src/pending-orders/entities/pending-order-processing-event.entity';
+import { TradingOrderEntity } from '../src/orders/entities/trading-order.entity';
+import { PortfolioPosition } from '../src/portfolio/entities/portfolio-position.entity';
+import { OrderSettlementEvent } from '../src/settlements/entities/order-settlement-event.entity';
+import { TradingNotificationEvent } from '../src/settlements/entities/trading-notification-event.entity';
+import { Wallet } from '../src/wallet/entities/wallet.entity';
+
+@Module({
+  imports: [
+    TypeOrmModule.forRoot({
+      type: 'mysql',
+      host: process.env.DB_HOST ?? 'localhost',
+      port: Number(process.env.DB_PORT ?? 3307),
+      username: process.env.DB_USERNAME ?? 'nexus_user',
+      password: process.env.DB_PASSWORD ?? '',
+      database: process.env.DB_DATABASE ?? 'nexus',
+      entities: [
+        BrokerExecutionEvent,
+        BrokerOrderValidationEvent,
+        CommissionCalculationEvent,
+        CommissionDistributionEvent,
+        ComplianceValidationEvent,
+        FundsValidationEvent,
+        HoldingsValidationEvent,
+        MarketExchange,
+        MarketValidationEvent,
+        OrderStatusEventEntity,
+        PendingOrderProcessingEvent,
+        OrderSettlementEvent,
+        PortfolioPosition,
+        TradingNotificationEvent,
+        TradingOrderEntity,
+        Wallet,
+      ],
+      synchronize: false,
+    }),
+  ],
+})
+export class DatabaseModule {}

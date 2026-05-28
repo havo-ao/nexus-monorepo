@@ -1,0 +1,50 @@
+spring:
+  application:
+    name: identity-service
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://mysql:3306/nexus}
+    username: ${SPRING_DATASOURCE_USERNAME:nexus_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:${NEXUS_MYSQL_PASSWORD}}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      show-sql: false
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+server:
+  port: 8881
+
+jwt:
+  secret: ${NEXUS_JWT_SECRET}
+  expiration: 86400000
+  refresh-expiration: 86400000
+
+stripe:
+  secret-key: ${STRIPE_SECRET_KEY}
+  monthly-price-id: ${STRIPE_MONTHLY_PRICE}
+  yearly-price-id: ${STRIPE_YEARLY_PRICE}
+
+frontend-domain: ${FRONTEND_DOMAIN}
+notification-service-url: ${NOTIFICATION_SERVICE_URL}
+
+logging:
+  level:
+    com.nexus.identityservice: INFO
+    org.springframework.web: INFO
+    org.springframework.web.servlet.mvc.method.annotation: INFO
+
+kind: Application
+
+

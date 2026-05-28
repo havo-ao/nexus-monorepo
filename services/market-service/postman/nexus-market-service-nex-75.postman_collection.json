@@ -1,0 +1,42 @@
+{
+  "info": {
+    "name": "Nexus Market Service - NEX-75",
+    "description": "Consultar acciones disponibles.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Synchronize instruments catalog",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{marketServiceBaseUrl}}/api/v1/instruments/sync",
+          "host": ["{{marketServiceBaseUrl}}"],
+          "path": ["api", "v1", "instruments", "sync"]
+        },
+        "description": "Synchronizes available instruments from the configured catalog provider."
+      },
+      "response": []
+    },
+    {
+      "name": "List available instruments",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{marketServiceBaseUrl}}/api/v1/instruments",
+          "host": ["{{marketServiceBaseUrl}}"],
+          "path": ["api", "v1", "instruments"]
+        }
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "marketServiceBaseUrl",
+      "value": "http://localhost:8884"
+    }
+  ]
+}

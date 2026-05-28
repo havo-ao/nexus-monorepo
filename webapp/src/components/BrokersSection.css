@@ -1,0 +1,221 @@
+/* src/components/BrokersSection.css */
+.brokers-section {
+  padding: 60px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Header */
+.brokers-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.section-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 2.5rem;
+  font-weight: 700;
+  background: var(--nexus-accent-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin-bottom: 16px;
+}
+
+.section-subtitle {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.1rem;
+  color: var(--ion-text-color);
+  opacity: 0.8;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+/* Contenedor de modos */
+.modes-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+  justify-content: center;
+  margin-bottom: 64px;
+}
+
+.mode-card {
+  flex: 1;
+  min-width: 300px;
+  max-width: 500px;
+  border-radius: 24px;
+  background: var(--ion-card-background);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+  transition: transform 0.3s ease;
+  text-align: center;
+  padding: 24px;
+}
+
+.mode-card:hover {
+  transform: translateY(-5px);
+}
+
+.mode-icon-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.mode-icon {
+  font-size: 64px;
+  padding: 16px;
+  border-radius: 50%;
+}
+
+.advisory-icon {
+  color: #ffc107;
+  background: rgba(255, 193, 7, 0.1);
+  padding: 16px;
+}
+
+.operational-icon {
+  color: var(--nexus-accent);
+  background: rgba(var(--nexus-accent-rgb), 0.12);
+  padding: 16px;
+}
+
+.mode-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.mode-description {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--ion-text-color);
+  opacity: 0.85;
+  margin-bottom: 20px;
+}
+
+.mode-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.mode-features {
+  text-align: left;
+  margin: 20px 0;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+}
+
+.feature-item ion-icon {
+  font-size: 20px;
+}
+
+.mode-chip {
+  margin-top: 16px;
+  justify-content: center;
+}
+
+/* Why broker section */
+.why-broker-section {
+  margin-top: 64px;
+  padding: 20px;
+  text-align: center;
+}
+
+.why-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 48px;
+}
+
+.why-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 32px;
+  margin-bottom: 48px;
+}
+
+.why-card {
+  flex: 1;
+  min-width: 220px;
+  max-width: 280px;
+  text-align: center;
+  padding: 24px 16px;
+  background: var(--ion-card-background);
+  border-radius: 24px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  transition: transform 0.2s;
+}
+
+.why-card:hover {
+  transform: translateY(-5px);
+}
+
+.why-icon {
+  font-size: 48px;
+  color: var(--nexus-accent);
+  margin-bottom: 20px;
+}
+
+.why-card-title {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-bottom: 12px;
+  color: var(--ion-text-color);
+}
+
+.why-card-text {
+  font-family: 'Poppins', sans-serif;
+  font-size: 0.9rem;
+  opacity: 0.8;
+  line-height: 1.4;
+}
+
+.why-callout {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--nexus-accent-text);
+  max-width: 600px;
+  margin: 0 auto;
+  padding-top: 20px;
+  border-top: 1px solid var(--ion-color-step-200);
+}
+
+
+/* Responsive */
+@media (max-width: 768px) {
+  .section-title {
+    font-size: 1.8rem;
+  }
+  
+  .mode-title {
+    font-size: 1.4rem;
+  }
+  
+   .why-grid {
+    flex-direction: column;
+    align-items: center;
+  }
+  .why-card {
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  .mode-card {
+    padding: 16px;
+  }
+}

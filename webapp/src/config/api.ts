@@ -1,0 +1,108 @@
+function cleanBaseUrl(raw: unknown): string {
+  if (raw === undefined || raw === "") {
+    return "";
+  }
+  return String(raw).replace(/\/$/, "");
+}
+
+/**
+ * API base URL for the identity service.
+ * Set `VITE_API_BASE_URL` in `.env` / `.env.production` (no trailing slash).
+ * Example dev: http://localhost:8881
+ */
+export function getApiBaseUrl(): string {
+  return cleanBaseUrl(import.meta.env.VITE_API_BASE_URL);
+}
+
+export function getTradingApiBaseUrl(): string {
+  return cleanBaseUrl(
+    import.meta.env.VITE_TRADING_API_BASE_URL ?? "http://localhost:8882",
+  );
+}
+
+export function getMarketApiBaseUrl(): string {
+  return cleanBaseUrl(
+    import.meta.env.VITE_MARKET_API_BASE_URL ?? "/market-api",
+  );
+}
+
+export function getPortfolioApiBaseUrl(): string {
+  return cleanBaseUrl(
+    import.meta.env.VITE_PORTFOLIO_API_BASE_URL ?? "/portfolio-api",
+  );
+}
+
+export function getComplianceApiBaseUrl(): string {
+  return cleanBaseUrl(
+    import.meta.env.VITE_COMPLIANCE_API_BASE_URL ?? "/compliance-api",
+  );
+}
+
+export function apiUrl(path: string): string {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  const base = getApiBaseUrl();
+  return base ? `${base}${normalizedPath}` : normalizedPath;
+}
+
+export function tradingApiUrl(path: string): string {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${getTradingApiBaseUrl()}${normalizedPath}`;
+}
+
+export function marketApiUrl(path: string): string {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${getMarketApiBaseUrl()}${normalizedPath}`;
+}
+
+export function portfolioApiUrl(path: string): string {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${getPortfolioApiBaseUrl()}${normalizedPath}`;
+}
+
+export function complianceApiUrl(path: string): string {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${getComplianceApiBaseUrl()}${normalizedPath}`;
+}
+
+export const API_PATHS = {
+  authLogin: "/api/auth/login",
+  authMe: "/api/auth/me",
+  authRegisterTrader: "/api/auth/register/trader",
+  tradingValidateBuyFunds: "/api/v1/validations/funds/buy",
+  tradingValidateSellHoldings: "/api/v1/validations/holdings/sell",
+  tradingValidateMarketStatus: "/api/v1/validations/market/status",
+  tradingCreateMarketBuyOrder: "/api/v1/orders/buy/market",
+  tradingCreateLimitBuyOrder: "/api/v1/orders/buy/limit",
+  tradingCreateMarketSellOrder: "/api/v1/orders/sell/market",
+  tradingCreateLimitSellOrder: "/api/v1/orders/sell/limit",
+  tradingCreateStopLossOrder: "/api/v1/orders/sell/stop-loss",
+  tradingCreateTakeProfitOrder: "/api/v1/orders/sell/take-profit",
+  tradingOrderStatus: "/api/v1/orders",
+  tradingBrokerValidation: "/api/v1/orders",
+  tradingBrokerExecution: "/api/v1/executions/broker/orders",
+  tradingSettlement: "/api/v1/orders",
+  tradingCalculateCommission: "/api/v1/commissions/calculate",
+  tradingDistributeCommission: "/api/v1/commissions/distribute",
+  marketDashboard: "/api/v1/dashboard",
+  marketMarkets: "/api/v1/markets",
+  marketInstruments: "/api/v1/instruments",
+  marketQuotes: "/api/v1/quotes",
+  marketHours: "/api/v1/market-hours",
+  marketAdminHours: "/api/v1/admin/market-hours",
+  marketWatchlists: "/api/v1/watchlists",
+  authRegisterAdmin: "/api/auth/register/admin",
+  subscriptionCheckout: "/api/subscriptions/checkout",
+  subscriptionStatus: "/api/subscriptions/status",
+  tradersMe: "/api/traders/me",
+  tradersUpdate: "/api/traders",
+  adminBase: "/api/admin",
+  adminMe: "/api/admin/me",
+  adminAudit: "/api/admin/audit",
+  adminCount: "/api/admin/count",
+  adminTraderAudit: "/api/admin/audit/traders",
+  adminTraderCount: "/api/admin/traders/count",
+  adminSubscriptionPlans: "/api/admin/subscription-plans",
+  subscriptionVerify: "/api/subscriptions/verify",
+  portfolioBase: "/api/v1/portfolio",
+  complianceReports: "/api/v1/reports",
+} as const;

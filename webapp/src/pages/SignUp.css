@@ -1,0 +1,142 @@
+.signup-content {
+  --background: var(--ion-background-color, #0f0f14);
+  color: var(--ion-text-color, #f4f5f8);
+}
+
+.signup-container {
+  max-width: 720px;
+  margin: 56px auto;
+  padding: 28px;
+  background: rgba(20, 22, 35, 0.9);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(var(--nexus-accent-rgb), 0.35);
+  border: 1px solid rgba(var(--nexus-accent-rgb), 0.25);
+}
+
+.signup-container h1 {
+  margin: 0 0 8px;
+  font-size: 1.8rem;
+  color: var(--ion-text-color, #f4f5f8);
+}
+
+.signup-container > p {
+  margin: 0 0 22px;
+  color: rgba(244, 245, 248, 0.8);
+}
+
+.signup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.signup-phone-row {
+  display: grid;
+  gap: 12px;
+}
+
+.signup-phone-code-item,
+.signup-phone-number-item {
+  width: 100%;
+}
+
+.signup-form ion-item {
+  --background: rgba(255, 255, 255, 0.04);
+  --color: var(--ion-text-color, #f4f5f8);
+  --border-color: rgba(var(--nexus-accent-rgb), 0.28);
+  border-radius: 10px;
+}
+
+.signup-form ion-label {
+  color: rgba(244, 245, 248, 0.88) !important;
+}
+
+.signup-form ion-input,
+.signup-form ion-select {
+  --color: var(--ion-text-color, #f4f5f8);
+  --placeholder-color: rgba(244, 245, 248, 0.55);
+}
+
+.signup-submit {
+  margin-top: 10px;
+  --background: var(--nexus-accent);
+  --background-hover: var(--nexus-accent);
+}
+
+.signup-helper-text {
+  margin: 0 4px;
+  color: #ffb4b4;
+  font-size: 0.86rem;
+}
+
+.password-rules {
+  margin: 4px 0 8px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(var(--nexus-accent-rgb), 0.08);
+  border: 1px solid rgba(var(--nexus-accent-rgb), 0.22);
+}
+
+.password-rules-title {
+  margin: 0 0 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: rgba(244, 245, 248, 0.88);
+}
+
+.picker-popover-wrapper {
+  width: min(100%, 360px);
+  padding: 10px 0;
+}
+
+.picker-popover-wrapper ion-searchbar {
+  margin: 0 0 8px;
+}
+
+.picker-popover-wrapper ion-item {
+  --background: transparent;
+}
+
+.password-rules ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.password-rules li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: rgba(244, 245, 248, 0.55);
+  margin-bottom: 6px;
+  line-height: 1.35;
+}
+
+.password-rules li:last-child {
+  margin-bottom: 0;
+}
+
+.password-rules li.met {
+  color: var(--nexus-accent-text);
+}
+
+.password-rules-icon {
+  flex-shrink: 0;
+  width: 1.1rem;
+  text-align: center;
+  font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .signup-container {
+    margin: 24px auto;
+    padding: 20px;
+  }
+}
+
+@media (min-width: 860px) {
+  .signup-phone-row {
+    grid-template-columns: 180px minmax(0, 1fr);
+  }
+}

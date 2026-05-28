@@ -1,0 +1,348 @@
+import { Injectable } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
+import { calculatePlatformCommission } from '../../common/commission';
+import { DataSource, EntityManager } from 'typeorm';
+import { roundMoney } from '../../common/money';
+import { FundsValidationEvent } from '../../funds-validation/entities/funds-validation-event.entity';
+import { Wallet } from '../../wallet/entities/wallet.entity';
+import { OrderStatusEventEntity } from '../entities/order-status-event.entity';
+import { TradingOrder } from '../entities/trading-order';
+import { TradingOrderEntity } from '../entities/trading-order.entity';
+import type {
+  CreateLimitBuyOrderCommand,
+  CreateLimitSellOrderCommand,
+  CreateMarketBuyOrderCommand,
+  CreateMarketSellOrderCommand,
+  CreateStopLossOrderCommand,
+  CreateTakeProfitOrderCommand,
+  OrderCreationResult,
+  OrderRepository,
+} from './order.repository';
+
+@Injectable()
+export class TypeOrmOrderRepository implements OrderRepository {
+  constructor(private readonly dataSource: DataSource) {}
+
+  createMarketBuyOrder(
+    command: CreateMarketBuyOrderCommand,
+  ): Promise<OrderCreationResult> {
+    return this.dataSource.transaction((manager) =>
+      this.createBuyOrderInTransaction(
+        manager,
+        command,
+        'MARKET',
+        command.initialStatus ?? 'PENDING_EXECUTION',
+        command.statusReason ??
+          'Market buy order created after funds reservation',
+      ),
+    );
+  }
+
+  createLimitBuyOrder(
+    command: CreateLimitBuyOrderCommand,
+  ): Promise<OrderCreationResult> {
+    return this.dataSource.transaction((manager) =>
+      this.createBuyOrderInTransaction(
+        manager,
+        command,
+        'LIMIT',
+        'PENDING_CONDITION',
+        'Limit buy order created with pending price condition',
+      ),
+    );
+  }
+
+  createMarketSellOrder(
+    command: CreateMarketSellOrderCommand,
+  ): Promise<OrderCreationResult> {
+    return this.dataSource.transaction((manager) =>
+      this.createSellOrderInTransaction(
+        manager,
+        command,
+        'MARKET',
+        command.initialStatus ?? 'PENDING_EXECUTION',
+        command.statusReason ??
+          'Market sell order created after holdings validation',
+      ),
+    );
+  }
+
+  createLimitSellOrder(
+    command: CreateLimitSellOrderCommand,
+  ): Promise<OrderCreationResult> {
+    return this.dataSource.transaction((manager) =>
+      this.createSellOrderInTransaction(
+        manager,
+        command,
+        'LIMIT',
+        'PENDING_CONDITION',
+        'Limit sell order created with pending price condition',
+      ),
+    );
+  }
+
+  createStopLossOrder(
+    command: CreateStopLossOrderCommand,
+  ): Promise<OrderCreationResult> {
+    return this.dataSource.transaction((manager) =>
+      this.createSellOrderInTransaction(
+        manager,
+        command,
+        'STOP_LOSS',
+        'PENDING_CONDITION',
+        'Stop loss order created with pending trigger condition',
+      ),
+    );
+  }
+
+  createTakeProfitOrder(
+    command: CreateTakeProfitOrderCommand,
+  ): Promise<OrderCreationResult> {
+    return this.dataSource.transaction((manager) =>
+      this.createSellOrderInTransaction(
+        manager,
+        command,
+        'TAKE_PROFIT',
+        'PENDING_CONDITION',
+        'Take profit order created with pending target condition',
+      ),
+    );
+  }
+
+  private async createBuyOrderInTransaction(
+    manager: EntityManager,
+    command: CreateMarketBuyOrderCommand | CreateLimitBuyOrderCommand,
+    orderType: 'MARKET' | 'LIMIT',
+    status: 'PENDING_EXECUTION' | 'PENDING_CONDITION' | 'PENDING_MARKET_OPEN',
+    statusReason: string,
+  ): Promise<OrderCreationResult> {
+    const walletRepository = manager.getRepository(Wallet);
+    const fundsEventRepository = manager.getRepository(FundsValidationEvent);
+    const orderRepository = manager.getRepository(TradingOrderEntity);
+    const statusEventRepository = manager.getRepository(OrderStatusEventEntity);
+
+    const wallet = await walletRepository.findOne({
+      where: { traderId: command.traderId },
+      lock: { mode: 'pessimistic_write' },
+    });
+
+    const availableAmount = roundMoney(
+      wallet ? Number(wallet.availableBalance) : 0,
+    );
+    const currentReservedAmount = roundMoney(
+      wallet ? Number(wallet.reservedBalance) : 0,
+    );
+
+    const commissionAmount = calculatePlatformCommission(command.grossAmount);
+    const requiredAmount = roundMoney(command.grossAmount + commissionAmount);
+
+    if (!wallet || availableAmount < requiredAmount) {
+      await fundsEventRepository.save(
+        this.toFundsEvent({
+          approved: false,
+          traderId: command.traderId,
+          availableAmount,
+          requiredAmount,
+          reservedAmount: currentReservedAmount,
+          reason: 'Insufficient available funds',
+        }),
+      );
+
+      return {
+        approved: false,
+        reason: 'Insufficient available funds',
+        availableAmount,
+        requiredAmount,
+      };
+    }
+
+    const reservedAmount = roundMoney(currentReservedAmount + requiredAmount);
+    wallet.availableBalance = this.toDecimal(availableAmount - requiredAmount);
+    wallet.reservedBalance = this.toDecimal(reservedAmount);
+    await walletRepository.save(wallet);
+
+    await fundsEventRepository.save(
+      this.toFundsEvent({
+        approved: true,
+        traderId: command.traderId,
+        availableAmount,
+        requiredAmount,
+        reservedAmount,
+      }),
+    );
+
+    const orderEntity = new TradingOrderEntity();
+    orderEntity.orderReference = randomUUID();
+    orderEntity.traderId = command.traderId;
+    orderEntity.side = 'BUY';
+    orderEntity.orderType = orderType;
+    orderEntity.status = status;
+    orderEntity.symbol = command.symbol;
+    orderEntity.exchangeId = command.exchangeId;
+    orderEntity.stockId = command.stockId;
+    orderEntity.quantity = command.quantity.toFixed(6);
+    orderEntity.estimatedUnitPrice = this.toDecimal(
+      'estimatedUnitPrice' in command
+        ? command.estimatedUnitPrice
+        : command.limitPrice,
+    );
+    orderEntity.limitPrice =
+      'limitPrice' in command ? this.toDecimal(command.limitPrice) : undefined;
+    orderEntity.grossAmount = this.toDecimal(command.grossAmount);
+    orderEntity.reservedAmount = this.toDecimal(requiredAmount);
+    orderEntity.currency = command.currency;
+
+    const savedOrder = await orderRepository.save(orderEntity);
+
+    const statusEvent = new OrderStatusEventEntity();
+    statusEvent.orderId = savedOrder.id;
+    statusEvent.orderReference = savedOrder.orderReference;
+    statusEvent.toStatus = status;
+    statusEvent.actorType = 'TRADER';
+    statusEvent.actorId = command.traderId;
+    statusEvent.reason = statusReason;
+    await statusEventRepository.save(statusEvent);
+
+    return {
+      approved: true,
+      order: this.toDomain(savedOrder),
+      availableAmount,
+      requiredAmount,
+    };
+  }
+
+  private async createSellOrderInTransaction(
+    manager: EntityManager,
+    command:
+      | CreateMarketSellOrderCommand
+      | CreateLimitSellOrderCommand
+      | CreateStopLossOrderCommand
+      | CreateTakeProfitOrderCommand,
+    orderType: 'MARKET' | 'LIMIT' | 'STOP_LOSS' | 'TAKE_PROFIT',
+    status: 'PENDING_EXECUTION' | 'PENDING_CONDITION' | 'PENDING_MARKET_OPEN',
+    statusReason: string,
+  ): Promise<OrderCreationResult> {
+    const orderRepository = manager.getRepository(TradingOrderEntity);
+    const statusEventRepository = manager.getRepository(OrderStatusEventEntity);
+
+    const orderEntity = new TradingOrderEntity();
+    orderEntity.orderReference = randomUUID();
+    orderEntity.traderId = command.traderId;
+    orderEntity.side = 'SELL';
+    orderEntity.orderType = orderType;
+    orderEntity.status = status;
+    orderEntity.symbol = command.symbol;
+    orderEntity.exchangeId = command.exchangeId;
+    orderEntity.stockId = command.stockId;
+    orderEntity.quantity = command.quantity.toFixed(6);
+    orderEntity.estimatedUnitPrice = this.toDecimal(this.getUnitPrice(command));
+    const conditionalPrice = this.getConditionalPrice(command);
+    orderEntity.limitPrice =
+      conditionalPrice === undefined
+        ? undefined
+        : this.toDecimal(conditionalPrice);
+    orderEntity.grossAmount = this.toDecimal(command.grossAmount);
+    orderEntity.reservedAmount = this.toDecimal(0);
+    orderEntity.currency = command.currency;
+
+    const savedOrder = await orderRepository.save(orderEntity);
+
+    const statusEvent = new OrderStatusEventEntity();
+    statusEvent.orderId = savedOrder.id;
+    statusEvent.orderReference = savedOrder.orderReference;
+    statusEvent.toStatus = status;
+    statusEvent.actorType = 'TRADER';
+    statusEvent.actorId = command.traderId;
+    statusEvent.reason = statusReason;
+    await statusEventRepository.save(statusEvent);
+
+    return {
+      approved: true,
+      order: this.toDomain(savedOrder),
+      requiredQuantity: command.quantity,
+    };
+  }
+
+  private toFundsEvent(result: {
+    approved: boolean;
+    traderId: string;
+    availableAmount: number;
+    requiredAmount: number;
+    reservedAmount: number;
+    reason?: string;
+  }): FundsValidationEvent {
+    const event = new FundsValidationEvent();
+    event.traderId = result.traderId;
+    event.validationType = 'BUY_ORDER_FUNDS_RESERVATION';
+    event.approved = result.approved;
+    event.requiredAmount = this.toDecimal(result.requiredAmount);
+    event.availableAmount = this.toDecimal(result.availableAmount);
+    event.reservedAmount = this.toDecimal(result.reservedAmount);
+    event.reason = result.reason;
+    return event;
+  }
+
+  private toDomain(entity: TradingOrderEntity): TradingOrder {
+    return new TradingOrder(
+      entity.id,
+      entity.orderReference,
+      entity.traderId,
+      entity.side,
+      entity.orderType,
+      entity.status,
+      entity.symbol,
+      entity.exchangeId,
+      Number(entity.quantity),
+      Number(entity.estimatedUnitPrice),
+      Number(entity.grossAmount),
+      Number(entity.reservedAmount),
+      entity.currency,
+      entity.createdAt.toISOString(),
+      entity.limitPrice ? Number(entity.limitPrice) : undefined,
+      entity.rejectionReason,
+      entity.stockId,
+    );
+  }
+
+  private toDecimal(value: number): string {
+    return roundMoney(value).toFixed(2);
+  }
+
+  private getUnitPrice(
+    command:
+      | CreateMarketSellOrderCommand
+      | CreateLimitSellOrderCommand
+      | CreateStopLossOrderCommand
+      | CreateTakeProfitOrderCommand,
+  ): number {
+    if ('estimatedUnitPrice' in command) {
+      return command.estimatedUnitPrice;
+    }
+    if ('limitPrice' in command) {
+      return command.limitPrice;
+    }
+    if ('targetPrice' in command) {
+      return command.targetPrice;
+    }
+    return command.stopPrice;
+  }
+
+  private getConditionalPrice(
+    command:
+      | CreateMarketSellOrderCommand
+      | CreateLimitSellOrderCommand
+      | CreateStopLossOrderCommand
+      | CreateTakeProfitOrderCommand,
+  ): number | undefined {
+    if ('limitPrice' in command) {
+      return command.limitPrice;
+    }
+    if ('stopPrice' in command) {
+      return command.stopPrice;
+    }
+    if ('targetPrice' in command) {
+      return command.targetPrice;
+    }
+    return undefined;
+  }
+}
