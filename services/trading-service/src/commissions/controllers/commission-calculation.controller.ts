@@ -2,9 +2,11 @@ import { Body, Controller, Post } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CalculateCommissionDto } from '../dto/calculate-commission.dto';
 import { CommissionCalculationService } from '../services/commission-calculation.service';
+import { Roles } from '../../auth/roles.decorator';
 
 @ApiTags('commissions')
 @Controller('commissions')
+@Roles('TRADER', 'CONSULTANT', 'ADMIN')
 export class CommissionCalculationController {
   constructor(
     private readonly commissionCalculationService: CommissionCalculationService,

@@ -2,9 +2,11 @@ import { Body, Controller, Post } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { DistributeCommissionDto } from '../dto/distribute-commission.dto';
 import { CommissionDistributionService } from '../services/commission-distribution.service';
+import { Roles } from '../../auth/roles.decorator';
 
 @ApiTags('commissions')
 @Controller('commissions')
+@Roles('TRADER', 'CONSULTANT', 'ADMIN')
 export class CommissionDistributionController {
   constructor(
     private readonly commissionDistributionService: CommissionDistributionService,

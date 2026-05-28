@@ -1,4 +1,5 @@
 import { API_PATHS, marketApiUrl } from "../config/api";
+import { getAccessToken } from "../auth/storage";
 
 export type DashboardMarket = {
   code: string;
@@ -186,11 +187,26 @@ async function readJsonSafe(response: Response): Promise<unknown> {
   }
 }
 
+function buildMarketHeaders(includeJson = false): HeadersInit {
+  const accessToken = getAccessToken();
+  const headers: Record<string, string> = {
+    Accept: "application/json",
+  };
+
+  if (includeJson) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  if (accessToken) {
+    headers.Authorization = `Bearer ${accessToken}`;
+  }
+
+  return headers;
+}
+
 export async function getMarketDashboard(): Promise<MarketDashboardResponse> {
   const response = await fetch(marketApiUrl(API_PATHS.marketDashboard), {
-    headers: {
-      Accept: "application/json",
-    },
+    headers: buildMarketHeaders(),
   });
   const body = await readJsonSafe(response);
 
@@ -220,9 +236,7 @@ function asArray<T>(value: unknown): T[] {
 
 async function getJson<T>(path: string, errorMessage: string): Promise<T> {
   const response = await fetch(marketApiUrl(path), {
-    headers: {
-      Accept: "application/json",
-    },
+    headers: buildMarketHeaders(),
   });
   const body = await readJsonSafe(response);
 
@@ -241,10 +255,7 @@ async function sendJson<T>(
 ): Promise<T> {
   const response = await fetch(marketApiUrl(path), {
     method,
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
+    headers: buildMarketHeaders(true),
     body: body ? JSON.stringify(body) : undefined,
   });
   const responseBody = await readJsonSafe(response);

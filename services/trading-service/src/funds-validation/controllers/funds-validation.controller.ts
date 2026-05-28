@@ -2,9 +2,11 @@ import { Body, Controller, HttpCode, Post } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ValidateBuyFundsDto } from '../dto/validate-buy-funds.dto';
 import { FundsValidationService } from '../services/funds-validation.service';
+import { Roles } from '../../auth/roles.decorator';
 
 @ApiTags('validations')
 @Controller('validations/funds')
+@Roles('TRADER', 'ADMIN')
 export class FundsValidationController {
   constructor(
     private readonly fundsValidationService: FundsValidationService,

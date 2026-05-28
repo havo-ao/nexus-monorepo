@@ -1,9 +1,11 @@
 import { Controller, Param, Post } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { BrokerExecutionService } from '../services/broker-execution.service';
+import { Roles } from '../../auth/roles.decorator';
 
 @ApiTags('executions')
 @Controller('executions/broker')
+@Roles('CONSULTANT', 'ADMIN')
 export class BrokerExecutionController {
   constructor(
     private readonly brokerExecutionService: BrokerExecutionService,

@@ -15,9 +15,11 @@ import {
 } from '@nestjs/swagger';
 import { SyncOrderSettlementDto } from '../dto/sync-order-settlement.dto';
 import { OrderSettlementService } from '../services/order-settlement.service';
+import { Roles } from '../../auth/roles.decorator';
 
 @ApiTags('settlements')
 @Controller('orders')
+@Roles('TRADER', 'CONSULTANT', 'ADMIN')
 export class OrderSettlementController {
   constructor(private readonly settlementService: OrderSettlementService) {}
 

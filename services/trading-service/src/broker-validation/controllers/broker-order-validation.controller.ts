@@ -2,9 +2,11 @@ import { Body, Controller, Param, Post } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ValidateOrderByBrokerDto } from '../dto/validate-order-by-broker.dto';
 import { BrokerOrderValidationService } from '../services/broker-order-validation.service';
+import { Roles } from '../../auth/roles.decorator';
 
 @ApiTags('broker-validations')
 @Controller('orders')
+@Roles('CONSULTANT', 'ADMIN')
 export class BrokerOrderValidationController {
   constructor(
     private readonly brokerOrderValidationService: BrokerOrderValidationService,

@@ -19,12 +19,14 @@ import {
 import { AddWatchlistItemDto } from '../dto/add-watchlist-item.dto';
 import { WatchlistResponseDto } from '../dto/watchlist-response.dto';
 import { WatchlistsService } from '../services/watchlists.service';
+import { Roles } from '../../auth/roles.decorator';
 
 @ApiTags('watchlists')
 @Controller({
   path: 'watchlists',
   version: '1',
 })
+@Roles('TRADER', 'ADMIN')
 export class WatchlistsController {
   constructor(private readonly watchlistsService: WatchlistsService) {}
 

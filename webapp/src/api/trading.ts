@@ -299,6 +299,23 @@ export type CancelOrderResponse = {
   reason: string;
 };
 
+function buildTradingHeaders(includeJson = false): HeadersInit {
+  const accessToken = getAccessToken();
+  const headers: Record<string, string> = {
+    Accept: "application/json",
+  };
+
+  if (includeJson) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  if (accessToken) {
+    headers.Authorization = `Bearer ${accessToken}`;
+  }
+
+  return headers;
+}
+
 async function readJsonSafe(response: Response): Promise<unknown> {
   const text = await response.text();
   if (!text) {
@@ -318,10 +335,7 @@ export async function validateBuyFunds(
     tradingApiUrl(API_PATHS.tradingValidateBuyFunds),
     {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers: buildTradingHeaders(true),
       body: JSON.stringify(request),
     },
   );
@@ -342,10 +356,7 @@ export async function validateSellHoldings(
     tradingApiUrl(API_PATHS.tradingValidateSellHoldings),
     {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers: buildTradingHeaders(true),
       body: JSON.stringify(request),
     },
   );
@@ -366,10 +377,7 @@ export async function validateMarketStatus(
     tradingApiUrl(API_PATHS.tradingValidateMarketStatus),
     {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers: buildTradingHeaders(true),
       body: JSON.stringify(request),
     },
   );
@@ -390,10 +398,7 @@ export async function createMarketBuyOrder(
     tradingApiUrl(API_PATHS.tradingCreateMarketBuyOrder),
     {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers: buildTradingHeaders(true),
       body: JSON.stringify(request),
     },
   );
@@ -418,10 +423,7 @@ export async function createLimitBuyOrder(
     tradingApiUrl(API_PATHS.tradingCreateLimitBuyOrder),
     {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers: buildTradingHeaders(true),
       body: JSON.stringify(request),
     },
   );
@@ -446,10 +448,7 @@ export async function createMarketSellOrder(
     tradingApiUrl(API_PATHS.tradingCreateMarketSellOrder),
     {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers: buildTradingHeaders(true),
       body: JSON.stringify(request),
     },
   );
@@ -474,10 +473,7 @@ export async function createLimitSellOrder(
     tradingApiUrl(API_PATHS.tradingCreateLimitSellOrder),
     {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers: buildTradingHeaders(true),
       body: JSON.stringify(request),
     },
   );
@@ -502,10 +498,7 @@ export async function createStopLossOrder(
     tradingApiUrl(API_PATHS.tradingCreateStopLossOrder),
     {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers: buildTradingHeaders(true),
       body: JSON.stringify(request),
     },
   );
@@ -530,10 +523,7 @@ export async function createTakeProfitOrder(
     tradingApiUrl(API_PATHS.tradingCreateTakeProfitOrder),
     {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers: buildTradingHeaders(true),
       body: JSON.stringify(request),
     },
   );
@@ -559,9 +549,7 @@ export async function getOrderStatus(
       `${API_PATHS.tradingOrderStatus}/${encodeURIComponent(orderReference)}/status`,
     ),
     {
-      headers: {
-        Accept: "application/json",
-      },
+      headers: buildTradingHeaders(),
     },
   );
 
@@ -586,9 +574,7 @@ export async function getOrderStatusHistory(
       `${API_PATHS.tradingOrderStatus}/${encodeURIComponent(orderReference)}/status-history`,
     ),
     {
-      headers: {
-        Accept: "application/json",
-      },
+      headers: buildTradingHeaders(),
     },
   );
 
@@ -615,10 +601,7 @@ export async function validateOrderByBroker(
     ),
     {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers: buildTradingHeaders(true),
       body: JSON.stringify(request),
     },
   );
@@ -645,9 +628,7 @@ export async function sendOrderToBroker(
     ),
     {
       method: "POST",
-      headers: {
-        Accept: "application/json",
-      },
+      headers: buildTradingHeaders(),
     },
   );
 
@@ -711,10 +692,7 @@ export async function cancelOrder(
     ),
     {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers: buildTradingHeaders(true),
       body: JSON.stringify(request),
     },
   );
@@ -739,10 +717,7 @@ export async function calculateCommission(
     tradingApiUrl(API_PATHS.tradingCalculateCommission),
     {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers: buildTradingHeaders(true),
       body: JSON.stringify(request),
     },
   );
@@ -767,10 +742,7 @@ export async function distributeCommission(
     tradingApiUrl(API_PATHS.tradingDistributeCommission),
     {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
+      headers: buildTradingHeaders(true),
       body: JSON.stringify(request),
     },
   );

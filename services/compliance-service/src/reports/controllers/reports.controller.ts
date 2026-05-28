@@ -2,9 +2,11 @@ import { Controller, Get, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ReportQueryDto } from '../dto/report-query.dto';
 import { ReportsService } from '../services/reports.service';
+import { Roles } from '../../auth/roles.decorator';
 
 @ApiTags('reports')
 @Controller({ path: 'reports', version: '1' })
+@Roles('ADMIN', 'LEGAL_USER')
 export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 

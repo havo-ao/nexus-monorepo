@@ -8,9 +8,11 @@ import {
 import { ProcessPendingOrdersDto } from '../dto/process-pending-orders.dto';
 import { PendingOrderProcessingResult } from '../entities/pending-order-processing-result.entity';
 import { PendingOrderProcessingService } from '../services/pending-order-processing.service';
+import { Roles } from '../../auth/roles.decorator';
 
 @ApiTags('pending-orders')
 @Controller('orders/pending')
+@Roles('ADMIN')
 export class PendingOrderProcessingController {
   constructor(
     private readonly pendingOrderProcessingService: PendingOrderProcessingService,

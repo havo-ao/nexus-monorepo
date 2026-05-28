@@ -1,9 +1,11 @@
 import { Controller, Get, Param } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { OrderStatusService } from '../services/order-status.service';
+import { Roles } from '../../auth/roles.decorator';
 
 @ApiTags('order-status')
 @Controller('orders')
+@Roles('TRADER', 'CONSULTANT', 'ADMIN')
 export class OrderStatusController {
   constructor(private readonly orderStatusService: OrderStatusService) {}
 
