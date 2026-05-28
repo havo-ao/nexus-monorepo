@@ -7,17 +7,24 @@ import {
   IonSpinner,
 } from "@ionic/react";
 import {
+  alertCircleOutline,
   barChartOutline,
   documentTextOutline,
+  mailUnreadOutline,
   refreshOutline,
   shieldCheckmarkOutline,
+  timeOutline,
 } from "ionicons/icons";
 import NavBar from "../components/NavBar";
-import { getStoredUser } from "../auth/storage";
+import { formatUserDisplayName, getStoredUser } from "../auth/storage";
 import {
+  getAuditEvents,
   getComplianceReport,
+  getNotificationAttempts,
+  type AuditEvent,
   type ComplianceReport,
   type ComplianceReportType,
+  type NotificationAttempt,
 } from "../api/compliance";
 import "./Reports.css";
 
@@ -52,10 +59,15 @@ const Reports: React.FC = () => {
   const [activeType, setActiveType] =
     useState<ComplianceReportType>("operational");
   const [report, setReport] = useState<ComplianceReport | null>(null);
+  const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([]);
+  const [notificationAttempts, setNotificationAttempts] = useState<
+    NotificationAttempt[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const canViewReports = user?.userRol === "ADMIN" || user?.userRol === "LEGAL_USER";
+  const workspaceLabel = user?.userRol === "ADMIN" ? "Administration" : "Legal";
 
   const metrics = useMemo(
     () => report?.metrics ?? report?.summary ?? {},
@@ -72,7 +84,15 @@ const Reports: React.FC = () => {
     setLoading(true);
     setError("");
     try {
-      setReport(await getComplianceReport(type));
+      const [reportResult, auditResult, notificationResult] =
+        await Promise.all([
+          getComplianceReport(type),
+          getAuditEvents(),
+          getNotificationAttempts(),
+        ]);
+      setReport(reportResult);
+      setAuditEvents(auditResult.slice(0, 6));
+      setNotificationAttempts(notificationResult.slice(0, 6));
     } catch (requestError) {
       setError(
         requestError instanceof Error
@@ -96,12 +116,17 @@ const Reports: React.FC = () => {
         <main className="reports-shell">
           <header className="reports-header">
             <div>
-              <span>Compliance</span>
+              <span>{workspaceLabel} reports</span>
               <h1>Reports</h1>
               <p>
-                Review operational, regulatory and executive evidence from the
-                compliance service.
+                Review platform evidence, notification traceability and audit
+                signals from the compliance service.
               </p>
+              {user && (
+                <small className="reports-user-context">
+                  Signed in as {formatUserDisplayName(user)} · {user.userRol}
+                </small>
+              )}
             </div>
             <IonButton
               className="reports-refresh"
@@ -175,6 +200,77 @@ const Reports: React.FC = () => {
                   ))}
                 </div>
               )}
+
+              <div className="reports-evidence-grid">
+                <article>
+                  <h3>
+                    <IonIcon icon={alertCircleOutline} />
+                    Audit evidence
+                  </h3>
+                  {auditEvents.length ? (
+                    <div className="reports-evidence-list">
+                      {auditEvents.map((event) => (
+                        <div key={event.id} className="reports-evidence-row">
+                          <div>
+                            <strong>{event.eventType}</strong>
+                            <span>
+                              {event.sourceService} · {event.entityType}{" "}
+                              {event.entityId}
+                            </span>
+                          </div>
+                          <small className={event.critical ? "critical" : ""}>
+                            {event.critical ? "Critical" : event.result}
+                          </small>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="reports-empty-state">
+                      No audit evidence has been recorded yet.
+                    </p>
+                  )}
+                </article>
+
+                <article>
+                  <h3>
+                    <IonIcon icon={mailUnreadOutline} />
+                    Notification evidence
+                  </h3>
+                  {notificationAttempts.length ? (
+                    <div className="reports-evidence-list">
+                      {notificationAttempts.map((attempt) => (
+                        <div key={attempt.id} className="reports-evidence-row">
+                          <div>
+                            <strong>{attempt.subject}</strong>
+                            <span>
+                              {attempt.category} ·{" "}
+                              {attempt.recipientEmail ?? "No recipient"}
+                            </span>
+                          </div>
+                          <small
+                            className={
+                              attempt.deliveryStatus === "FAILED"
+                                ? "critical"
+                                : ""
+                            }
+                          >
+                            {attempt.deliveryStatus}
+                          </small>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="reports-empty-state">
+                      No notification attempts have been recorded yet.
+                    </p>
+                  )}
+                </article>
+              </div>
+
+              <footer className="reports-panel-footer">
+                <IonIcon icon={timeOutline} />
+                Evidence is generated on demand from compliance-service.
+              </footer>
             </section>
           )}
         </main>

@@ -22,6 +22,7 @@ import {
   NotificationDeliveryStatus,
 } from '../entities/notification-attempt.entity';
 import { NotificationsService } from '../services/notifications.service';
+import { Roles } from '../../auth/roles.decorator';
 
 @ApiTags('notifications')
 @Controller({
@@ -109,6 +110,7 @@ export class NotificationsController {
   }
 
   @Get('attempts')
+  @Roles('ADMIN', 'LEGAL_USER')
   @ApiOperation({ summary: 'Query notification delivery attempts' })
   @ApiOkResponse({ type: NotificationAttemptResponseDto, isArray: true })
   @ApiQuery({ name: 'category', required: false })

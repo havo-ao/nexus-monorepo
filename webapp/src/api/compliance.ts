@@ -15,6 +15,36 @@ export type ComplianceReport = {
   provenance?: Record<string, string>;
 };
 
+export type AuditEvent = {
+  id: string;
+  eventType: string;
+  sourceService: string;
+  actorId: string;
+  actorRole?: string;
+  entityType: string;
+  entityId: string;
+  correlationId?: string;
+  result: "SUCCESS" | "FAILURE" | "PENDING" | "INFO";
+  critical: boolean;
+  occurredAt: string;
+  recordedAt: string;
+};
+
+export type NotificationAttempt = {
+  id: string;
+  category: string;
+  channel: "EMAIL";
+  recipientEmail?: string;
+  subject: string;
+  sourceService: string;
+  entityType: string;
+  entityId: string;
+  correlationId?: string;
+  deliveryStatus: "SENT" | "FAILED" | "SKIPPED";
+  occurredAt: string;
+  recordedAt: string;
+};
+
 function buildHeaders(): HeadersInit {
   const accessToken = getAccessToken();
   const headers: Record<string, string> = {
@@ -48,4 +78,41 @@ export async function getComplianceReport(
   }
 
   return body as ComplianceReport;
+}
+
+export async function getAuditEvents(): Promise<AuditEvent[]> {
+  const response = await fetch(complianceApiUrl("/api/v1/audit/events"), {
+    headers: buildHeaders(),
+  });
+  const body = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(
+      typeof body.message === "string"
+        ? body.message
+        : "Could not load audit evidence.",
+    );
+  }
+
+  return Array.isArray(body) ? (body as AuditEvent[]) : [];
+}
+
+export async function getNotificationAttempts(): Promise<NotificationAttempt[]> {
+  const response = await fetch(
+    complianceApiUrl("/api/v1/notifications/attempts"),
+    {
+      headers: buildHeaders(),
+    },
+  );
+  const body = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(
+      typeof body.message === "string"
+        ? body.message
+        : "Could not load notification evidence.",
+    );
+  }
+
+  return Array.isArray(body) ? (body as NotificationAttempt[]) : [];
 }

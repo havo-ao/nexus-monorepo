@@ -58,6 +58,11 @@ import "./TraderPanel.css";
 type BuyOrderMode = "MARKET" | "LIMIT" | "STOP_LOSS" | "TAKE_PROFIT";
 type OrderSide = "BUY" | "SELL";
 type WorkflowStepStatus = "ready" | "active" | "done";
+type WorkflowStep = {
+  id: number;
+  title: string;
+  detail: string;
+};
 
 const moneyFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -68,8 +73,8 @@ const TraderPanel: React.FC = () => {
   const history = useHistory();
   const location = useLocation();
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [traderId, setTraderId] = useState("101");
-  const [brokerId, setBrokerId] = useState("201");
+  const [traderId, setTraderId] = useState("");
+  const [brokerId, setBrokerId] = useState("1");
   const [exchangeId, setExchangeId] = useState("1");
   const [orderSide, setOrderSide] = useState<OrderSide>("BUY");
   const [orderMode, setOrderMode] = useState<BuyOrderMode>("MARKET");
@@ -174,14 +179,70 @@ const TraderPanel: React.FC = () => {
       Number.isFinite(activePrice) &&
       activePrice > 0,
   );
-  const workflowSteps = [
-    ["1", "Checks", "Funds, market and fees"],
-    ["2", "Order Details", "Configure ticket"],
-    ["3", "Create", "Submit order"],
-    ["4", "Review", "Broker decision"],
-    ["5", "Execute", "Alpaca and settlement"],
-    ["6", "Monitor", "Status and audit trail"],
+  const role = user?.userRol;
+  const isTrader = role === "TRADER";
+  const isBroker = role === "CONSULTANT";
+  const isLegal = role === "LEGAL_USER";
+  const workflowSteps: WorkflowStep[] = [
+    { id: 1, title: "Checks", detail: "Funds, market and fees" },
+    { id: 2, title: "Order Details", detail: "Configure ticket" },
+    { id: 3, title: "Create", detail: "Submit order" },
+    { id: 4, title: "Review", detail: "Broker decision" },
+    { id: 5, title: "Execute", detail: "Alpaca and settlement" },
+    { id: 6, title: "Monitor", detail: "Status and audit trail" },
   ];
+  const visibleWorkflowSteps = workflowSteps.filter((step) => {
+    if (isTrader) {
+      return [1, 2, 3, 6].includes(step.id);
+    }
+    if (isBroker) {
+      return [4, 5, 6].includes(step.id);
+    }
+    if (isLegal) {
+      return [6].includes(step.id);
+    }
+    return true;
+  });
+  const currentWorkflowStep =
+    workflowSteps.find((step) => step.id === activeWorkflowStep) ??
+    visibleWorkflowSteps[0] ??
+    workflowSteps[0];
+  const roleHeader = isTrader
+    ? {
+        eyebrow: "Trading",
+        title: "My orders",
+        description:
+          "Create an order, send it for review and track its execution status.",
+      }
+    : isBroker
+      ? {
+          eyebrow: "Broker desk",
+          title: "Order review",
+          description:
+            "Review pending orders, approve or reject them, and route approved orders to Alpaca.",
+        }
+      : isLegal
+        ? {
+            eyebrow: "Compliance",
+            title: "Trading oversight",
+            description:
+              "Trading actions are read-only here. Use reports and notifications for compliance evidence.",
+          }
+        : {
+            eyebrow: "Trading operations",
+            title: "Trading desk",
+            description:
+              "Create, review, execute and monitor orders across the trading workflow.",
+          };
+  const stepIds = visibleWorkflowSteps.map((step) => step.id);
+  const goToAdjacentStep = (direction: -1 | 1) => {
+    const currentIndex = Math.max(stepIds.indexOf(activeWorkflowStep), 0);
+    const nextIndex = Math.min(
+      Math.max(currentIndex + direction, 0),
+      stepIds.length - 1,
+    );
+    setActiveWorkflowStep(stepIds[nextIndex] ?? activeWorkflowStep);
+  };
 
   const getWorkflowStepStatus = (step: number): WorkflowStepStatus => {
     if (activeWorkflowStep === step) {
@@ -232,6 +293,23 @@ const TraderPanel: React.FC = () => {
       return;
     }
     setUser(stored);
+    if (stored.userRol === "TRADER") {
+      setTraderId(String(stored.id));
+      setActiveWorkflowStep((current) =>
+        [1, 2, 3, 6].includes(current) ? current : 1,
+      );
+      return;
+    }
+    if (stored.userRol === "CONSULTANT") {
+      setBrokerId(String(stored.id));
+      setActiveWorkflowStep((current) =>
+        [4, 5, 6].includes(current) ? current : 4,
+      );
+      return;
+    }
+    if (stored.userRol === "LEGAL_USER") {
+      setActiveWorkflowStep(6);
+    }
   }, [history, location.key]);
 
   const handleValidateFunds = async () => {
@@ -658,7 +736,7 @@ const TraderPanel: React.FC = () => {
       setOrderStatus(null);
       setOrderStatusHistory([]);
       setBrokerValidation(null);
-      setActiveWorkflowStep(4);
+      setActiveWorkflowStep(isTrader ? 6 : 4);
     } catch (error) {
       setOrderError(
         error instanceof Error
@@ -681,12 +759,9 @@ const TraderPanel: React.FC = () => {
         <main className="trader-panel-shell">
           <header className="trader-panel-header">
             <div>
-              <span className="trader-panel-eyebrow">Trading</span>
-              <h1>Trading desk</h1>
-              <p>
-                Create an order, collect validation evidence, route it to
-                Alpaca, settle the result and review the audit trail.
-              </p>
+              <span className="trader-panel-eyebrow">{roleHeader.eyebrow}</span>
+              <h1>{roleHeader.title}</h1>
+              <p>{roleHeader.description}</p>
             </div>
             <div className="trader-panel-actions">
               <button
@@ -708,7 +783,7 @@ const TraderPanel: React.FC = () => {
 
           <section className="trader-session-strip">
             <div>
-              <span>Trader</span>
+              <span>{isBroker ? "Broker" : isLegal ? "Legal user" : "Trader"}</span>
               <strong>{formatUserDisplayName(user)}</strong>
             </div>
             <div>
@@ -745,9 +820,7 @@ const TraderPanel: React.FC = () => {
             <div className="trader-dashboard-metrics">
               <div>
                 <span>Step</span>
-                <strong>
-                  {workflowSteps[activeWorkflowStep - 1]?.[1] ?? "Ticket"}
-                </strong>
+                <strong>{currentWorkflowStep.title}</strong>
               </div>
               <div>
                 <span>Order state</span>
@@ -777,16 +850,16 @@ const TraderPanel: React.FC = () => {
           </section>
 
           <section className="trader-workflow-rail" aria-label="Trading steps">
-            {workflowSteps.map(([step, title, detail]) => {
-              const status = getWorkflowStepStatus(Number(step));
+            {visibleWorkflowSteps.map(({ id, title, detail }) => {
+              const status = getWorkflowStepStatus(id);
               return (
                 <button
                   className={`trader-workflow-step ${status}`}
-                  key={step}
-                  onClick={() => setActiveWorkflowStep(Number(step))}
+                  key={id}
+                  onClick={() => setActiveWorkflowStep(id)}
                   type="button"
                 >
-                  <span>{step}</span>
+                  <span>{id}</span>
                   <div>
                     <strong>{title}</strong>
                     <small>{detail}</small>
@@ -798,7 +871,43 @@ const TraderPanel: React.FC = () => {
           </section>
 
           <section className="trader-panel-grid single">
-            {activeWorkflowStep === 2 && (
+            {isLegal && (
+              <article className="trader-precheck-panel trader-role-panel">
+                <div className="trader-panel-section-heading">
+                  <span>
+                    <IonIcon icon={shieldCheckmarkOutline} />
+                  </span>
+                  <div>
+                    <h2>Compliance workspace</h2>
+                    <p>Trading is operational. Compliance works from evidence and reports.</p>
+                  </div>
+                </div>
+                <section className="trader-precheck-section wide">
+                  <div className="trader-precheck-title">
+                    <IonIcon icon={informationCircleOutline} />
+                    <h3>Use the compliance views</h3>
+                  </div>
+                  <p className="trader-panel-message approved">
+                    Review audit evidence, notifications and regulatory reports
+                    from the Compliance section. Order approval and execution
+                    actions are handled by brokers.
+                  </p>
+                  <div className="trader-card-actions">
+                    <IonButton onClick={() => history.push("/reports")}>
+                      Open Reports
+                    </IonButton>
+                    <IonButton
+                      fill="outline"
+                      onClick={() => history.push("/notifications")}
+                    >
+                      Open Notifications
+                    </IonButton>
+                  </div>
+                </section>
+              </article>
+            )}
+
+            {!isLegal && activeWorkflowStep === 2 && (
               <article className="trader-order-ticket">
               <div className="trader-panel-section-heading">
                 <span>
@@ -870,6 +979,7 @@ const TraderPanel: React.FC = () => {
                   <IonLabel position="stacked">Trader</IonLabel>
                   <IonInput
                     value={traderId}
+                    readonly={user.userRol === "TRADER"}
                     onIonInput={(event) =>
                       setTraderId(String(event.detail.value ?? ""))
                     }
@@ -986,18 +1096,18 @@ const TraderPanel: React.FC = () => {
               <div className="trader-step-navigation">
                 <IonButton
                   fill="outline"
-                  onClick={() => setActiveWorkflowStep(1)}
+                  onClick={() => goToAdjacentStep(-1)}
                 >
                   Previous
                 </IonButton>
-                <IonButton onClick={() => setActiveWorkflowStep(3)}>
+                <IonButton onClick={() => goToAdjacentStep(1)}>
                   Next
                 </IonButton>
               </div>
               </article>
             )}
 
-            {activeWorkflowStep !== 2 && (
+            {!isLegal && activeWorkflowStep !== 2 && (
             <article
               className={`trader-precheck-panel trader-step-panel step-${activeWorkflowStep}`}
             >
@@ -1018,8 +1128,8 @@ const TraderPanel: React.FC = () => {
                   />
                 </span>
                 <div>
-                  <h2>{workflowSteps[activeWorkflowStep - 1]?.[1]}</h2>
-                  <p>{workflowSteps[activeWorkflowStep - 1]?.[2]}</p>
+                  <h2>{currentWorkflowStep.title}</h2>
+                  <p>{currentWorkflowStep.detail}</p>
                 </div>
               </div>
 
@@ -1527,17 +1637,17 @@ const TraderPanel: React.FC = () => {
                 <IonButton
                   fill="outline"
                   onClick={() =>
-                    setActiveWorkflowStep((current) => Math.max(current - 1, 1))
+                    goToAdjacentStep(-1)
                   }
-                  disabled={activeWorkflowStep === 1}
+                  disabled={activeWorkflowStep === stepIds[0]}
                 >
                   Previous
                 </IonButton>
                 <IonButton
                   onClick={() =>
-                    setActiveWorkflowStep((current) => Math.min(current + 1, 6))
+                    goToAdjacentStep(1)
                   }
-                  disabled={activeWorkflowStep === 6}
+                  disabled={activeWorkflowStep === stepIds.at(-1)}
                 >
                   Next
                 </IonButton>

@@ -147,7 +147,8 @@ const NavBar: React.FC = () => {
   const handleLogout = () => {
     clearAuthSession();
     setSessionUser(null);
-    history.push('/');
+    setIsMobileMenuOpen(false);
+    history.replace('/login');
   };
 
   const guestLinks = useMemo<NavItem[]>(
@@ -168,7 +169,7 @@ const NavBar: React.FC = () => {
       { label: 'Subscription', icon: sparklesOutline, path: '/plan-selection', action: () => goToRoute('/plan-selection') },
       { label: 'Notifications', icon: notificationsOutline, path: '/notifications', action: () => goToRoute('/notifications') },
       { label: 'Dashboard', icon: gridOutline, path: '/dashboard', action: () => goToRoute('/dashboard') },
-      { label: 'Trading', icon: cartOutline, path: '/trader-panel', action: () => goToRoute('/trader-panel') },
+      { label: 'Orders', icon: cartOutline, path: '/trader-panel', action: () => goToRoute('/trader-panel') },
       { label: 'Market', icon: analyticsOutline, path: '/markets', action: () => goToRoute('/markets') },
       { label: 'Watchlist', icon: starOutline, path: '/watchlist', action: () => goToRoute('/watchlist') },
       { label: 'Portfolio', icon: albumsOutline, path: '/portfolio', action: () => goToRoute('/portfolio') }
@@ -179,7 +180,13 @@ const NavBar: React.FC = () => {
   const adminLinks = useMemo<NavItem[]>(
     () => [
       { label: 'Profile', icon: personCircleOutline, path: '/profile', action: () => goToRoute('/profile') },
+      { label: 'Dashboard', icon: gridOutline, path: '/dashboard', action: () => goToRoute('/dashboard') },
+      { label: 'Subscription', icon: sparklesOutline, path: '/plan-selection', action: () => goToRoute('/plan-selection') },
+      { label: 'Notifications', icon: notificationsOutline, path: '/notifications', action: () => goToRoute('/notifications') },
       { label: 'Market', icon: analyticsOutline, path: '/markets', action: () => goToRoute('/markets') },
+      { label: 'Trading Ops', icon: cartOutline, path: '/trader-panel', action: () => goToRoute('/trader-panel') },
+      { label: 'Watchlist', icon: starOutline, path: '/watchlist', action: () => goToRoute('/watchlist') },
+      { label: 'Portfolio', icon: albumsOutline, path: '/portfolio', action: () => goToRoute('/portfolio') },
       { label: 'Market Hours', icon: timeOutline, path: '/admin/market-hours', action: () => goToRoute('/admin/market-hours') },
       { label: 'Manage Admins', icon: ribbonOutline, path: '/manage-admins', action: () => goToRoute('/manage-admins') },
       { label: 'Manage Plans', icon: cardOutline, path: '/manage-plans', action: () => goToRoute('/manage-plans') },
@@ -200,7 +207,7 @@ const NavBar: React.FC = () => {
   const brokerLinks = useMemo<NavItem[]>(
     () => [
       { label: 'Profile', icon: personCircleOutline, path: '/profile', action: () => goToRoute('/profile') },
-      { label: 'Trading', icon: cartOutline, path: '/trader-panel', action: () => goToRoute('/trader-panel') },
+      { label: 'Order Review', icon: cartOutline, path: '/trader-panel', action: () => goToRoute('/trader-panel') },
       { label: 'Market', icon: analyticsOutline, path: '/markets', action: () => goToRoute('/markets') }
     ],
     [goToRoute]
