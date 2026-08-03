@@ -52,21 +52,20 @@ const MarketsSection: React.FC = () => {
 
       <div className="markets-grid">
         {marketsData.map((market, idx) => (
-          <IonCard key={idx} className="market-card">
-            <div className="market-card-header">
-              
-              <div className="market-info">
-                <h3 className="market-country">{market.country}</h3>
-                <p className="market-exchange">{market.exchangeName} ({market.exchange})</p>
+          <IonCard key={idx} className="markets-card">
+            <div className="markets-card-header">
+              <div className="markets-card-info">
+                <h3 className="markets-card-country">{market.country}</h3>
+                <p className="markets-card-exchange">{market.exchangeName} ({market.exchange})</p>
               </div>
             </div>
             <IonCardContent>
-              <div className="top-stocks">
-                <div className="top-stocks-title">
+              <div className="markets-card-stocks">
+                <div className="markets-card-stocks-title">
                   <IonIcon icon={trendingUpOutline} />
                   <span>Top Stocks</span>
                 </div>
-                <div className="stock-chips">
+                <div className="markets-card-chips">
                   {market.topStocks.map((stock, i) => (
                     <IonChip key={i} color="primary" outline>
                       <IonIcon icon={businessOutline} />
